@@ -1,18 +1,19 @@
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import { Link } from 'react-router-native';
+// Calendar.js
 
-const Calendar = () => {
-  // Tutaj możesz dodać logikę obsługi kalendarza
+import * as React from 'react';
+import { View, Text, StyleSheet, Button } from 'react-native';
 
+const Calendar = ({ navigation }) => {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Kalendarz</Text>
-      {/* Tutaj umieść kalendarz */}
+      {/* Tutaj możesz dodać zawartość kalendarza */}
 
-      <Link to="/home" style={styles.link}>
-        <Text style={styles.linkText}>Powrót do Home</Text>
-      </Link>
+      <Button
+        title="Powrót do Home"
+        onPress={() => navigation.navigate('Home')}
+        style={styles.button}
+      />
     </View>
   );
 };
@@ -29,20 +30,12 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 20,
   },
-  link: {
-    padding: 10,
+  button: {
     margin: 10,
     backgroundColor: '#9091fd',
     borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
     elevation: 3,
     width: '50%',
-  },
-  linkText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: 'white',
   },
 });
 

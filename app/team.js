@@ -10,9 +10,11 @@ const Team = () => {
       <Text style={styles.title}>Twój Zespół</Text>
       {/* Tutaj umieść kalendarz */}
 
-      <Link to="/home" style={styles.link}>
-        <Text style={styles.linkText}>Powrót do Home</Text>
-      </Link>
+      <Button
+        title="Powrót do Home"
+        onPress={() => navigation.navigate('Home')}
+        style={styles.button}
+      />
     </View>
   );
 };

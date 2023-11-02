@@ -10,9 +10,11 @@ const Profil = () => {
       <Text style={styles.title}>Profil</Text>
       {<Text>fdfd</Text>}
 
-      <Link to="/home" style={styles.link}>
-        <Text style={styles.linkText}>Powrót do Home</Text>
-      </Link>
+      <Button
+        title="Powrót do Home"
+        onPress={() => navigation.navigate('Home')}
+        style={styles.button}
+      />
     </View>
   );
 };

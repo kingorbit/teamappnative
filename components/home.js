@@ -1,47 +1,52 @@
-import React from 'react';
+import * as React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { Link } from 'react-router-native';
 
-const Home = () => {
+const Home = ({ navigation }) => {
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>
-        Team App
-      </Text>
+      <Text style={styles.title}>Team App</Text>
 
-      <Link to="/calendar" style={styles.link}>
-        <Text style={styles.linkText}>
-          Kalendarz
-        </Text>
-      </Link>
+      <TouchableOpacity
+        style={styles.link}
+        onPress={() => navigation.navigate('Calendar')}
+      >
+        <Text style={styles.linkText}>Kalendarz</Text>
+      </TouchableOpacity>
 
-      <Link to="/team" style={styles.link}>
-        <Text style={styles.linkText}>
-          Drużyna
-        </Text>
-      </Link>
+      <TouchableOpacity
+        style={styles.link}
+        onPress={() => navigation.navigate('Team')}
+      >
+        <Text style={styles.linkText}>Drużyna</Text>
+      </TouchableOpacity>
 
-      <Link to="/chat" style={styles.link}>
-        <Text style={styles.linkText}>
-          Chat
-        </Text>
-      </Link>
-      <Link to="/profil" style={styles.link}>
-        <Text style={styles.linkText}>
-          Profil
-        </Text>
-      </Link>
-      <Link to="/stats" style={styles.link}>
-        <Text style={styles.linkText}>
-          Statystyki
-        </Text>
-      </Link>
-      <Link to="/settings" style={styles.link}>
-        <Text style={styles.linkText}>
-          Ustawienia
-        </Text>
-      </Link>
+      <TouchableOpacity
+        style={styles.link}
+        onPress={() => navigation.navigate('Chat')}
+      >
+        <Text style={styles.linkText}>Chat</Text>
+      </TouchableOpacity>
 
+      <TouchableOpacity
+        style={styles.link}
+        onPress={() => navigation.navigate('Profil')}
+      >
+        <Text style={styles.linkText}>Profil</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        style={styles.link}
+        onPress={() => navigation.navigate('Stats')}
+      >
+        <Text style={styles.linkText}>Statystyki</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        style={styles.link}
+        onPress={() => navigation.navigate('Settings')}
+      >
+        <Text style={styles.linkText}>Ustawienia</Text>
+      </TouchableOpacity>
     </View>
   );
 };
