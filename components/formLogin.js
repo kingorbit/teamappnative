@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { TextInput, Button, View } from 'react-native';
-import auth from '../constants/config'; // Import zainicjalizowanej konfiguracji Firebase
+import { TextInput, Button, View, Alert } from 'react-native';
+import { signInWithEmailAndPassword } from 'firebase/auth';
+import { auth } from '../constants/config'; // Import zainicjalizowanej konfiguracji Firebase
 
 const FormLogin = ({ navigation }) => {
   const [email, setEmail] = useState('');
@@ -8,11 +9,17 @@ const FormLogin = ({ navigation }) => {
 
   const handleLogin = async () => {
     try {
-      const response = await auth.signInWithEmailAndPassword(email, password);
+      const response = await signInWithEmailAndPassword(auth, email, password);
       console.log('Zalogowano', response);
-      navigation.navigate('Home');
+      // Przekierowanie do innej trasy za pomocą funkcji obsługującej zmianę trasy
+      navigation.reset({
+        index: 0,
+        routes: [{ name: 'Home' }], // Nazwa trasy, do której ma nastąpić przekierowanie
+      });
     } catch (error) {
       console.error('Błąd logowania', error);
+      // Obsługa błędów poprzez wyświetlenie alertu
+      Alert.alert('Błąd logowania', error.message); // Wyświetlenie komunikatu z błędem
     }
   };
 
@@ -24,7 +31,7 @@ const FormLogin = ({ navigation }) => {
         onChangeText={setEmail}
       />
       <TextInput
-        placeholder="Password"
+        placeholder="Hasło"
         value={password}
         onChangeText={setPassword}
         secureTextEntry
