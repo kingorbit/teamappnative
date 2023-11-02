@@ -52,6 +52,7 @@ const styles = StyleSheet.create({
     fontSize: 35,
     fontWeight: 'bold',
     marginBottom: 20,
+    color: 'white',
   },
   link: {
     padding: 20,

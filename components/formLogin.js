@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { TextInput, Button, View, Alert } from 'react-native';
+import { TextInput, View, Alert, Button, StyleSheet } from 'react-native';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '../constants/config'; // Import zainicjalizowanej konfiguracji Firebase
 
@@ -11,34 +11,61 @@ const FormLogin = ({ navigation }) => {
     try {
       const response = await signInWithEmailAndPassword(auth, email, password);
       console.log('Zalogowano', response);
-      // Przekierowanie do innej trasy za pomocą funkcji obsługującej zmianę trasy
       navigation.reset({
         index: 0,
-        routes: [{ name: 'Home' }], // Nazwa trasy, do której ma nastąpić przekierowanie
+        routes: [{ name: 'Home' }],
       });
     } catch (error) {
       console.error('Błąd logowania', error);
-      // Obsługa błędów poprzez wyświetlenie alertu
-      Alert.alert('Błąd logowania', error.message); // Wyświetlenie komunikatu z błędem
+      Alert.alert('Błąd logowania', error.message);
     }
   };
 
   return (
-    <View>
+    <View style={styles.container}>
       <TextInput
+        style={styles.input}
         placeholder="Email"
         value={email}
         onChangeText={setEmail}
       />
       <TextInput
+        style={styles.input}
         placeholder="Hasło"
         value={password}
         onChangeText={setPassword}
         secureTextEntry
       />
-      <Button title="Zaloguj" onPress={handleLogin} />
+      <Button
+        title="Zaloguj"
+        onPress={handleLogin}
+      />
+      <Button
+        title="Powrót"
+        onPress={() => navigation.navigate('WelcomeScreen')}
+      />
     </View>
   );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    width: '70%',
+  },
+  input: {
+    width: '100%',
+    height: 35,
+    borderWidth: 1,
+    backgroundColor: 'white',
+    borderRadius: 5,
+    marginBottom: 15,
+    paddingHorizontal: 10,
+    textAlign: 'center',
+  },
+});
 
 export default FormLogin;
