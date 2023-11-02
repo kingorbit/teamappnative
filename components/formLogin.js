@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { TextInput, View, Alert, Button, StyleSheet } from 'react-native';
 import { signInWithEmailAndPassword } from 'firebase/auth';
-import { auth } from '../constants/config'; // Import zainicjalizowanej konfiguracji Firebase
+import { auth } from '../constants/config';
+import { Link } from 'react-router-native'; // Importuj Link
 
-const FormLogin = ({ navigation }) => {
+const FormLogin = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
@@ -11,10 +12,8 @@ const FormLogin = ({ navigation }) => {
     try {
       const response = await signInWithEmailAndPassword(auth, email, password);
       console.log('Zalogowano', response);
-      navigation.reset({
-        index: 0,
-        routes: [{ name: 'Home' }],
-      });
+      // Użyj Link to="/" po udanym zalogowaniu
+      // Spowoduje to przekierowanie do ekranu Home
     } catch (error) {
       console.error('Błąd logowania', error);
       Alert.alert('Błąd logowania', error.message);
@@ -40,10 +39,11 @@ const FormLogin = ({ navigation }) => {
         title="Zaloguj"
         onPress={handleLogin}
       />
-      <Button
-        title="Powrót"
-        onPress={() => navigation.navigate('WelcomeScreen')}
-      />
+      <Link to="/">
+        <View>
+          <Button title="Powrót" />
+        </View>
+      </Link>
     </View>
   );
 };

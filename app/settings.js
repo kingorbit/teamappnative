@@ -10,11 +10,9 @@ const Settings = () => {
       <Text style={styles.title}>Ustawienia</Text>
       {/* Tutaj umieść kalendarz */}
 
-      <Button
-        title="Powrót do Home"
-        onPress={() => navigation.navigate('Home')}
-        style={styles.button}
-      />
+      <Link to="/home" style={styles.link}>
+        <Text style={styles.linkText}>Powrót do Home</Text>
+      </Link>
     </View>
   );
 };
