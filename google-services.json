@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1092485530008",
+    "project_id": "teamappnative",
+    "storage_bucket": "teamappnative.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1092485530008:android:bbfdfbed1bb57ba0c66bed",
+        "android_client_info": {
+          "package_name": "com.teamappnative"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDzuWXDswMN68eGvMYiU2ZMupSmLEDoEZA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

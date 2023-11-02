@@ -1,10 +1,19 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Link } from 'react-router-native';
+import LoginForm from './formLogin';
+import SignUpForm from './formSignUp';
 
 const WelcomeScreen = () => {
-  const handleButtonClick = () => {
-    console.log('Ten przycisk nie wykonuje żadnej akcji');
+  const [showLoginForm, setShowLoginForm] = useState(false);
+  const [showSignUpForm, setShowSignUpForm] = useState(false);
+
+  const handleLoginClick = () => {
+    setShowLoginForm(true);
+  };
+
+  const handleSignUpClick = () => {
+    setShowSignUpForm(true);
   };
 
   return (
@@ -12,19 +21,22 @@ const WelcomeScreen = () => {
       <Text style={styles.title}>
         Team App
       </Text>
-      <Link to="/home" style={styles.button}>
-          <Text style={styles.buttonText}>
-            Login In
+      {!showLoginForm && !showSignUpForm && (
+        <Link to="/home" style={styles.link}>
+          <Text style={styles.buttonText} onPress={handleLoginClick}>
+            Log In
           </Text>
-
-      </Link>
-      <TouchableOpacity onPress={handleButtonClick}>
-        <TouchableOpacity style={styles.button}>
+        </Link>
+      )}
+      {showLoginForm && <LoginForm />}
+      {!showLoginForm && (
+        <TouchableOpacity style={styles.button} onPress={handleSignUpClick}>
           <Text style={styles.buttonText}>
-            Sign In
+            Sign Up
           </Text>
         </TouchableOpacity>
-      </TouchableOpacity>
+      )}
+      {showSignUpForm && <SignUpForm />}
     </View>
   );
 };
@@ -38,11 +50,10 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 35,
-    color: 'white',
     fontWeight: 'bold',
     marginBottom: 20,
   },
-  button: {
+  link: {
     padding: 20,
     margin: 10,
     backgroundColor: 'white',
@@ -56,6 +67,16 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     color: 'black',
+  },
+  button: {
+    padding: 20,
+    margin: 10,
+    backgroundColor: 'white',
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    elevation: 3,
+    width: '50%',
   },
 });
 
