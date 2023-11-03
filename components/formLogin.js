@@ -1,22 +1,22 @@
 import React, { useState } from 'react';
-import { TextInput, View, Alert, Button, StyleSheet } from 'react-native';
+import { TextInput, View, Alert, TouchableOpacity, Text, StyleSheet } from 'react-native';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '../constants/config';
-import { Link } from 'react-router-native'; // Importuj Link
+import { useNavigate } from 'react-router-native'; // Importuj useNavigate
 
 const FormLogin = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const navigate = useNavigate();
 
   const handleLogin = async () => {
     try {
       const response = await signInWithEmailAndPassword(auth, email, password);
       console.log('Zalogowano', response);
-      // Użyj Link to="/" po udanym zalogowaniu
-      // Spowoduje to przekierowanie do ekranu Home
+      navigate('/home');
     } catch (error) {
       console.error('Błąd logowania', error);
-      Alert.alert('Błąd logowania', error.message);
+      Alert.alert('Podałeś niepoprawny email lub hasło!');
     }
   };
 
@@ -35,15 +35,9 @@ const FormLogin = () => {
         onChangeText={setPassword}
         secureTextEntry
       />
-      <Button
-        title="Zaloguj"
-        onPress={handleLogin}
-      />
-      <Link to="/">
-        <View>
-          <Button title="Powrót" />
-        </View>
-      </Link>
+      <TouchableOpacity style={styles.button} onPress={handleLogin}>
+        <Text style={styles.buttonText}>Log In</Text>
+      </TouchableOpacity>
     </View>
   );
 };
@@ -65,6 +59,21 @@ const styles = StyleSheet.create({
     marginBottom: 15,
     paddingHorizontal: 10,
     textAlign: 'center',
+  },
+  buttonText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: 'black',
+  },
+  button: {
+    padding: 20,
+    margin: 10,
+    backgroundColor: 'white',
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    elevation: 3,
+    width: '50%',
   },
 });
 

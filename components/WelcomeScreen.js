@@ -1,43 +1,60 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { Link } from 'react-router-native';
+import { Link, useNavigate } from 'react-router-native';
 import LoginForm from './formLogin';
 import SignUpForm from './formSignUp';
 
 const WelcomeScreen = () => {
+  const navigate = useNavigate();
   const [showLoginForm, setShowLoginForm] = useState(false);
   const [showSignUpForm, setShowSignUpForm] = useState(false);
 
   const handleLoginClick = () => {
     setShowLoginForm(true);
+    setShowSignUpForm(false); // Tutaj resetujemy stan formularza SignUp
   };
 
   const handleSignUpClick = () => {
     setShowSignUpForm(true);
+    setShowLoginForm(false); // Tutaj resetujemy stan formularza Login
+  };
+
+  const handleBack = () => {
+    setShowLoginForm(false);
+    setShowSignUpForm(false);
+
+    navigate('/'); // Przykładowe użycie nawigacji do ekranu głównego
   };
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>
-        Team App
-      </Text>
-      {!showLoginForm && !showSignUpForm && (
-        <Link to="/home" style={styles.link}>
-          <Text style={styles.buttonText} onPress={handleLoginClick}>
-            Log In
-          </Text>
-        </Link>
-      )}
-      {showLoginForm && <LoginForm />}
-      {!showLoginForm && (
-        <TouchableOpacity style={styles.button} onPress={handleSignUpClick}>
-          <Text style={styles.buttonText}>
-            Sign Up
-          </Text>
-        </TouchableOpacity>
-      )}
-      {showSignUpForm && <SignUpForm />}
-    </View>
+    <Text style={styles.title}>
+      Team App
+    </Text>
+    {!showLoginForm && !showSignUpForm && (
+      <TouchableOpacity style={styles.button} onPress={handleLoginClick}>
+        <Text style={styles.buttonText}>
+          Log In
+        </Text>
+      </TouchableOpacity>
+    )}
+    {showLoginForm && <LoginForm />}
+    {!showLoginForm && !showSignUpForm && (
+      <TouchableOpacity style={styles.button} onPress={handleSignUpClick}>
+        <Text style={styles.buttonText}>
+          Sign Up
+        </Text>
+      </TouchableOpacity>
+    )}
+    {showSignUpForm && <SignUpForm />}
+    {showLoginForm || showSignUpForm ? (
+      <TouchableOpacity style={styles.button} onPress={handleBack}>
+        <Text style={styles.buttonText}>
+          Back
+        </Text>
+      </TouchableOpacity>
+    ) : null}
+  </View>
   );
 };
 
