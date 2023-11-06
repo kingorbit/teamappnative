@@ -3,15 +3,30 @@ import { View, Text, StyleSheet } from 'react-native';
 import { Link } from 'react-router-native';
 import Header from '../components/header';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
-import { auth } from '../constants/config';
+import { auth, firestore } from '../constants/config';
+import { collection, query, where, getDocs } from 'firebase/firestore';
 
 const Profil = () => {
   const [user, setUser] = useState(null);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (userData) => {
+    const unsubscribe = onAuthStateChanged(auth, async (userData) => {
       if (userData) {
-        setUser(userData); // Aktualizacja stanu użytkownika po zalogowaniu
+        setUser(userData); // Ustawianie stanu użytkownika po zalogowaniu
+
+        try {
+          // Pobierz referencję do kolekcji "users" na podstawie uid
+          const usersRef = collection(firestore, 'users');
+          const q = query(usersRef, where('uid', '==', userData.uid));
+          const querySnapshot = await getDocs(q);
+
+          querySnapshot.forEach((doc) => {
+            console.log(doc.id, ' => ', doc.data());
+            setUser(doc.data()); // Ustawianie stanu użytkownika na podstawie danych z Firestore
+          });
+        } catch (error) {
+          console.error('Błąd pobierania danych użytkownika', error);
+        }
       }
     });
 
@@ -24,20 +39,16 @@ const Profil = () => {
       <View style={styles.calendarContent}>
         <Text style={styles.title}>Twój Profil</Text>
         <View style={styles.avatarContainer}>
-        
-      </View>
-      <View style={styles.detailsContainer}>
-        <Text style={styles.name}>
-          {user?.firstName} {user?.lastName}
-        </Text>
-        <Text style={styles.email}>
-          Email: {user?.email}
-        </Text>
-        <Text>Imie: {user?.firstName}</Text>
-        <Text>Nazwisko: Przykladowe nazwisko</Text>
-        <Text>Druzyna: Przykladowa druzyna</Text>
-
-      </View>
+          {/* Możesz umieścić tutaj zdjęcie profilowe */}
+        </View>
+        <View style={styles.detailsContainer}>
+          <Text style={styles.name}>
+            {user?.firstName} {user?.lastName}
+          </Text>
+          <Text style={styles.email}>
+            Email: {user?.email} {user?.position}
+          </Text>
+        </View>
         <Link to="/home" style={styles.link}>
           <Text style={styles.linkText}>Powrót do Home</Text>
         </Link>

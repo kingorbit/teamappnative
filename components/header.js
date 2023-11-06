@@ -1,28 +1,40 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { onAuthStateChanged, signOut } from 'firebase/auth'; // Importuj funkcje onAuthStateChanged, auth i signOut
+import { onAuthStateChanged, signOut } from 'firebase/auth'; 
 import { auth } from '../constants/config';
 import { useNavigate } from 'react-router-native';
+import { collection, query, where, getDocs } from 'firebase/firestore';
+import { firestore } from '../constants/config';
 
 const Header = () => {
   const [user, setUser] = useState(null);
-  const navigate = useNavigate(); // Użyj useNavigate
+  const navigate = useNavigate();
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (userData) => {
+    const unsubscribe = onAuthStateChanged(auth, async (userData) => {
       if (userData) {
-        setUser(userData); // Aktualizacja stanu użytkownika po zalogowaniu
+        try {
+          const usersRef = collection(firestore, 'users');
+          const q = query(usersRef, where('uid', '==', userData.uid));
+          const querySnapshot = await getDocs(q);
+
+          querySnapshot.forEach((doc) => {
+            setUser(doc.data());
+          });
+        } catch (error) {
+          console.error('Błąd pobierania danych użytkownika', error);
+        }
       }
     });
 
-    return () => unsubscribe(); // Oczyszczanie subskrypcji po zamontowaniu komponentu
+    return () => unsubscribe();
   }, []);
 
   const handleLogout = () => {
     signOut(auth)
       .then(() => {
         setUser(null);
-        navigate('/'); // Przekierowanie po wylogowaniu
+        navigate('/');
       })
       .catch((error) => {
         console.error('Błąd wylogowania', error);
@@ -34,7 +46,9 @@ const Header = () => {
       <Text style={styles.title}>Team App</Text>
       {user && (
         <View style={styles.userDetails}>
-          <Text style={styles.userText}>Zalogowany: {user.email}</Text>
+          <Text style={styles.userText}>
+            Zalogowany: {user.firstName} {user.lastName}
+          </Text>
           <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
             <Text style={styles.logoutText}>Wyloguj</Text>
           </TouchableOpacity>
