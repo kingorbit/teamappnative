@@ -33,7 +33,10 @@ const Profil = () => {
         <Text style={styles.email}>
           Email: {user?.email}
         </Text>
-        {/* Dodaj dodatkowe informacje o użytkowniku, np. czy jest piłkarzem, drużyną itp. */}
+        <Text>Imie: {user?.firstName}</Text>
+        <Text>Nazwisko: Przykladowe nazwisko</Text>
+        <Text>Druzyna: Przykladowa druzyna</Text>
+
       </View>
         <Link to="/home" style={styles.link}>
           <Text style={styles.linkText}>Powrót do Home</Text>

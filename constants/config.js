@@ -4,6 +4,8 @@ import { getFirestore } from 'firebase/firestore';
 
 import '@firebase/firestore';
 
+
+
 const firebaseConfig = {
   apiKey: "AIzaSyDPV3-30Zc9BKM_bl8_k6llOo02CAULwDU",
   authDomain: "teamappnative.firebaseapp.com",
@@ -14,7 +16,10 @@ const firebaseConfig = {
   measurementId: "G-XYLGH00G40"
 };
 
+
 // Initialize Firebase
 export const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const firestore = getFirestore(app);
+
+

@@ -1,13 +1,16 @@
 import React, { useState } from 'react';
 import { TextInput, View, Alert, TouchableOpacity, Text, StyleSheet } from 'react-native';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
-import auth from '../constants/config'; // Import zainicjalizowanej konfiguracji Firebase
+import { auth } from '../constants/config'; // Import zainicjalizowanej konfiguracji Firebase
 import { useNavigate } from 'react-router-native'; // Zaimportuj useNavigate
 
-const FormSignUp = ({ navigation }) => {
+const FormSignUp = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const navigate = useNavigate();
 
   const handleSignUp = async () => {
     if (password !== confirmPassword) {
@@ -18,21 +21,28 @@ const FormSignUp = ({ navigation }) => {
     try {
       const response = await createUserWithEmailAndPassword(auth, email, password);
       console.log('Zarejestrowano', response);
-      // Przekierowanie do innej trasy za pomocą funkcji obsługującej zmianę trasy
-      navigation.navigate('Login'); // Przykładowe przekierowanie do ekranu logowania
+      navigate('/home');
     } catch (error) {
       console.error('Błąd rejestracji', error);
       // Obsługa błędów poprzez wyświetlenie alertu
-      Alert.alert('Błąd rejestracji', error.message); // Wyświetlenie komunikatu z błędem
+      Alert.alert('Błąd rejestracji', error.alert); // Wyświetlenie komunikatu z błędem
     }
-  };
-  const navigate = useNavigate(); // Użyj useNavigate
-  const handleBack = () => {
-    navigate('/'); 
   };
 
   return (
-    <View style={styles.container} >
+    <View style={styles.container}>
+      <TextInput
+        style={styles.input}
+        placeholder="Imię"
+        value={firstName}
+        onChangeText={setFirstName}
+      />
+      <TextInput
+        style={styles.input}
+        placeholder="Nazwisko"
+        value={lastName}
+        onChangeText={setLastName}
+      />
       <TextInput
         style={styles.input}
         placeholder="Email"
@@ -41,20 +51,20 @@ const FormSignUp = ({ navigation }) => {
       />
       <TextInput
         style={styles.input}
-        placeholder="Password"
+        placeholder="Hasło"
         value={password}
         onChangeText={setPassword}
         secureTextEntry
       />
       <TextInput
         style={styles.input}
-        placeholder="Potwierdź hasło"
+        placeholder="Potwierdź Hasło"
         value={confirmPassword}
         onChangeText={setConfirmPassword}
         secureTextEntry
       />
       <TouchableOpacity style={styles.button} onPress={handleSignUp}>
-        <Text style={styles.buttonText}>Sign Up</Text>
+        <Text style={styles.buttonText}>Zarejestruj się</Text>
       </TouchableOpacity>
     </View>
   );
