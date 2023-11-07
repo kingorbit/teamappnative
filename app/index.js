@@ -9,6 +9,8 @@ import Team from './team';
 import Stats from './stats'
 import Profil from './profil';
 import Settings from './settings'
+import CreateTeam from "../components/createTeam";
+import TeamsList from "../components/listTeam";
 
 const App = () => {
   return (
@@ -22,6 +24,9 @@ const App = () => {
         <Route path="/stats" element={<Stats />} />
         <Route path="/profil" element={<Profil />} />
         <Route path="/settings" element={<Settings />} />
+        <Route path="/createTeam" element={<CreateTeam />} />
+        <Route path="/listTeam" element={<TeamsList/>} />
+        
       </Routes>
     </NativeRouter>
   );
