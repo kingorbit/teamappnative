@@ -11,6 +11,8 @@ import Profil from './profil';
 import Settings from './settings'
 import CreateTeam from "../components/createTeam";
 import TeamsList from "../components/listTeam";
+import FormSignUp from "../components/formSignUp";
+
 
 const App = () => {
   return (
@@ -26,7 +28,8 @@ const App = () => {
         <Route path="/settings" element={<Settings />} />
         <Route path="/createTeam" element={<CreateTeam />} />
         <Route path="/listTeam" element={<TeamsList/>} />
-        
+        <Route path="/formSignUp" element={<FormSignUp />} />
+
       </Routes>
     </NativeRouter>
   );

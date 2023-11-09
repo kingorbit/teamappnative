@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Link, useNavigate } from 'react-router-native';
 import LoginForm from './formLogin';
-import SignUpForm from './formSignUp';
+import FormRole from './formRole'
 
 
 
@@ -46,11 +46,11 @@ const WelcomeScreen = () => {
     {!showLoginForm && !showSignUpForm && (
       <TouchableOpacity style={styles.button} onPress={handleSignUpClick}>
         <Text style={styles.buttonText}>
-          Rejestracja
+          Stwórz Konto
         </Text>
       </TouchableOpacity>
     )}
-    {showSignUpForm && <SignUpForm />}
+    {showSignUpForm && <FormRole />}
     {showLoginForm || showSignUpForm ? (
       <TouchableOpacity style={styles.button} onPress={handleBack}>
         <Text style={styles.buttonText}>

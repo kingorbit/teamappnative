@@ -3,7 +3,6 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Link } from 'react-router-native';
 import { onAuthStateChanged, signOut } from 'firebase/auth'; // Importuj funkcje onAuthStateChanged, auth i signOut
 import { auth } from '../constants/config'; 
-import { useNavigate } from 'react-router-native';
 import Header from './header';
 
 const Home = () => {
