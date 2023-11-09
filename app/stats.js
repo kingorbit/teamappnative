@@ -23,7 +23,12 @@ const Stats = () => {
       <Header user={user} setUser={setUser} />
       <View style={styles.calendarContent}>
         <Text style={styles.title}>Statystyki</Text>
-        {/* Tutaj umieść kalendarz */}
+        <Link to="/home" style={styles.link}>
+          <Text style={styles.linkText}>Statystyki Indywidualne</Text>
+        </Link>
+        <Link to="/home" style={styles.link}>
+          <Text style={styles.linkText}>Statystyki Drużyny</Text>
+        </Link>
         <Link to="/home" style={styles.link}>
           <Text style={styles.linkText}>Powrót do Home</Text>
         </Link>

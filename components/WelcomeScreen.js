@@ -37,15 +37,16 @@ const WelcomeScreen = () => {
     {!showLoginForm && !showSignUpForm && (
       <TouchableOpacity style={styles.button} onPress={handleLoginClick}>
         <Text style={styles.buttonText}>
-          Log In
+          Logowanie
         </Text>
       </TouchableOpacity>
     )}
+
     {showLoginForm && <LoginForm />}
     {!showLoginForm && !showSignUpForm && (
       <TouchableOpacity style={styles.button} onPress={handleSignUpClick}>
         <Text style={styles.buttonText}>
-          Sign Up
+          Rejestracja
         </Text>
       </TouchableOpacity>
     )}
@@ -53,7 +54,7 @@ const WelcomeScreen = () => {
     {showLoginForm || showSignUpForm ? (
       <TouchableOpacity style={styles.button} onPress={handleBack}>
         <Text style={styles.buttonText}>
-          Back
+          Powrót
         </Text>
       </TouchableOpacity>
     ) : null}
@@ -97,7 +98,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     elevation: 3,
-    width: '30%',
+    width: '45%',
   },
 });
 

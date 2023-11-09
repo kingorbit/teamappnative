@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { collection, getDocs, doc, getDoc } from 'firebase/firestore';
+import { collection, getDocs, query, where } from 'firebase/firestore';
 import { firestore } from '../constants/config';
 import { useNavigate } from 'react-router-native';
 
@@ -16,7 +16,7 @@ const TeamsList = () => {
       const teamsData = [];
       for (const docRef of querySnapshot.docs) {
         const teamData = docRef.data();
-        const userData = await getUserData(teamData.createdBy); // Użyj pola 'createdBy'
+        const userData = await getUserData(teamData.createdBy);
         teamsData.push({ id: docRef.id, ...teamData, creator: userData });
       }
 
@@ -27,13 +27,44 @@ const TeamsList = () => {
   }, []);
 
   const getUserData = async (uid) => {
-    const userDoc = doc(firestore, 'users', uid);
-    const userSnapshot = await getDoc(userDoc);
-    if (userSnapshot.exists()) {
-      return userSnapshot.data();
+    try {
+      const usersRef = collection(firestore, 'users');
+      const q = query(usersRef, where('uid', '==', uid));
+      const querySnapshot = await getDocs(q);
+  
+      let user = null;
+      querySnapshot.forEach((doc) => {
+        user = doc.data();
+      });
+  
+      return user;
+    } catch (error) {
+      console.error('Błąd pobierania danych użytkownika', error);
+      return null;
     }
-    return null;
   };
+
+  return (
+    <View style={styles.container}>
+      <Text style={styles.title}>Lista Zespołów</Text>
+      {teams.map((team) => (
+        <TouchableOpacity key={team.id} style={styles.team} onPress={() => navigate(`/team/${team.id}`)}>
+          <Text style={styles.teamName}>{team.name}</Text>
+          <Text style={styles.teamDescription}>{team.description}</Text>
+          {team.creator && (
+            <Text style={styles.creatorInfo}>
+              Założyciel: {team.creator.firstName} {team.creator.lastName}
+            </Text>
+          )}
+        </TouchableOpacity>
+      ))}
+        <TouchableOpacity style={styles.link} onPress={() => navigate('/team')}>
+          <Text style={styles.linkText}>Powrót</Text>
+        </TouchableOpacity>
+    </View>
+    
+  );
+
 
   return (
     <View style={styles.container}>
@@ -55,6 +86,7 @@ const TeamsList = () => {
     </View>
   );
 };
+
 
 const styles = StyleSheet.create({
   container: {

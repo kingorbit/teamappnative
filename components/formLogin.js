@@ -36,7 +36,7 @@ const FormLogin = () => {
         secureTextEntry
       />
       <TouchableOpacity style={styles.button} onPress={handleLogin}>
-        <Text style={styles.buttonText}>Log In</Text>
+        <Text style={styles.buttonText}>Zaloguj</Text>
       </TouchableOpacity>
     </View>
   );

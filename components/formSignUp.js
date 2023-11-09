@@ -17,30 +17,34 @@ const FormSignUp = () => {
   const navigate = useNavigate();
 
   const handleSignUp = async () => {
+    if (!email || !password || !confirmPassword || !firstName || !lastName || !age) {
+      Alert.alert('Błąd rejestracji', 'Proszę wypełnić wszystkie pola.');
+      return;
+    }
+  
     if (password !== confirmPassword) {
       Alert.alert('Błąd rejestracji', 'Hasła nie pasują do siebie. Wprowadź je ponownie.');
       return;
     }
-
-    // Walidacja wieku: upewnienie się, że wiek mieści się w zakresie od 1 do 99
+  
     const isValidAge = /^\d+$/.test(age) && age >= 1 && age <= 99;
     if (!isValidAge) {
       Alert.alert('Błąd rejestracji', 'Podaj prawidłowy wiek (1-99).');
       return;
     }
-
+  
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-
+  
       const userDoc = await addDoc(collection(firestore, 'users'), {
         email: email,
         firstName: firstName,
         lastName: lastName,
         age: age,
         position: position,
-        uid: userCredential.user.uid
+        uid: userCredential.user.uid,
       });
-
+  
       console.log('Dodano użytkownika do kolekcji "users" z ID:', userDoc.id);
       navigate('/home');
     } catch (error) {
@@ -90,6 +94,7 @@ const FormSignUp = () => {
         value={age}
         onChangeText={setAge}
         keyboardType="numeric"
+        maxLength={2} // Limits the input length to 2 characters
       />
       <ModalDropdown
         options={positionOptions}
@@ -101,7 +106,7 @@ const FormSignUp = () => {
         onSelect={(index, value) => setPosition(value)}
       />
       <TouchableOpacity style={styles.button} onPress={handleSignUp}>
-        <Text style={styles.buttonText}>Sign In</Text>
+        <Text style={styles.buttonText}>Zarejestruj</Text>
       </TouchableOpacity>
       </KeyboardAvoidingView>
   );
@@ -137,7 +142,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     elevation: 3,
-    width: '50%',
+    width: '60%',
   },
   dropdown: {
     width: '100%',

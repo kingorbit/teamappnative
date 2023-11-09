@@ -1,13 +1,15 @@
-// Team.js
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Link } from 'react-router-native';
-import TeamsList from '../components/listTeam';
-import CreateTeam from '../components/createTeam';
+import Header from '../components/header';
+import { onAuthStateChanged, signOut } from 'firebase/auth';
+import { auth } from '../constants/config';
 
 const Team = () => {
+  const [user, setUser] = useState(null);
   return (
     <View style={styles.container}>
+      <Header user={user} setUser={setUser}/>
       <View style={styles.teamContent}>
         <Text style={styles.title}>Zarządzanie Zespołami</Text>
         <Link to="/listTeam" style={styles.link}>
@@ -15,6 +17,15 @@ const Team = () => {
         </Link>
         <Link to="/createTeam" style={styles.link}>
           <Text style={styles.linkText}>Utwórz Zespół</Text>
+        </Link>
+        <Link to="/createTeam" style={styles.link}>
+          <Text style={styles.linkText}>Dołącz do Zespółu</Text>
+        </Link>
+        <Link to="/home" style={styles.link}>
+          <Text style={styles.linkText}>Twoja Drużyna</Text>
+        </Link>
+        <Link to="/home" style={styles.link}>
+          <Text style={styles.linkText}>Zarządzaj Drużyną</Text>
         </Link>
         <Link to="/home" style={styles.link}>
           <Text style={styles.linkText}>Powrót do Home</Text>
