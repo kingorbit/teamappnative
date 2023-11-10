@@ -9,12 +9,13 @@ import Team from './team';
 import Stats from './stats'
 import Profil from './profil';
 import Settings from './settings'
-import CreateTeam from "../components/createTeam";
-import TeamsList from "../components/listTeam";
+import CreateTeam from "../components/team/createTeam";
+import TeamsList from "../components/team/listTeam";
 import FormSignUp from "../components/formSignUp";
 import FormSignUpCoach from "../components/formCoach";
-import JoinTeam from "../components/joinTeam";
-import YourTeam from "../components/yourTeam";
+import JoinTeam from "../components/team/joinTeam";
+import YourTeam from "../components/team/yourTeam";
+import LeaveTeam from "../components/team/leaveTeam";
 
 
 const App = () => {
@@ -35,6 +36,7 @@ const App = () => {
         <Route path="/formCoach" element={<FormSignUpCoach />} />
         <Route path="/joinTeam" element={<JoinTeam />} />
         <Route path="/yourTeam" element={<YourTeam />} />
+        <Route path="/leaveTeam" element={<LeaveTeam />} />
 
 
       </Routes>

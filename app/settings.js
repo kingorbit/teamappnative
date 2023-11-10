@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Link } from 'react-router-native';
 import Header from '../components/header';
+import Footer from '../components/footer';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { auth } from '../constants/config';
 
@@ -28,6 +29,7 @@ const Settings = () => {
           <Text style={styles.linkText}>Powrót do Home</Text>
         </Link>
       </View>
+      <Footer></Footer>
     </View>
   );
 };

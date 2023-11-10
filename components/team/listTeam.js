@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { collection, getDocs, query, where } from 'firebase/firestore';
-import { firestore } from '../constants/config';
+import { firestore } from '../../constants/config';
 import { useNavigate } from 'react-router-native';
 
 const TeamsList = () => {

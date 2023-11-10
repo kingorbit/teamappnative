@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { collection, addDoc } from 'firebase/firestore';
-import { firestore, auth } from '../constants/config';
+import { firestore, auth } from '../../constants/config';
 import { onAuthStateChanged } from 'firebase/auth';
 import { useNavigate } from 'react-router-native';
 

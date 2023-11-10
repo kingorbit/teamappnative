@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { onAuthStateChanged } from 'firebase/auth';
 import { collection, query, where, getDocs, getDoc } from 'firebase/firestore';
-import Header from '../components/header';
-import { firestore, auth } from '../constants/config';
+import Header from '../header';
+import { firestore, auth } from '../../constants/config';
 import { useNavigate } from 'react-router-native';
 
 const YourTeam = () => {
@@ -76,18 +76,18 @@ const YourTeam = () => {
         {team ? (
           <>
             <Text style={styles.title}>Twój Zespół</Text>
-            <Text>Nazwa Zespołu: {team.name}</Text>
-            <Text>Opis: {team.description}</Text>
+            <Text style={styles.info}>Nazwa Zespołu: {team.name}</Text>
+            <Text style={styles.info}>Opis: {team.description}</Text>
             {founderData && (
-              <Text>Założyciel: {`${founderData.firstName} ${founderData.lastName}`}</Text>
+              <Text style={styles.info}>Założyciel: {`${founderData.firstName} ${founderData.lastName}`}</Text>
             )}
-            <Text>Członkowie:</Text>
+            <Text style={styles.membersTitle}>Członkowie:</Text>
             {teamMembers.map((member, index) => (
-              <Text key={index}>{member}</Text>
+              <Text key={index} style={styles.member}>{member}</Text>
             ))}
           </>
         ) : (
-          <Text>Nie jesteś członkiem żadnego zespołu.</Text>
+          <Text style={styles.info}>Nie jesteś członkiem żadnego zespołu.</Text>
         )}
         <TouchableOpacity style={styles.button} onPress={() => navigate('/team')}>
           <Text style={styles.buttonText}>Powrót</Text>
@@ -98,39 +98,50 @@ const YourTeam = () => {
 };
 
 const styles = StyleSheet.create({
-    container: {
-      flex: 1,
-      backgroundColor: '#9091fd',
-    },
-    title: {
-      fontSize: 24,
-      fontWeight: 'bold',
-      marginBottom: 20,
-      textAlign: 'center',
-      color: 'white',
-    },
-    teamContent: {
-      padding: 20,
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
-    info: {
-      fontSize: 18,
-      marginBottom: 10,
-      color: 'white',
-    },
-    membersTitle: {
-      fontSize: 20,
-      fontWeight: 'bold',
-      marginTop: 15,
-      marginBottom: 10,
-      color: 'white',
-    },
-    member: {
-      fontSize: 16,
-      marginBottom: 5,
-      color: 'white',
-    },
-  });
-  
-  export default YourTeam;
+  container: {
+    flex: 1,
+    backgroundColor: '#9091fd',
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 20,
+    textAlign: 'center',
+    color: 'white',
+  },
+  teamContent: {
+    padding: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  info: {
+    fontSize: 18,
+    marginBottom: 10,
+    color: 'white',
+  },
+  membersTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginTop: 15,
+    marginBottom: 10,
+    color: 'white',
+  },
+  member: {
+    fontSize: 16,
+    marginBottom: 5,
+    color: 'white',
+  },
+  button: {
+    marginTop: 20,
+    padding: 10,
+    backgroundColor: 'white',
+    borderRadius: 5,
+  },
+  buttonText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: 'black',
+  },
+});
+
+export default YourTeam;

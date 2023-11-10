@@ -58,49 +58,56 @@ const Header = () => {
   };
 
   return (
-<View style={styles.header}>
-  {user && (
-    <View style={styles.userDetails}>
-      <View style={styles.userInfo}>
-      <Text style={styles.userText}>
-          Zalogowany: {user.firstName} {user.lastName}
-        </Text>
-        {teamName && (
-          <Text style={styles.teamText}>
-            Drużyna: {teamName}
-          </Text>
-        )}
-      </View>
-      <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-        <Text style={styles.logoutText}>Wyloguj</Text>
-      </TouchableOpacity>
+    <View style={styles.header}>
+      <Text style={styles.appTitle}>Team App</Text>
+      {user && (
+        <View style={styles.userDetails}>
+          <View style={styles.userInfo}>
+            <Text style={styles.userText}>
+              Zalogowany: {user.firstName} {user.lastName}
+            </Text>
+            {teamName && (
+              <Text style={styles.teamText}>
+                Drużyna: {teamName}
+              </Text>
+            )}
+          </View>
+          <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+            <Text style={styles.logoutText}>Wyloguj</Text>
+          </TouchableOpacity>
+        </View>
+      )}
     </View>
-  )}
-</View>
   );
 };
 
 const styles = StyleSheet.create({
   header: {
     backgroundColor: '#40407a',
-    padding: 15,
-    marginBottom: '10%'
+    marginBottom: '10%',
+  },
+  appTitle: {
+    fontSize: 24,
+    color: 'white',
+    fontWeight: 'bold',
+    textAlign: 'center',
+
   },
   userDetails: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginTop: 10,
+    padding: 5,
   },
   userInfo: {
     flexDirection: 'column',
     alignItems: 'flex-start',
   },
-  // ...
   logoutButton: {
     backgroundColor: 'white',
     padding: 8,
     borderRadius: 5,
+    marginTop: 5,
   },
   userText: {
     color: 'white',
@@ -111,12 +118,6 @@ const styles = StyleSheet.create({
     color: 'white',
     fontWeight: 'bold',
     marginBottom: 5,
-  },
-  logoutButton: {
-    backgroundColor: 'white',
-    padding: 8,
-    borderRadius: 5,
-    marginTop: 5,
   },
   logoutText: {
     fontSize: 14,

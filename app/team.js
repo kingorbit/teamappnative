@@ -68,7 +68,7 @@ const Team = () => {
             </Link>
           </>
         )}
-        {!isInTeam && (
+        {!isCoach && !isInTeam && (
           <Link to="/joinTeam" style={styles.link}>
             <Text style={styles.linkText}>Dołącz do Zespołu</Text>
           </Link>

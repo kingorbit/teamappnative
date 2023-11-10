@@ -3,8 +3,8 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'reac
 import { useNavigate } from 'react-router-native';
 import { collection, query, where, getDocs, updateDoc, arrayUnion } from 'firebase/firestore';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
-import { firestore, auth } from '../constants/config';
-import Header from '../components/header';
+import { firestore, auth } from '../../constants/config';
+import Header from '../header';
 
 
 const joinTeamByCode = async (userUid, joinCode) => {
