@@ -12,6 +12,9 @@ import Settings from './settings'
 import CreateTeam from "../components/createTeam";
 import TeamsList from "../components/listTeam";
 import FormSignUp from "../components/formSignUp";
+import FormSignUpCoach from "../components/formCoach";
+import JoinTeam from "../components/joinTeam";
+import YourTeam from "../components/yourTeam";
 
 
 const App = () => {
@@ -29,6 +32,10 @@ const App = () => {
         <Route path="/createTeam" element={<CreateTeam />} />
         <Route path="/listTeam" element={<TeamsList/>} />
         <Route path="/formSignUp" element={<FormSignUp />} />
+        <Route path="/formCoach" element={<FormSignUpCoach />} />
+        <Route path="/joinTeam" element={<JoinTeam />} />
+        <Route path="/yourTeam" element={<YourTeam />} />
+
 
       </Routes>
     </NativeRouter>

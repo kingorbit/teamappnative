@@ -10,7 +10,7 @@ const formRole = () => {
   };
 
   const handleCoachSelection = () => {
-    navigate('/sign-up-coach');
+    navigate('./formCoach');
   };
 
   return (
@@ -20,7 +20,7 @@ const formRole = () => {
         <Text style={styles.buttonText}>Zawodnik</Text>
       </TouchableOpacity>
       <TouchableOpacity style={styles.button} onPress={handleCoachSelection}>
-        <Text style={styles.buttonText}>Trener</Text>
+        <Text style={styles.buttonText}>   Trener   </Text>
       </TouchableOpacity>
     </View>
   );

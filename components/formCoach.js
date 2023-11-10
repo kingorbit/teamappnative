@@ -4,20 +4,21 @@ import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { auth, firestore } from '../constants/config';
 import { collection, addDoc } from 'firebase/firestore';
 import { useNavigate } from 'react-router-native';
-import ModalDropdown from 'react-native-modal-dropdown';
+import CheckBox from 'react-native-check-box'; // Importuj komponent CheckBox
 
-const FormSignUp = () => {
+const FormSignUpCoach = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [age, setAge] = useState('');
-  const [position, setPosition] = useState('Bramkarz');
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [isCoach, setIsCoach] = useState(false);
   const navigate = useNavigate();
 
   const handleSignUp = async () => {
-    if (!email || !password || !confirmPassword || !firstName || !lastName || !age) {
+    if (!email || !password || !confirmPassword || !firstName || !lastName || !age || !phoneNumber) {
       Alert.alert('Błąd rejestracji', 'Proszę wypełnić wszystkie pola.');
       return;
     }
@@ -41,7 +42,8 @@ const FormSignUp = () => {
         firstName: firstName,
         lastName: lastName,
         age: age,
-        position: position,
+        isCoach: isCoach,
+        phoneNumber: phoneNumber,
         uid: userCredential.user.uid,
       });
 
@@ -52,8 +54,6 @@ const FormSignUp = () => {
       Alert.alert('Błąd rejestracji', error.message);
     }
   };
-
-  const positionOptions = ['Bramkarz', 'Obronca', 'Pomocnik', 'Napastnik'];
 
   return (
     <KeyboardAvoidingView style={styles.container} behavior="padding" keyboardVerticalOffset={-500}>
@@ -101,15 +101,21 @@ const FormSignUp = () => {
           keyboardType="numeric"
           maxLength={2}
         />
-        <ModalDropdown
-          options={positionOptions}
-          defaultValue={position}
-          style={styles.dropdown}
-          textStyle={styles.dropdownText}
-          dropdownStyle={styles.dropdownOptions}
-          dropdownTextStyle={styles.dropdownOptionText}
-          onSelect={(index, value) => setPosition(value)}
+        <TextInput
+          style={styles.input}
+          placeholder="Numer Telefonu"
+          value={phoneNumber}
+          onChangeText={setPhoneNumber}
+          keyboardType="numeric"
         />
+        <View style={styles.checkboxContainer}>
+          <CheckBox
+            isChecked={isCoach}
+            onClick={() => setIsCoach(!isCoach)}
+            checkBoxColor="white"
+          />
+          <Text style={styles.label}>Jestem trenerem</Text>
+        </View>
         <TouchableOpacity style={styles.button} onPress={handleSignUp}>
           <Text style={styles.buttonText}>Zarejestruj</Text>
         </TouchableOpacity>
@@ -121,104 +127,77 @@ const FormSignUp = () => {
   );
 };
 
-  const styles = StyleSheet.create({
-    container: {
-      flex: 1,
-      justifyContent: 'center',
-      alignItems: 'center',
-      paddingHorizontal: 20,
-      backgroundColor: '#9091fd',
-    },
-    formContainer: {
-      width: '100%',
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
-    link: {
-      padding: 20,
-      margin: 10,
-      padding: 20,
-      backgroundColor: 'white',
-      borderRadius: 10,
-      alignItems: 'center',
-      justifyContent: 'center',
-      elevation: 3,
-      width: '60%',
-    },
-    linkText: {
-      fontSize: 18,
-      fontWeight: 'bold',
-      color: 'black',
-    },
-    input: {
-      width: '70%',
-      height: 35,
-      borderWidth: 1,
-      backgroundColor: 'white',
-      borderRadius: 5,
-      marginBottom: 15,
-      paddingHorizontal: 10,
-      textAlign: 'center',
-    },
-    title: {
-      fontSize: 35,
-      fontWeight: 'bold',
-      marginBottom: 20,
-      color: 'white',
-    },
-    buttonText: {
-      fontSize: 18,
-      fontWeight: 'bold',
-      color: 'black',
-    },
-    button: {
-      padding: 20,
-      backgroundColor: 'white',
-      borderRadius: 10,
-      alignItems: 'center',
-      justifyContent: 'center',
-      elevation: 3,
-      width: '60%',
-    },
-    checkboxContainer: {
-      flexDirection: 'row',
-      marginBottom: 15,
-      alignItems: 'center',
-    },
-    checkbox: {
-      alignSelf: 'center',
-    },
-    label: {
-      margin: 8,
-      color: 'white',
-    },
-  dropdown: {
-    width: '70%',
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    backgroundColor: '#9091fd',
+  },
+  formContainer: {
+    width: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  link: {
+    padding: 20,
+    margin: 10,
+    padding: 20,
+    backgroundColor: 'white',
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    elevation: 3,
+    width: '60%',
+  },
+  linkText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: 'black',
+  },
+  input: {
+    width: '100%',
     height: 35,
     borderWidth: 1,
     backgroundColor: 'white',
     borderRadius: 5,
     marginBottom: 15,
-    justifyContent: 'center',
     paddingHorizontal: 10,
-  },
-  dropdownText: {
     textAlign: 'center',
-    fontSize: 17,
   },
-  dropdownOptions: {
-    textAlign: 'center',
-    height: 150,
-    width: '65%',
-    borderRadius: 5,
-    marginTop: -5,
+  title: {
+    fontSize: 35,
+    fontWeight: 'bold',
+    marginBottom: 20,
+    color: 'white',
   },
-  dropdownOptionText: {
-    textAlign: 'center',
-    fontSize: 16,
-    paddingTop: 8,
-    paddingBottom: 8,
+  buttonText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: 'black',
+  },
+  button: {
+    padding: 20,
+    backgroundColor: 'white',
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    elevation: 3,
+    width: '60%',
+  },
+  checkboxContainer: {
+    flexDirection: 'row',
+    marginBottom: 15,
+    alignItems: 'center',
+  },
+  checkbox: {
+    alignSelf: 'center',
+  },
+  label: {
+    margin: 8,
+    color: 'white',
   },
 });
 
-export default FormSignUp;
+export default FormSignUpCoach;
