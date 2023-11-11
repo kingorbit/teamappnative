@@ -22,7 +22,6 @@ const joinTeamByCode = async (userUid, joinCode) => {
 
       console.log('Użytkownik dołączył do drużyny:', teamDoc.id);
       return true;
-      navigate
     } else {
       console.log('Drużyna o podanym kodzie nie istnieje.');
       return false;
@@ -50,7 +49,7 @@ const JoinTeam = () => {
       if (success) {
         Alert.alert('Sukces', 'Pomyślnie dołączono do drużyny!');
         setEnteredCode('');
-        navigate('/home');
+        navigate('/team');
       } else {
         Alert.alert('Błąd', 'Drużyna o podanym kodzie nie istnieje.');
       }

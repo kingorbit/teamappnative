@@ -1,15 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
-import { collection, addDoc, doc, updateDoc } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, deleteDoc } from 'firebase/firestore';
 import { firestore, auth } from '../../constants/config';
 import { onAuthStateChanged } from 'firebase/auth';
 import { useNavigate } from 'react-router-native';
 
-const CreateTeam = () => {
+const DeleteTeam = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [teamName, setTeamName] = useState('');
-  const [teamDescription, setTeamDescription] = useState('');
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (userData) => {
@@ -21,72 +20,57 @@ const CreateTeam = () => {
     return () => unsubscribe();
   }, []);
 
-  const generateJoinCode = () => {
-    let result = '';
-    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    const charactersLength = characters.length;
-
-    for (let i = 0; i < 6; i++) {
-      result += characters.charAt(Math.floor(Math.random() * charactersLength));
-    }
-
-    return result;
-  };
-
-  const handleCreateTeam = async () => {
-    if (!teamName || !teamDescription) {
-      Alert.alert('Błąd', 'Proszę uzupełnić nazwę i opis zespołu.');
+  const handleDeleteTeam = async () => {
+    if (!teamName) {
+      Alert.alert('Błąd', 'Proszę uzupełnić nazwę zespołu.');
       return;
     }
-  
+
     try {
-      const teamRef = collection(firestore, 'teams');
-      const newTeam = {
-        name: teamName,
-        description: teamDescription,
-        createdBy: user.uid,
-        joinCode: generateJoinCode(),
-        members: [user.uid], // Dodanie trenera do listy członków
-      };
-  
-      const docRef = await addDoc(teamRef, newTeam);
-      const teamId = docRef.id;
-  
-      // Dodajemy unikalne ID do zespołu
-      await updateDoc(doc(firestore, 'teams', teamId), { teamId });
-  
-      // Czyszczenie pól po dodaniu zespołu
-      setTeamName('');
-      setTeamDescription('');
-  
-      Alert.alert('Sukces', 'Zespół został pomyślnie utworzony!');
-      navigate('/team');
+      const teamsRef = collection(firestore, 'teams');
+      const q = query(teamsRef, where('name', '==', teamName));
+      const teamsQuery = await getDocs(q);
+
+      if (!teamsQuery.empty) {
+        const teamDoc = teamsQuery.docs[0];
+        const teamData = teamDoc.data();
+
+        // Sprawdzamy, czy aktualnie zalogowany użytkownik jest założycielem zespołu
+        if (teamData.createdBy === user.uid) {
+          const teamId = teamDoc.id;
+
+          // Usuwanie zespołu z kolekcji
+          await deleteDoc(doc(firestore, 'teams', teamId));
+
+          // Czyszczenie pola po usunięciu zespołu
+          setTeamName('');
+
+          Alert.alert('Sukces', 'Zespół został pomyślnie usunięty!');
+          navigate('/team');
+        } else {
+          Alert.alert('Błąd', 'Nie masz uprawnień do usunięcia tego zespołu.');
+        }
+      } else {
+        Alert.alert('Błąd', 'Nie znaleziono zespołu o podanej nazwie.');
+      }
     } catch (error) {
-      console.error('Błąd podczas dodawania zespołu', error);
-      Alert.alert('Błąd', 'Wystąpił błąd podczas dodawania zespołu.');
+      console.error('Błąd podczas usuwania zespołu', error);
+      Alert.alert('Błąd', 'Wystąpił błąd podczas usuwania zespołu.');
     }
   };
 
   return (
     <View style={styles.container}>
       <View style={styles.teamContent}>
-        <Text style={styles.title}>Utwórz Zespół</Text>
+        <Text style={styles.title}>Usuń Zespół</Text>
         <TextInput
           style={styles.input}
           placeholder="Nazwa zespołu"
           value={teamName}
           onChangeText={setTeamName}
         />
-        <TextInput
-          style={styles.input}
-          placeholder="Opis zespołu"
-          value={teamDescription}
-          onChangeText={setTeamDescription}
-          multiline={true}
-          numberOfLines={4}
-        />
-        <TouchableOpacity style={styles.button} onPress={handleCreateTeam}>
-          <Text style={styles.buttonText}>Utwórz Zespół</Text>
+        <TouchableOpacity style={styles.button} onPress={handleDeleteTeam}>
+          <Text style={styles.buttonText}>Usuń Zespół</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.link} onPress={() => navigate('/team')}>
           <Text style={styles.linkText}>Powrót</Text>
@@ -156,4 +140,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default CreateTeam;
+export default DeleteTeam;

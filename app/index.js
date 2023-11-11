@@ -16,6 +16,9 @@ import FormSignUpCoach from "../components/formCoach";
 import JoinTeam from "../components/team/joinTeam";
 import YourTeam from "../components/team/yourTeam";
 import LeaveTeam from "../components/team/leaveTeam";
+import DeleteTeam from "../components/team/deleteTeam";
+import ManageTeam from "../components/team/manageTeam";
+ 
 
 
 const App = () => {
@@ -37,8 +40,8 @@ const App = () => {
         <Route path="/joinTeam" element={<JoinTeam />} />
         <Route path="/yourTeam" element={<YourTeam />} />
         <Route path="/leaveTeam" element={<LeaveTeam />} />
-
-
+        <Route path="/deleteTeam" element={<DeleteTeam />} />
+        <Route path="/manageTeam" element={<ManageTeam />} />
       </Routes>
     </NativeRouter>
   );

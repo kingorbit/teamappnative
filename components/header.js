@@ -8,7 +8,7 @@ import { firestore } from '../constants/config';
 
 const Header = () => {
   const [user, setUser] = useState(null);
-  const [teamName, setTeamName] = useState(null);
+  const [teamNames, setTeamNames] = useState([]);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -23,18 +23,19 @@ const Header = () => {
             const userData = querySnapshot.docs[0].data();
             setUser(userData);
 
-            // Sprawdź, czy użytkownik jest w zespole
+            // Sprawdź, czy użytkownik jest w zespołach
             const teamsRef = collection(firestore, 'teams');
             const teamsQuery = query(teamsRef, where('members', 'array-contains', userData.uid));
             const teamsSnapshot = await getDocs(teamsQuery);
 
+            const userTeams = [];
             for (const teamDoc of teamsSnapshot.docs) {
               const teamData = teamDoc.data();
               if (teamData.members && teamData.members.includes(userData.uid)) {
-                setTeamName(teamData.name);
-                console.log('Nazwa zespołu:', teamData.name);
+                userTeams.push(teamData.name);
               }
             }
+            setTeamNames(userTeams);
           }
         } catch (error) {
           console.error('Błąd pobierania danych użytkownika', error);
@@ -49,7 +50,7 @@ const Header = () => {
     signOut(auth)
       .then(() => {
         setUser(null);
-        setTeamName(null);
+        setTeamNames([]);
         navigate('/');
       })
       .catch((error) => {
@@ -66,10 +67,11 @@ const Header = () => {
             <Text style={styles.userText}>
               Zalogowany: {user.firstName} {user.lastName}
             </Text>
-            {teamName && (
-              <Text style={styles.teamText}>
-                Drużyna: {teamName}
-              </Text>
+            {teamNames.length > 0 && (
+              <View style={styles.teamContainer}>
+                <Text style={styles.teamText}>Drużyny: </Text>
+                <Text style={styles.teamNameText}>{teamNames.join(', ')}</Text>
+              </View>
             )}
           </View>
           <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
@@ -92,6 +94,18 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     textAlign: 'center',
 
+  },
+  teamContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  teamText: {
+    color: 'white',
+    fontWeight: 'bold',
+  },
+  teamNameText: {
+    color: 'white',
+    marginLeft: 5,
   },
   userDetails: {
     flexDirection: 'row',

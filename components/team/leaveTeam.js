@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { onAuthStateChanged } from 'firebase/auth';
 import { collection, query, where, getDocs, doc, updateDoc } from 'firebase/firestore';
 import Header from '../header';
@@ -9,6 +9,8 @@ import { useNavigate } from 'react-router-native';
 const LeaveTeam = () => {
   const [user, setUser] = useState(null);
   const [team, setTeam] = useState(null);
+  const [teamId, setTeamId] = useState(null);
+  const [leaveSuccess, setLeaveSuccess] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -23,7 +25,6 @@ const LeaveTeam = () => {
             const userData = querySnapshot.docs[0].data();
             setUser(userData);
 
-            // Sprawdź, czy użytkownik jest w zespole
             const teamsRef = collection(firestore, 'teams');
             const teamsQuery = query(teamsRef, where('members', 'array-contains', userData.uid));
             const teamsSnapshot = await getDocs(teamsQuery);
@@ -32,6 +33,7 @@ const LeaveTeam = () => {
               const teamData = teamDoc.data();
               if (teamData.members && teamData.members.includes(userData.uid)) {
                 setTeam(teamData);
+                setTeamId(teamDoc.id);
                 console.log('Nazwa zespołu:', teamData.name);
               }
             }
@@ -43,25 +45,37 @@ const LeaveTeam = () => {
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [leaveSuccess]);
 
   const leaveTeam = async () => {
     try {
-      // Usuń użytkownika z listy członków zespołu
-      const updatedMembers = team.members.filter(member => member !== user.uid);
-      const teamRef = doc(firestore, 'teams', team.id);
+      if (!team || !user || !teamId) {
+        console.error('Brak danych o zespole, użytkowniku lub teamId.');
+        return;
+      }
+  
+      console.log('Team:', team);
+      console.log('Team members:', team.members);
+      console.log('User:', user);
+  
+      const updatedMembers = team.members ? team.members.filter((member) => member !== user.uid) : [];
+  
+      const teamRef = doc(firestore, 'teams', teamId);
       await updateDoc(teamRef, { members: updatedMembers });
-
-      // Zaktualizuj dane użytkownika (usuń id zespołu)
+  
       const userRef = doc(firestore, 'users', user.id);
       await updateDoc(userRef, { teamId: null });
-
-      // Zaktualizuj lokalny stan komponentu
+  
       setTeam(null);
-    } catch (error) {
-      console.error('Błąd przy opuszczaniu zespołu', error);
+      setTeamId(null);
+      setLeaveSuccess(true);
+  
+    } finally {
+      navigate('/team');
+      Alert.alert('Sukces', 'Zespół został pomyślnie opuszczony!');
     }
   };
+  
 
   return (
     <View style={styles.container}>
@@ -76,9 +90,12 @@ const LeaveTeam = () => {
             <TouchableOpacity style={styles.leaveButton} onPress={leaveTeam}>
               <Text style={styles.leaveButtonText}>Opuść Zespół</Text>
             </TouchableOpacity>
+            {leaveSuccess && (
+              <Text style={styles.successText}>Zespół został pomyślnie opuszczony!</Text>
+            )}
           </>
         ) : (
-          <Text>Nie jesteś członkiem żadnego zespołu.</Text>
+          <Text style={styles.info}>Nie jesteś członkiem żadnego zespołu.</Text>
         )}
         <TouchableOpacity style={styles.button} onPress={() => navigate('/team')}>
           <Text style={styles.buttonText}>Powrót</Text>
@@ -120,6 +137,15 @@ const styles = StyleSheet.create({
   leaveButtonText: {
     fontSize: 18,
     fontWeight: 'bold',
+    color: 'white',
+  },
+  successText: {
+    marginTop: 20,
+    color: 'green',
+    textAlign: 'center',
+  },
+  info: {
+    fontSize: 18,
     color: 'white',
   },
   button: {

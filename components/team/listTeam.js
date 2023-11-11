@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import { firestore } from '../../constants/config';
 import { useNavigate } from 'react-router-native';
@@ -31,12 +31,12 @@ const TeamsList = () => {
       const usersRef = collection(firestore, 'users');
       const q = query(usersRef, where('uid', '==', uid));
       const querySnapshot = await getDocs(q);
-  
+
       let user = null;
       querySnapshot.forEach((doc) => {
         user = doc.data();
       });
-  
+
       return user;
     } catch (error) {
       console.error('Błąd pobierania danych użytkownika', error);
@@ -45,7 +45,7 @@ const TeamsList = () => {
   };
 
   return (
-    <View style={styles.container}>
+    <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.title}>Lista Zespołów</Text>
       {teams.map((team) => (
         <TouchableOpacity key={team.id} style={styles.team} onPress={() => navigate(`/team/${team.id}`)}>
@@ -58,39 +58,16 @@ const TeamsList = () => {
           )}
         </TouchableOpacity>
       ))}
-        <TouchableOpacity style={styles.link} onPress={() => navigate('/team')}>
-          <Text style={styles.linkText}>Powrót</Text>
-        </TouchableOpacity>
-    </View>
-    
-  );
-
-
-  return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Lista Zespołów</Text>
-      {teams.map((team) => (
-        <View key={team.id} style={styles.team}>
-          <Text style={styles.teamName}>{team.name}</Text>
-          <Text style={styles.teamDescription}>{team.description}</Text>
-          {team.creator && (
-            <Text style={styles.creatorInfo}>
-              Założyciel: {team.creator.firstName} {team.creator.lastName} ({team.creator.email})
-            </Text>
-          )}
-        </View>
-      ))}
       <TouchableOpacity style={styles.link} onPress={() => navigate('/team')}>
         <Text style={styles.linkText}>Powrót</Text>
       </TouchableOpacity>
-    </View>
+    </ScrollView>
   );
 };
 
-
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    flexGrow: 1,
     backgroundColor: '#9091fd',
     justifyContent: 'center',
     alignItems: 'center',
@@ -118,6 +95,11 @@ const styles = StyleSheet.create({
   },
   teamDescription: {
     fontSize: 16,
+    textAlign: 'center', // Centrowanie tekstu
+  },
+  creatorInfo: {
+    fontSize: 16,
+    color: 'gray',
     textAlign: 'center', // Centrowanie tekstu
   },
   link: {

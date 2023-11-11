@@ -50,6 +50,7 @@ const Team = () => {
     };
   }, []);
 
+
   return (
     <View style={styles.container}>
       <Header user={user} setUser={setUser} />
@@ -57,6 +58,7 @@ const Team = () => {
         <Text style={styles.title}>Zarządzanie Zespołami</Text>
         {user && user.isCoach && (
           <>
+            {/* Linki dla trenera */}
             <Link to="/manageTeam" style={styles.link}>
               <Text style={styles.linkText}>Zarządzaj Drużyną</Text>
             </Link>
@@ -66,28 +68,39 @@ const Team = () => {
             <Link to="/listTeam" style={styles.link}>
               <Text style={styles.linkText}>Lista Zespołów</Text>
             </Link>
+            <Link to="/deleteTeam" style={styles.link}>
+              <Text style={styles.linkText}>Usuń Drużynę</Text>
+            </Link>
           </>
         )}
-        {!isCoach && !isInTeam && (
+        {user && !isCoach && !isInTeam && (
+          // Link tylko dla zwykłego użytkownika
           <Link to="/joinTeam" style={styles.link}>
             <Text style={styles.linkText}>Dołącz do Zespołu</Text>
           </Link>
         )}
-        {isInTeam && (
+        {user && !isCoach && isInTeam && (
+          // Link tylko dla zwykłego użytkownika będącego w zespole
           <Link to="/leaveTeam" style={styles.link}>
             <Text style={styles.linkText}>Opuść Zespół</Text>
           </Link>
         )}
-        <Link to="/yourTeam" style={styles.link}>
-          <Text style={styles.linkText}>Twoja Drużyna</Text>
-        </Link>
-        <Link to="/home" style={styles.link}>
-          <Text style={styles.linkText}>Powrót do Home</Text>
-        </Link>
+        {user && (
+          // Pozostałe linki dostępne dla wszystkich zalogowanych użytkowników
+          <>
+            <Link to="/yourTeam" style={styles.link}>
+              <Text style={styles.linkText}>Twoja Drużyna</Text>
+            </Link>
+            <Link to="/home" style={styles.link}>
+              <Text style={styles.linkText}>Powrót do Home</Text>
+            </Link>
+          </>
+        )}
       </View>
     </View>
   );
 };
+
 
 const styles = StyleSheet.create({
   container: {

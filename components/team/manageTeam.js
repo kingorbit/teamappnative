@@ -1,14 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, TextInput, Alert, ScrollView } from 'react-native';
 import { onAuthStateChanged } from 'firebase/auth';
-import { collection, query, where, getDocs, getDoc } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, updateDoc, arrayRemove } from 'firebase/firestore';
 import Header from '../header';
 import { firestore, auth } from '../../constants/config';
 import { useNavigate } from 'react-router-native';
 
-const YourTeam = () => {
+const ManageTeam = () => {
   const [user, setUser] = useState(null);
   const [teams, setTeams] = useState([]);
+  const [teamMembers, setTeamMembers] = useState([]);
+  const [founderData, setFounderData] = useState(null);
+  const [newName, setNewName] = useState('');
+  const [newDescription, setNewDescription] = useState('');
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -60,22 +64,76 @@ const YourTeam = () => {
     return () => unsubscribe();
   }, []);
 
+  const handleRemoveMember = async (memberUid) => {
+    try {
+      const teamRef = doc(firestore, 'teams', teams[0].team.teamId); // Change to the appropriate team
+      await updateDoc(teamRef, {
+        members: arrayRemove(memberUid),
+      });
+      Alert.alert('Sukces', 'Członek zespołu został usunięty.');
+    } catch (error) {
+      console.error('Błąd usuwania członka zespołu', error);
+      Alert.alert('Błąd', 'Wystąpił błąd podczas usuwania członka zespołu.');
+    }
+  };
+
+  const handleUpdateTeamInfo = async () => {
+    try {
+      const teamRef = doc(firestore, 'teams', teams[0].team.teamId); // Change to the appropriate team
+      await updateDoc(teamRef, {
+        name: newName || teams[0].team.name,
+        description: newDescription || teams[0].team.description,
+      });
+      setNewName('');
+      setNewDescription('');
+      Alert.alert('Sukces', 'Informacje o zespole zostały zaktualizowane.');
+    } catch (error) {
+      console.error('Błąd aktualizacji informacji o zespole', error);
+      Alert.alert('Błąd', 'Wystąpił błąd podczas aktualizacji informacji o zespole.');
+    }
+  };
+
   return (
     <View style={styles.container}>
       <Header user={user} setUser={setUser} />
-      <View style={styles.teamContent}>
+      <ScrollView contentContainerStyle={styles.scrollView}>
         {teams.length > 0 ? (
           <>
-            <Text style={styles.title}>Twoje Zespoły</Text>
+            <Text style={styles.title}>Zarządzaj Zespołem</Text>
             {teams.map((team, index) => (
               <View key={index} style={styles.teamInfo}>
                 <Text style={styles.info}>Nazwa Zespołu: {team.team.name}</Text>
                 <Text style={styles.info}>Opis: {team.team.description}</Text>
+                {founderData && (
+                  <Text style={styles.info}>Założyciel: {`${founderData.firstName} ${founderData.lastName}`}</Text>
+                )}
+                <Text style={styles.info}>Kod dołączania do drużyny: {team.team.joinCode}</Text>
                 <Text style={styles.membersTitle}>Członkowie:</Text>
-                {team.members.map((member, memberIndex) => (
-                  <Text key={memberIndex} style={styles.member}>{member}</Text>
+                {team.members.map((member, index) => (
+                  <View key={index} style={styles.memberContainer}>
+                    <Text style={styles.member}>{member}</Text>
+                    <TouchableOpacity onPress={() => handleRemoveMember(member)}>
+                      <Text style={styles.removeMemberText}>Usuń</Text>
+                    </TouchableOpacity>
+                  </View>
                 ))}
-                {index < teams.length - 1 && <View style={styles.hr} />}
+                <Text style={styles.info}>Zmień nazwę zespołu:</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Nowa nazwa zespołu"
+                  value={newName}
+                  onChangeText={(text) => setNewName(text)}
+                />
+                <Text style={styles.info}>Zmień opis zespołu:</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Nowy opis zespołu"
+                  value={newDescription}
+                  onChangeText={(text) => setNewDescription(text)}
+                />
+                <TouchableOpacity style={styles.button} onPress={handleUpdateTeamInfo}>
+                  <Text style={styles.buttonText}>Zaktualizuj informacje o zespole</Text>
+                </TouchableOpacity>
               </View>
             ))}
           </>
@@ -85,17 +143,20 @@ const YourTeam = () => {
         <TouchableOpacity style={styles.button} onPress={() => navigate('/team')}>
           <Text style={styles.buttonText}>Powrót</Text>
         </TouchableOpacity>
-      </View>
+      </ScrollView>
     </View>
   );
 };
-
-
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#9091fd',
+  },
+  scrollView: {
+    padding: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   title: {
     fontSize: 24,
@@ -103,11 +164,6 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     textAlign: 'center',
     color: 'white',
-  },
-  teamContent: {
-    padding: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
   },
   teamInfo: {
     marginBottom: 20,
@@ -129,10 +185,19 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     color: 'white',
   },
+  memberContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
   member: {
     fontSize: 16,
     marginBottom: 5,
     color: 'white',
+  },
+  removeMemberText: {
+    fontSize: 16,
+    color: 'red',
   },
   button: {
     marginTop: 20,
@@ -145,6 +210,15 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: 'black',
   },
+  input: {
+    height: 40,
+    width: '100%',
+    borderColor: 'white',
+    borderWidth: 1,
+    marginBottom: 10,
+    paddingLeft: 10,
+    color: 'white',
+  },
 });
 
-export default YourTeam;
+export default ManageTeam;
