@@ -47,34 +47,60 @@ const LeaveTeam = () => {
     return () => unsubscribe();
   }, [leaveSuccess]);
 
-  const leaveTeam = async () => {
+  const handleRemoveMember = async (memberUid) => {
     try {
-      if (!team || !user || !teamId) {
-        console.error('Brak danych o zespole, użytkowniku lub teamId.');
+      if (!teams || teams.length === 0) {
+        console.error('Brak danych o zespole.');
         return;
       }
   
-      console.log('Team:', team);
-      console.log('Team members:', team.members);
-      console.log('User:', user);
-  
-      const updatedMembers = team.members ? team.members.filter((member) => member !== user.uid) : [];
-  
+      const teamId = teams[0].team.teamId;
       const teamRef = doc(firestore, 'teams', teamId);
-      await updateDoc(teamRef, { members: updatedMembers });
   
-      const userRef = doc(firestore, 'users', user.id);
-      await updateDoc(userRef, { teamId: null });
+      // Pobierz aktualne dane zespołu
+      const teamDoc = await getDoc(teamRef);
+      const currentMembers = teamDoc.data().members;
   
-      setTeam(null);
-      setTeamId(null);
-      setLeaveSuccess(true);
+      console.log('Current Members:', currentMembers);
   
-    } finally {
-      navigate('/team');
-      Alert.alert('Sukces', 'Zespół został pomyślnie opuszczony!');
+      // Usuń członka zespołu
+      const updatedMembers = currentMembers.filter((member) => member !== memberUid);
+  
+      console.log('Updated Members:', updatedMembers);
+  
+      // Zaktualizuj kolekcję teams
+      await updateDoc(teamRef, {
+        members: updatedMembers,
+      });
+  
+      // Aktualizuj lokalny stan teams
+      setTeams((prevTeams) => {
+        const updatedTeams = [...prevTeams];
+        const updatedTeamIndex = updatedTeams.findIndex((team) => team.team.teamId === teamId);
+  
+        if (updatedTeamIndex !== -1) {
+          updatedTeams[updatedTeamIndex] = {
+            ...updatedTeams[updatedTeamIndex],
+            team: {
+              ...updatedTeams[updatedTeamIndex].team,
+              members: updatedMembers,
+            },
+          };
+        }
+  
+        console.log('Updated Teams:', updatedTeams);
+  
+        return updatedTeams;
+      });
+  
+      Alert.alert('Sukces', 'Członek zespołu został usunięty.');
+    } catch (error) {
+      console.error('Błąd usuwania członka zespołu', error);
+      Alert.alert('Błąd', 'Wystąpił błąd podczas usuwania członka zespołu.');
+      console.log('Teams after update:', teams);
     }
   };
+  
   
 
   return (

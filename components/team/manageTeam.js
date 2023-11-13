@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, TextInput, Alert, ScrollView } from 'react-native';
 import { onAuthStateChanged } from 'firebase/auth';
-import { collection, query, where, getDocs, doc, updateDoc, arrayRemove } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, updateDoc, FieldValue, getDoc, arrayRemove } from 'firebase/firestore';
 import Header from '../header';
 import { firestore, auth } from '../../constants/config';
 import { useNavigate } from 'react-router-native';
@@ -9,7 +9,6 @@ import { useNavigate } from 'react-router-native';
 const ManageTeam = () => {
   const [user, setUser] = useState(null);
   const [teams, setTeams] = useState([]);
-  const [teamMembers, setTeamMembers] = useState([]);
   const [founderData, setFounderData] = useState(null);
   const [newName, setNewName] = useState('');
   const [newDescription, setNewDescription] = useState('');
@@ -27,7 +26,6 @@ const ManageTeam = () => {
             const userData = querySnapshot.docs[0].data();
             setUser(userData);
 
-            // Sprawdź, czy użytkownik jest w zespołach
             const teamsRef = collection(firestore, 'teams');
             const teamsQuery = query(teamsRef, where('members', 'array-contains', userData.uid));
             const teamsSnapshot = await getDocs(teamsQuery);
@@ -36,7 +34,6 @@ const ManageTeam = () => {
             for (const teamDoc of teamsSnapshot.docs) {
               const teamData = teamDoc.data();
 
-              // Pobierz imiona i nazwiska członków zespołu
               const membersData = [];
               for (const memberUid of teamData.members) {
                 const memberQuery = query(usersRef, where('uid', '==', memberUid));
@@ -66,20 +63,57 @@ const ManageTeam = () => {
 
   const handleRemoveMember = async (memberUid) => {
     try {
-      const teamRef = doc(firestore, 'teams', teams[0].team.teamId); // Change to the appropriate team
-      await updateDoc(teamRef, {
-        members: arrayRemove(memberUid),
+      if (!teams || teams.length === 0) {
+        console.error('Brak danych o zespole.');
+        return;
+      }
+  
+      const teamId = teams[0].team.teamId;
+  
+      // Usuń członka zespołu
+      const updatedMembers = teams[0].team.members.filter((member) => member !== memberUid);
+  
+      // Zaktualizuj kolekcję teams
+      await updateDoc(doc(firestore, 'teams', teamId), { members: updatedMembers });
+  
+      // Aktualizuj lokalny stan teams
+      setTeams((prevTeams) => {
+        const updatedTeams = [...prevTeams];
+        const updatedTeamIndex = updatedTeams.findIndex((team) => team.team.teamId === teamId);
+  
+        if (updatedTeamIndex !== -1) {
+          updatedTeams[updatedTeamIndex] = {
+            ...updatedTeams[updatedTeamIndex],
+            team: {
+              ...updatedTeams[updatedTeamIndex].team,
+              members: updatedMembers,
+            },
+          };
+        }
+  
+        console.log('Updated Teams:', updatedTeams);
+  
+        return updatedTeams;
       });
+  
+      console.log('Members after update:', updatedMembers); // Dodaj ten log
+  
       Alert.alert('Sukces', 'Członek zespołu został usunięty.');
     } catch (error) {
       console.error('Błąd usuwania członka zespołu', error);
       Alert.alert('Błąd', 'Wystąpił błąd podczas usuwania członka zespołu.');
+      console.log('Teams after update:', teams);
     }
   };
+  
+  
+  
+  
+  
 
   const handleUpdateTeamInfo = async () => {
     try {
-      const teamRef = doc(firestore, 'teams', teams[0].team.teamId); // Change to the appropriate team
+      const teamRef = doc(firestore, 'teams', teams[0].team.teamId);
       await updateDoc(teamRef, {
         name: newName || teams[0].team.name,
         description: newDescription || teams[0].team.description,
@@ -167,11 +201,6 @@ const styles = StyleSheet.create({
   },
   teamInfo: {
     marginBottom: 20,
-  },
-  hr: {
-    height: 1,
-    backgroundColor: 'white',
-    marginVertical: 10,
   },
   info: {
     fontSize: 18,
