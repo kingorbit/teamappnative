@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, Image } from 'react-native';
 import { onAuthStateChanged } from 'firebase/auth';
 import {
   collection,
@@ -10,15 +10,19 @@ import {
   getDocs,
   serverTimestamp,
   where,
-  onSnapshot, // Dodajemy onSnapshot
+  onSnapshot,
 } from 'firebase/firestore';
-import Header from '../components/header';
-import { firestore, auth } from '../constants/config';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';  // Dodano import storage
+import { firestore, auth, storage } from '../constants/config';  // Dodano import storage
 import { useNavigate } from 'react-router-native';
+import * as ImagePicker from 'expo-image-picker';
+
+import Header from '../components/header';
 
 const Chat = () => {
   const [user, setUser] = useState(null);
   const [message, setMessage] = useState('');
+  const [image, setImage] = useState(null);
   const [messages, setMessages] = useState([]);
   const navigate = useNavigate();
 
@@ -40,7 +44,6 @@ const Chat = () => {
       }
     });
 
-    // Pobierz i ustaw wiadomości z firestore
     const messagesRef = collection(firestore, 'messages');
     const q = query(messagesRef, orderBy('timestamp', 'asc'), limit(50));
 
@@ -55,22 +58,63 @@ const Chat = () => {
     };
   }, []);
 
+  const chooseImage = async () => {
+    try {
+      const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+      if (permissionResult.granted === false) {
+        alert('Potrzebujemy dostępu do twojej biblioteki multimedialnej, aby wybrać obraz!');
+        return;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync();
+
+      if (!result.canceled) {
+        setImage(result.assets[0].uri);
+      }
+    } catch (error) {
+      console.error('Błąd podczas wybierania obrazu', error);
+    }
+  };
+
   const sendMessage = async () => {
-    if (!user || !message.trim()) {
+    if (!user || (!message.trim() && !image)) {
       return;
     }
 
     try {
-      const messagesRef = collection(firestore, 'messages');
-      await addDoc(messagesRef, {
-        userId: user.uid,
-        userName: `${user.firstName || ''} ${user.lastName || ''}`,
-        message: message.trim(),
-        timestamp: serverTimestamp(),
-      });
+      if (image) {
+        // Jeżeli istnieje obraz, przesyłamy go na Storage
+        const imageRef = ref(storage, `images/${Date.now()}_${user.uid}`);
+        await uploadBytes(imageRef, image);
+        const imageUrl = await getDownloadURL(imageRef);
 
-      // Wyczyść pole wiadomości po wysłaniu
-      setMessage('');
+        // Dodajemy wiadomość z obrazem
+        const messagesRef = collection(firestore, 'messages');
+        await addDoc(messagesRef, {
+          userId: user.uid,
+          userName: `${user.firstName || ''} ${user.lastName || ''}`,
+          message: message.trim(),
+          imageUrl,
+          timestamp: serverTimestamp(),
+        });
+
+        // Czyścimy pola po wysłaniu
+        setMessage('');
+        setImage(null);
+      } else {
+        // Jeżeli nie ma obrazu, dodajemy wiadomość tekstową
+        const messagesRef = collection(firestore, 'messages');
+        await addDoc(messagesRef, {
+          userId: user.uid,
+          userName: `${user.firstName || ''} ${user.lastName || ''}`,
+          message: message.trim(),
+          timestamp: serverTimestamp(),
+        });
+
+        // Czyścimy pole wiadomości po wysłaniu
+        setMessage('');
+      }
     } catch (error) {
       console.error('Błąd podczas wysyłania wiadomości', error);
     }
@@ -85,6 +129,7 @@ const Chat = () => {
             <View key={index} style={styles.messageContainer}>
               <Text style={styles.messageSender}>{msg.userName}</Text>
               <Text style={styles.messageText}>{msg.message}</Text>
+              {msg.imageUrl && <Image source={{ uri: msg.imageUrl }} style={styles.messageImage} />}
               <Text style={styles.messageTimestamp}>
                 {msg.timestamp && new Date(msg.timestamp.toMillis()).toLocaleString()}
               </Text>
@@ -98,6 +143,9 @@ const Chat = () => {
             value={message}
             onChangeText={(text) => setMessage(text)}
           />
+          <TouchableOpacity style={styles.chooseImageButton} onPress={chooseImage}>
+            <Text style={styles.chooseImageButtonText}>Wybierz obraz</Text>
+          </TouchableOpacity>
           <TouchableOpacity style={styles.sendButton} onPress={sendMessage}>
             <Text style={styles.sendButtonText}>Wyślij</Text>
           </TouchableOpacity>
@@ -110,8 +158,6 @@ const Chat = () => {
   );
 };
 
-
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -121,6 +167,18 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 20,
     justifyContent: 'space-between',
+  },
+  chooseImageButton: {
+    padding: 10,
+    backgroundColor: '#f0f0f0',
+    borderRadius: 5,
+    marginTop: 10,
+  },
+  chooseImageButtonText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: 'black',
+    textAlign: 'center',
   },
   homeButton: {
     padding: 10,
@@ -153,6 +211,11 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: 'white',
   },
+  messageImage: {
+    width: 200,
+    height: 200,
+    marginVertical: 10,
+  },
   messageTimestamp: {
     fontSize: 12,
     color: 'white',
@@ -174,6 +237,7 @@ const styles = StyleSheet.create({
     padding: 10,
     backgroundColor: 'white',
     borderRadius: 5,
+    marginVertical: 10,
   },
   sendButtonText: {
     fontSize: 16,
