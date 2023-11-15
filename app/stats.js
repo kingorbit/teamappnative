@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Link } from 'react-router-native';
 import Header from '../components/header';
-import { onAuthStateChanged, signOut } from 'firebase/auth';
+import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from '../constants/config';
 
 const Stats = () => {
@@ -23,6 +23,16 @@ const Stats = () => {
       <Header user={user} setUser={setUser} />
       <View style={styles.calendarContent}>
         <Text style={styles.title}>Statystyki</Text>
+        {user && user.isCoach && (
+          <Link to="/teamStats" style={styles.link}>
+            <Text style={styles.linkText}>Statystyki Indywidualne - Trener</Text>
+          </Link>
+        )}
+        {user && user.isCoach && (
+          <Link to="/teamStats" style={styles.link}>
+            <Text style={styles.linkText}>Statystyki Drużyny - Trener</Text>
+          </Link>
+        )}
         <Link to="/home" style={styles.link}>
           <Text style={styles.linkText}>Statystyki Indywidualne</Text>
         </Link>

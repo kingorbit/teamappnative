@@ -1,6 +1,17 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, Image } from 'react-native';
-import { onAuthStateChanged } from 'firebase/auth';
+import React, { useState, useEffect, useRef } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TextInput,
+  TouchableOpacity,
+  Image,
+  Keyboard,
+} from 'react-native';
+import {
+  onAuthStateChanged,
+} from 'firebase/auth';
 import {
   collection,
   addDoc,
@@ -12,19 +23,27 @@ import {
   where,
   onSnapshot,
 } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';  // Dodano import storage
-import { firestore, auth, storage } from '../constants/config';  // Dodano import storage
-import { useNavigate } from 'react-router-native';
-import * as ImagePicker from 'expo-image-picker';
-
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import Header from '../components/header';
+import { firestore, auth, storage } from '../constants/config';
+import { useNavigate } from 'react-router-native';
+import ImagePicker from 'react-native-image-picker';
+import { FontAwesome } from '@expo/vector-icons';
 
 const Chat = () => {
   const [user, setUser] = useState(null);
   const [message, setMessage] = useState('');
   const [image, setImage] = useState(null);
   const [messages, setMessages] = useState([]);
+  const [teamChat, setTeamChat] = useState(false);
+  const [userTeam, setUserTeam] = useState(null);
+  const [messagesToLoad, setMessagesToLoad] = useState(10);
+  const [loadingMore, setLoadingMore] = useState(false);
   const navigate = useNavigate();
+  const scrollViewRef = useRef();
+  const [showLoadMoreButton, setShowLoadMoreButton] = useState(false);
+  const [scrolledUp, setScrolledUp] = useState(false);
+  const [isInputFocused, setInputFocused] = useState(false);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (userData) => {
@@ -37,6 +56,7 @@ const Chat = () => {
           if (!querySnapshot.empty) {
             const userData = querySnapshot.docs[0].data();
             setUser(userData);
+            setUserTeam(userData.team);
           }
         } catch (error) {
           console.error('Błąd pobierania danych użytkownika', error);
@@ -44,33 +64,41 @@ const Chat = () => {
       }
     });
 
-    const messagesRef = collection(firestore, 'messages');
-    const q = query(messagesRef, orderBy('timestamp', 'asc'), limit(50));
+    const messagesRef = collection(
+      firestore,
+      teamChat ? `teamChats/${userTeam}/messages` : 'messages'
+    );
+    const q = query(messagesRef, orderBy('timestamp', 'desc'), limit(messagesToLoad));
 
     const unsubscribeMessages = onSnapshot(q, (querySnapshot) => {
       const messagesData = querySnapshot.docs.map((doc) => doc.data());
-      setMessages(messagesData);
+      setMessages(messagesData.reverse()); // Reverse the order to display the latest messages at the bottom
+      setLoadingMore(false);
     });
 
     return () => {
       unsubscribe();
       unsubscribeMessages();
     };
-  }, []);
+  }, [teamChat, userTeam, messagesToLoad]);
 
   const chooseImage = async () => {
     try {
       const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
 
       if (permissionResult.granted === false) {
-        alert('Potrzebujemy dostępu do twojej biblioteki multimedialnej, aby wybrać obraz!');
+        alert('Potrzebujemy dostępu do twojego aparatu, aby wybrać obraz!');
         return;
       }
 
       const result = await ImagePicker.launchImageLibraryAsync();
 
-      if (!result.canceled) {
-        setImage(result.assets[0].uri);
+      if (!result.cancelled) {
+        const imageUri = result.uri;
+        const response = await fetch(imageUri);
+        const blob = await response.blob();
+
+        setImage(blob);
       }
     } catch (error) {
       console.error('Błąd podczas wybierania obrazu', error);
@@ -84,13 +112,15 @@ const Chat = () => {
 
     try {
       if (image) {
-        // Jeżeli istnieje obraz, przesyłamy go na Storage
         const imageRef = ref(storage, `images/${Date.now()}_${user.uid}`);
         await uploadBytes(imageRef, image);
         const imageUrl = await getDownloadURL(imageRef);
 
-        // Dodajemy wiadomość z obrazem
-        const messagesRef = collection(firestore, 'messages');
+        const messagesRef = collection(
+          firestore,
+          teamChat ? `teamChats/${userTeam}/messages` : 'messages'
+        );
+
         await addDoc(messagesRef, {
           userId: user.uid,
           userName: `${user.firstName || ''} ${user.lastName || ''}`,
@@ -99,12 +129,14 @@ const Chat = () => {
           timestamp: serverTimestamp(),
         });
 
-        // Czyścimy pola po wysłaniu
         setMessage('');
         setImage(null);
       } else {
-        // Jeżeli nie ma obrazu, dodajemy wiadomość tekstową
-        const messagesRef = collection(firestore, 'messages');
+        const messagesRef = collection(
+          firestore,
+          teamChat ? `teamChats/${userTeam}/messages` : 'messages'
+        );
+
         await addDoc(messagesRef, {
           userId: user.uid,
           userName: `${user.firstName || ''} ${user.lastName || ''}`,
@@ -112,47 +144,137 @@ const Chat = () => {
           timestamp: serverTimestamp(),
         });
 
-        // Czyścimy pole wiadomości po wysłaniu
         setMessage('');
+        if (scrollViewRef.current) {
+          scrollViewRef.current.scrollToEnd({ animated: true });
+        }
       }
     } catch (error) {
       console.error('Błąd podczas wysyłania wiadomości', error);
     }
   };
 
+  const loadMoreMessages = () => {
+    setLoadingMore(true);
+    setMessagesToLoad((prev) => prev + 20);
+  };
+
+  const handleScroll = (event) => {
+    const { contentOffset, contentSize, layoutMeasurement } = event.nativeEvent;
+    const isAtTop = contentOffset.y === 0;
+    const isAtBottom = contentOffset.y >= contentSize.height - layoutMeasurement.height;
+
+    if (isAtTop && !scrolledUp) {
+      setShowLoadMoreButton(true);
+      setScrolledUp(true);
+    } else if (!isAtTop && scrolledUp) {
+      setScrolledUp(false);
+    }
+
+    if (isAtBottom && showLoadMoreButton) {
+      setShowLoadMoreButton(false);
+    }
+  };
+
+  const handleInputFocus = () => {
+    setInputFocused(true);
+  };
+
+  const handleInputBlur = () => {
+    setInputFocused(false);
+  };
+
+  const handleKeyboardHide = () => {
+    setInputFocused(false);
+  };
+
+  useEffect(() => {
+    const keyboardDidHideListener = Keyboard.addListener(
+      'keyboardDidHide',
+      handleKeyboardHide
+    );
+
+    return () => {
+      keyboardDidHideListener.remove();
+    };
+  }, []);
+
   return (
     <View style={styles.container}>
       <Header user={user} />
+      <Text style={styles.title}>Chat</Text>
       <View style={styles.chatContainer}>
-        <ScrollView contentContainerStyle={styles.messagesContainer}>
+        <View style={styles.hrLine}></View>
+        {showLoadMoreButton && (
+          <TouchableOpacity
+            onPress={loadMoreMessages}
+            disabled={loadingMore}
+            style={styles.loadMoreButton}
+          >
+            <Text style={styles.leadMoreButtonText}>Więcej</Text>
+          </TouchableOpacity>
+        )}
+        <ScrollView
+          contentContainerStyle={styles.messagesContainer}
+          ref={scrollViewRef}
+          onContentSizeChange={() => scrollViewRef.current.scrollToEnd({ animated: true })}
+          onScroll={handleScroll}
+        >
           {messages.map((msg, index) => (
-            <View key={index} style={styles.messageContainer}>
-              <Text style={styles.messageSender}>{msg.userName}</Text>
-              <Text style={styles.messageText}>{msg.message}</Text>
-              {msg.imageUrl && <Image source={{ uri: msg.imageUrl }} style={styles.messageImage} />}
-              <Text style={styles.messageTimestamp}>
-                {msg.timestamp && new Date(msg.timestamp.toMillis()).toLocaleString()}
-              </Text>
+            <View
+              key={index}
+              style={[
+                styles.messageContainer,
+                user && user.uid === msg.userId ? styles.currentUserMessage : styles.otherUserMessage,
+              ]}
+            >
+              <View style={styles.messageContent}>
+                <Text style={styles.messageSender}>{msg.userName}</Text>
+                <Text style={styles.messageText}>{msg.message}</Text>
+                {msg.imageUrl && <Image source={{ uri: msg.imageUrl }} style={styles.messageImage} />}
+                <Text style={styles.messageTimestamp}>
+                  {msg.timestamp && new Date(msg.timestamp.toMillis()).toLocaleString()}
+                </Text>
+              </View>
             </View>
           ))}
         </ScrollView>
+
         <View style={styles.inputContainer}>
           <TextInput
             style={styles.input}
             placeholder="Napisz wiadomość..."
             value={message}
             onChangeText={(text) => setMessage(text)}
+            onFocus={handleInputFocus}
+            onBlur={handleInputBlur}
           />
-          <TouchableOpacity style={styles.chooseImageButton} onPress={chooseImage}>
-            <Text style={styles.chooseImageButtonText}>Wybierz obraz</Text>
+          <TouchableOpacity
+            style={styles.chooseImageButton}
+            onPress={chooseImage}
+            disabled={teamChat}
+          >
+            <FontAwesome name="image" size={24} color="black" />
           </TouchableOpacity>
           <TouchableOpacity style={styles.sendButton} onPress={sendMessage}>
-            <Text style={styles.sendButtonText}>Wyślij</Text>
+            <FontAwesome name="send" size={24} color="black" />
           </TouchableOpacity>
         </View>
-        <TouchableOpacity style={styles.homeButton} onPress={() => navigate('/home')}>
-          <Text style={styles.homeButtonText}>Powrót do Home</Text>
-        </TouchableOpacity>
+        {!isInputFocused && (
+          <>
+            <TouchableOpacity
+              style={styles.toggleButton}
+              onPress={() => setTeamChat((prev) => !prev)}
+            >
+              <Text style={styles.toggleButtonText}>
+                {teamChat ? 'Chat ogólny' : 'Chat Zespołu'}
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.homeButton} onPress={() => navigate('/home')}>
+              <Text style={styles.linkText}>Powrót do Home</Text>
+            </TouchableOpacity>
+          </>
+        )}
       </View>
     </View>
   );
@@ -165,14 +287,25 @@ const styles = StyleSheet.create({
   },
   chatContainer: {
     flex: 1,
-    padding: 20,
+    padding: 10,
     justifyContent: 'space-between',
+  },
+  hrLine: {
+    height: 5,
+    backgroundColor: 'white',
+    marginBottom: 5,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    color: 'white',
   },
   chooseImageButton: {
     padding: 10,
     backgroundColor: '#f0f0f0',
     borderRadius: 5,
-    marginTop: 10,
+    margin: 10,
   },
   chooseImageButtonText: {
     fontSize: 16,
@@ -180,19 +313,34 @@ const styles = StyleSheet.create({
     color: 'black',
     textAlign: 'center',
   },
+  currentUserMessage: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#acadfe',
+    marginLeft: 10,
+    marginRight: '50%',
+    borderRadius: 15,
+  },
+  otherUserMessage: {
+    alignSelf: 'flex-end',
+    backgroundColor: '#48497f',
+    marginLeft: '50%',
+    marginRight: 10,
+    borderRadius: 15,
+  },
+  messageContent: {
+    padding: 10,
+    borderRadius: 15,
+  },
   homeButton: {
     padding: 10,
-    margin: 10,
-    borderRadius: 10,
+    marginVertical: 10,
+    borderRadius: 5,
     alignItems: 'center',
     justifyContent: 'center',
-    textAlign: 'center',
-    elevation: 3,
-    width: '50%',
     backgroundColor: '#f0f0f0',
   },
-  homeButtonText: {
-    fontSize: 18,
+  linkText:{
+    fontSize: 16,
     fontWeight: 'bold',
     color: 'black',
   },
@@ -201,23 +349,25 @@ const styles = StyleSheet.create({
   },
   messageContainer: {
     marginBottom: 10,
+    paddingHorizontal: 5,
   },
   messageSender: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: 'bold',
     color: 'white',
   },
   messageText: {
     fontSize: 14,
     color: 'white',
+    paddingVertical: 7,
   },
   messageImage: {
-    width: 200,
+    width: 150,
     height: 200,
-    marginVertical: 10,
+    marginVertical: 5,
   },
   messageTimestamp: {
-    fontSize: 12,
+    fontSize: 9,
     color: 'white',
   },
   inputContainer: {
@@ -233,13 +383,41 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     marginRight: 10,
   },
+  loadMoreButton: {
+    padding: 10,
+    backgroundColor: 'white',
+    borderRadius: 5,
+    marginVertical: 15,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  leadMoreButtonText:{
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: 'black',
+  },
   sendButton: {
     padding: 10,
     backgroundColor: 'white',
     borderRadius: 5,
     marginVertical: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   sendButtonText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: 'black',
+  },
+  toggleButton: {
+    padding: 10,
+    marginVertical: 10,
+    borderRadius: 5,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#f0f0f0',
+  },
+  toggleButtonText: {
     fontSize: 16,
     fontWeight: 'bold',
     color: 'black',
