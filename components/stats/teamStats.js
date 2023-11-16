@@ -1,27 +1,72 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity } from 'react-native';
-import { collection, doc, getDoc, setDoc, serverTimestamp, query, where, getDocs } from 'firebase/firestore';
-import { auth, firestore } from '../../constants/config';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, Modal, TextInput } from 'react-native';
 import { onAuthStateChanged } from 'firebase/auth';
+import { collection, query, where, getDocs, doc, updateDoc, setDoc, FieldValue, getDoc, arrayRemove } from 'firebase/firestore';
 import Header from '../header';
-
+import { firestore, auth } from '../../constants/config';
+import { useNavigate } from 'react-router-native';
 const TeamStats = () => {
   const [user, setUser] = useState(null);
+  const [teamNames, setTeamNames] = useState([]);
   const [teamStats, setTeamStats] = useState({
-    points: 0,
+    draws: 0,
+    losses: 0,
+    matchesPlayed: 0,
     wins: 0,
-    shots: 0,
-    // Dodaj inne statystyki, których chcesz śledzić
   });
+  const [editStatsModalVisible, setEditStatsModalVisible] = useState(false); // Definicja zmiennej editStatsModalVisible
+  const [teamId, setTeamId] = useState(null);
+  const [editedStats, setEditedStats] = useState({
+    draws: 0,
+    losses: 0,
+    matchesPlayed: 0,
+    wins: 0,
+  });
+
+  const navigate = useNavigate();
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (userData) => {
       if (userData) {
-        setUser(userData);
-        
-        if (userData.isCoach && userData.team) {
-          // Sprawdź, czy użytkownik jest trenerem i ma zespół
-          fetchTeamStats();
+        try {
+          const usersRef = collection(firestore, 'users');
+          const q = query(usersRef, where('uid', '==', userData.uid));
+          const querySnapshot = await getDocs(q);
+
+          if (!querySnapshot.empty) {
+            const userData = querySnapshot.docs[0].data();
+            setUser(userData);
+
+            const teamsRef = collection(firestore, 'teams');
+            const teamsQuery = query(
+              teamsRef,
+              where('members', 'array-contains', userData.uid)
+            );
+            const teamsSnapshot = await getDocs(teamsQuery);
+
+            const userTeams = [];
+            for (const teamDoc of teamsSnapshot.docs) {
+              const teamData = teamDoc.data();
+              if (teamData.members && teamData.members.includes(userData.uid)) {
+                userTeams.push({ id: teamDoc.id, name: teamData.name });
+              }
+            }
+            setTeamNames(userTeams.map((team) => team.name));
+
+            if (userTeams.length > 0 && userData.isCoach) {
+              const coachTeamId = userTeams[0].id;
+              setTeamId(coachTeamId);
+              const teamStatsRef = doc(firestore, 'teamStats', coachTeamId);
+              const teamStatsDoc = await getDoc(teamStatsRef);
+
+              if (teamStatsDoc.exists()) {
+                const statsData = teamStatsDoc.data();
+                setTeamStats(statsData);
+              }
+            }
+          }
+        } catch (error) {
+          console.error('Błąd pobierania danych użytkownika', error);
         }
       }
     });
@@ -29,93 +74,111 @@ const TeamStats = () => {
     return () => unsubscribe();
   }, []);
 
-  const fetchTeamStats = async () => {
+  const handleSaveStats = async () => {
     try {
-      const teamStatsDocRef = doc(firestore, 'teamStats', user.team);
-      const teamStatsDocSnap = await getDoc(teamStatsDocRef);
-
-      if (teamStatsDocSnap.exists()) {
-        setTeamStats(teamStatsDocSnap.data());
+      console.log('Przed teamId:', teamId);
+      if (teamId) {
+        const teamStatsRef = doc(firestore, 'teamStats', teamId);
+        console.log('teamStatsRef.path:', teamStatsRef.path);
+        await setDoc(teamStatsRef, editedStats);
+        console.log('Po setDoc');
+  
+        // Po zapisaniu statystyk ponownie pobierz dane z bazy danych
+        const updatedTeamStatsDoc = await getDoc(teamStatsRef);
+        if (updatedTeamStatsDoc.exists()) {
+          const updatedStatsData = updatedTeamStatsDoc.data();
+          setTeamStats(updatedStatsData);
+        }
+  
+        setEditStatsModalVisible(false);
       } else {
-        await setDoc(teamStatsDocRef, {
-          points: 0,
-          wins: 0,
-          shots: 0,
-          // Dodaj inne statystyki, których chcesz śledzić
-        });
+        console.error('Nie znaleziono teamId');
       }
     } catch (error) {
-      console.error('Błąd podczas pobierania statystyk drużyny', error);
+      console.error('Błąd podczas zapisywania statystyk', error);
     }
   };
 
-  const updateTeamStats = async () => {
-    try {
-      const teamStatsDocRef = doc(firestore, 'teamStats', user.team);
-      await setDoc(teamStatsDocRef, {
-        ...teamStats,
-        updatedAt: serverTimestamp(),
-      });
-    } catch (error) {
-      console.error('Błąd podczas aktualizacji statystyk drużyny', error);
-    }
+  const handleCancelEditStats = () => {
+    // W przypadku anulowania edycji przywróć pierwotne statystyki
+    setEditedStats(teamStats);
+    setEditStatsModalVisible(false);
   };
-
-  const handleStatChange = (statName, value) => {
-    setTeamStats((prevStats) => ({
-      ...prevStats,
-      [statName]: value,
-    }));
-  };
-
-  if (!user || !user.isCoach || !user.team) {
-    // Jeśli użytkownik nie jest trenerem lub nie ma zespołu, wyświetl odpowiedni komunikat
-    return (
-      <View style={styles.container}>
-        <Header user={user} setUser={setUser} />
-        <Text style={styles.errorText}>
-          Musisz być trenerem i mieć przypisany zespół, aby edytować statystyki drużyny.
-        </Text>
-      </View>
-    );
-  }
 
   return (
     <View style={styles.container}>
-      <Header user={user} setUser={setUser} />
+      <Header />
       <View style={styles.teamStatsContainer}>
         <Text style={styles.title}>Statystyki Drużyny</Text>
-        <View style={styles.statInputContainer}>
-          <Text style={styles.statLabel}>Punkty:</Text>
-          <TextInput
-            style={styles.statInput}
-            value={teamStats.points.toString()}
-            onChangeText={(text) => handleStatChange('points', parseInt(text) || 0)}
-            keyboardType="numeric"
-          />
-        </View>
-        <View style={styles.statInputContainer}>
-          <Text style={styles.statLabel}>Zwycięstwa:</Text>
-          <TextInput
-            style={styles.statInput}
-            value={teamStats.wins.toString()}
-            onChangeText={(text) => handleStatChange('wins', parseInt(text) || 0)}
-            keyboardType="numeric"
-          />
-        </View>
-        <View style={styles.statInputContainer}>
-          <Text style={styles.statLabel}>Strzały:</Text>
-          <TextInput
-            style={styles.statInput}
-            value={teamStats.shots.toString()}
-            onChangeText={(text) => handleStatChange('shots', parseInt(text) || 0)}
-            keyboardType="numeric"
-          />
-        </View>
-        <TouchableOpacity style={styles.saveButton} onPress={updateTeamStats}>
-          <Text style={styles.saveButtonText}>Zapisz</Text>
-        </TouchableOpacity>
+        {user && (
+          <View style={styles.teamInfo}>
+            <Text style={styles.userText}>
+              Zalogowany: {user.firstName} {user.lastName}
+            </Text>
+            {teamNames.length > 0 && (
+              <View style={styles.teamContainer}>
+                <Text style={styles.teamText}>Drużyny: </Text>
+                <Text style={styles.teamNameText}>{teamNames.join(', ')}</Text>
+              </View>
+            )}
+            {user.isCoach && (
+              <View>
+                <TouchableOpacity
+                  style={styles.editStatsButton}
+                  onPress={() => {
+                    setEditedStats(teamStats);
+                    setEditStatsModalVisible(true);
+                  }}
+                >
+                  <Text style={styles.editStatsButtonText}>Edytuj Statystyki</Text>
+                </TouchableOpacity>
+                <FlatList
+                  data={[
+                    { label: 'Liczba rozegranych meczów', value: teamStats.matchesPlayed },
+                    { label: 'Liczba wygranych', value: teamStats.wins },
+                    { label: 'Liczba remisów', value: teamStats.draws },
+                    { label: 'Liczba porażek', value: teamStats.losses },
+                  ]}
+                  keyExtractor={(item) => item.label}
+                  renderItem={({ item }) => (
+                    <View style={styles.statsItem}>
+                      <Text style={styles.statsLabel}>{item.label}</Text>
+                      <Text style={styles.statsValue}>{item.value}</Text>
+                    </View>
+                  )}
+                />
+              </View>
+            )}
+          </View>
+        )}
       </View>
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={editStatsModalVisible}
+        onRequestClose={() => setEditStatsModalVisible(false)}
+      >
+        <View style={styles.editStatsContainer}>
+          <Text style={styles.editStatsTitle}>Edytuj Statystyki</Text>
+          <TextInput
+            style={styles.input}
+            value={editedStats.matchesPlayed.toString()}
+            onChangeText={(text) =>
+              setEditedStats({ ...editedStats, matchesPlayed: parseInt(text) || 0 })
+            }
+          />
+          {/* Dodaj więcej pól do edycji w zależności od potrzeb */}
+          <TouchableOpacity style={styles.editStatsButton} onPress={handleSaveStats}>
+            <Text style={styles.editStatsButtonText}>Zapisz</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.editStatsButton}
+            onPress={handleCancelEditStats}
+          >
+            <Text style={styles.editStatsButtonText}>Anuluj</Text>
+          </TouchableOpacity>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -136,43 +199,70 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     color: 'white',
   },
-  statInputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 15,
-  },
-  statLabel: {
+  teamInfo: {
     fontSize: 18,
-    fontWeight: 'bold',
-    marginRight: 10,
     color: 'white',
   },
-  statInput: {
-    flex: 1,
-    height: 40,
-    backgroundColor: 'white',
-    borderRadius: 5,
-    paddingHorizontal: 10,
+  userText: {
+    color: 'white',
   },
-  saveButton: {
-    padding: 10,
-    backgroundColor: 'white',
-    borderRadius: 5,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 20,
+  teamContainer: {
+    flexDirection: 'row',
+    marginTop: 10,
   },
-  saveButtonText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: 'black',
-  },
-  errorText: {
+  teamText: {
     fontSize: 18,
     fontWeight: 'bold',
+    color: 'white',
+  },
+  teamNameText: {
+    fontSize: 18,
+    color: 'white',
+  },
+  statsItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 10,
+  },
+  statsLabel: {
+    fontSize: 16,
+    color: 'white',
+    fontWeight: 'bold',
+  },
+  statsValue: {
+    fontSize: 16,
+    color: 'white',
+  },
+  editStatsButton: {
+    backgroundColor: 'blue',
+    padding: 10,
+    borderRadius: 5,
+    marginTop: 10,
+  },
+  editStatsButtonText: {
+    color: 'white',
+    textAlign: 'center',
+  },
+  editStatsContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  editStatsTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 20,
     textAlign: 'center',
     color: 'white',
-    marginTop: 50,
+  },
+  input: {
+    height: 40,
+    borderColor: 'gray',
+    borderWidth: 1,
+    margin: 10,
+    padding: 5,
+    backgroundColor: 'white',
   },
 });
 
