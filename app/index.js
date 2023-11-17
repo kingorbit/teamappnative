@@ -19,6 +19,8 @@ import LeaveTeam from "../components/team/leaveTeam";
 import DeleteTeam from "../components/team/deleteTeam";
 import ManageTeam from "../components/team/manageTeam";
 import TeamStats from "../components/stats/teamStats";
+import TeamStatsView from "../components/stats/teamStatsView";
+import PlayerStats from "../components/stats/playerStats";
 
  
 
@@ -45,6 +47,9 @@ const App = () => {
         <Route path="/deleteTeam" element={<DeleteTeam />} />
         <Route path="/manageTeam" element={<ManageTeam />} />
         <Route path="/teamStats" element={<TeamStats />} />
+        <Route path="/teamStatsView" element={<TeamStatsView />} />
+        <Route path="/playerStats" element={<PlayerStats />} />
+
       </Routes>
     </NativeRouter>
   );

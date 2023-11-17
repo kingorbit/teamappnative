@@ -1,9 +1,13 @@
+// Calendar.js
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Link } from 'react-router-native';
 import Header from '../components/header';
-import { onAuthStateChanged, signOut } from 'firebase/auth';
+import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from '../constants/config';
+import CalendarScreen from '../components/calendar/calendarScreen'// Import nowego komponentu
+
+
 
 const Calendar = () => {
   const [user, setUser] = useState(null);
@@ -11,19 +15,18 @@ const Calendar = () => {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (userData) => {
       if (userData) {
-        setUser(userData); // Aktualizacja stanu użytkownika po zalogowaniu
+        setUser(userData);
       }
     });
 
-    return () => unsubscribe(); // Oczyszczanie subskrypcji po zamontowaniu komponentu
+    return () => unsubscribe();
   }, []);
 
   return (
     <View style={styles.container}>
       <Header user={user} setUser={setUser} />
       <View style={styles.calendarContent}>
-        <Text style={styles.title}>Kalendarz</Text>
-        {/* Tutaj umieść kalendarz */}
+        <CalendarScreen /> {/* Użycie nowego komponentu */}
         <Link to="/home" style={styles.link}>
           <Text style={styles.linkText}>Powrót do Home</Text>
         </Link>

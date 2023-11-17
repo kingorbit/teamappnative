@@ -58,11 +58,11 @@ const Stats = () => {
         <Text style={styles.title}>Statystyki</Text>
         {isCoach && (
           <>
-            <Link to="/teamStats" style={styles.link}>
-              <Text style={styles.linkText}>Statystyki Indywidualne - Trener</Text>
+            <Link to="/playerStats" style={styles.link}>
+              <Text style={styles.linkText}>Indywidualne - Trener</Text>
             </Link>
             <Link to="/teamStats" style={styles.link}>
-              <Text style={styles.linkText}>Statystyki Drużyny - Trener</Text>
+              <Text style={styles.linkText}>Drużyny - Trener</Text>
             </Link>
           </>
         )}
@@ -71,13 +71,13 @@ const Stats = () => {
             <Link to="/home" style={styles.link}>
               <Text style={styles.linkText}>Statystyki Indywidualne</Text>
             </Link>
-            <Link to="/home" style={styles.link}>
+            <Link to="/teamStatsView" style={styles.link}>
               <Text style={styles.linkText}>Statystyki Drużyny</Text>
             </Link>
           </>
         )}
         <Link to="/home" style={styles.link}>
-          <Text style={styles.linkText}>Powrót do Home</Text>
+          <Text style={styles.linkText}>Powrót</Text>
         </Link>
       </View>
     </View>
