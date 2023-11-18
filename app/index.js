@@ -21,6 +21,7 @@ import ManageTeam from "../components/team/manageTeam";
 import TeamStats from "../components/stats/teamStats";
 import TeamStatsView from "../components/stats/teamStatsView";
 import PlayerStats from "../components/stats/playerStats";
+import PlayerStatsView from "../components/stats/playerStatsView";
 
  
 
@@ -49,6 +50,7 @@ const App = () => {
         <Route path="/teamStats" element={<TeamStats />} />
         <Route path="/teamStatsView" element={<TeamStatsView />} />
         <Route path="/playerStats" element={<PlayerStats />} />
+        <Route path="/playerStatsView" element={<PlayerStatsView />} />
 
       </Routes>
     </NativeRouter>

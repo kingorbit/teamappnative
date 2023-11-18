@@ -68,7 +68,7 @@ const Stats = () => {
         )}
         {!isCoach && (
           <>
-            <Link to="/home" style={styles.link}>
+            <Link to="/playerStatsView" style={styles.link}>
               <Text style={styles.linkText}>Statystyki Indywidualne</Text>
             </Link>
             <Link to="/teamStatsView" style={styles.link}>

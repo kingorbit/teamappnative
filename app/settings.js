@@ -22,9 +22,13 @@ const Settings = () => {
   return (
     <View style={styles.container}>
       <Header user={user} setUser={setUser} />
-      <View style={styles.calendarContent}>
+      <View style={styles.settingsContent}>
         <Text style={styles.title}>Ustawienia Aplikacji</Text>
-        {/* Tutaj umieść kalendarz */}
+        <Text>Powiadomienia</Text>
+        <Text>Motyw</Text>
+        <Text>Zmiań hasło</Text>
+        <Text>Informacje</Text>
+
         <Link to="/home" style={styles.link}>
           <Text style={styles.linkText}>Powrót do Home</Text>
         </Link>

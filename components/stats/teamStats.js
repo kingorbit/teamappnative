@@ -760,7 +760,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#9091fd',
   },
   teamStatsContainer: {
-    padding: 20,
+    paddingTop: 30,
+    justifyContent: 'center',
+    alignItems: 'center',
+    flex: 1,
   },
   title: {
     fontSize: 24,
