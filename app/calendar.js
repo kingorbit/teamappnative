@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Modal, TextInput } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Modal, TextInput, Platform } from 'react-native';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from '../constants/config';
 import { Agenda } from 'react-native-calendars';
 import Header from '../components/header';
+import EventForm from '../components/calendar/eventForm'; // Dodaj import komponentu formularza
 
 const Calendar = () => {
   const [user, setUser] = useState(null);
@@ -14,6 +15,7 @@ const Calendar = () => {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (userData) => {
+      console.log('onAuthStateChanged - userData:', userData); // Doda
       if (userData) {
         setUser(userData);
       }
@@ -22,10 +24,7 @@ const Calendar = () => {
     // Pobierz wydarzenia z bazy danych lub innego źródła
     // Przykładowe dane:
     const fetchedEvents = {
-      '2023-11-17': [{ name: 'Mecz 1' }],
-      '2023-11-18': [{ name: 'Trening 1' }],
-      '2023-11-19': [],
-      '2023-11-20': [{ name: 'Mecz 2' }, { name: 'Trening 2' }],
+      '2023-11-19': [{ name: 'Mecz 1' }],
     };
     setEvents(fetchedEvents);
 
@@ -33,7 +32,9 @@ const Calendar = () => {
   }, []);
 
   const addEvent = () => {
-    if (selectedDate) {
+    console.log('user:', user); // Dodaj ten log
+    if (selectedDate && user && user.isCoach) {
+      console.log('Dodaję wydarzenie'); // Dodaj ten log
       const updatedEvents = { ...events };
       if (updatedEvents[selectedDate]) {
         updatedEvents[selectedDate].push({ name: eventName });
@@ -48,41 +49,44 @@ const Calendar = () => {
   return (
     <View style={styles.container}>
       <Header user={user} setUser={setUser} />
-      <View style={styles.calendarContent}>
-        <Agenda
-         style={{ width: '75%' }}
-          items={events}
-          renderItem={(item) => (
-            <View style={styles.item}>
-              <Text>{item.name}</Text>
-            </View>
-          )}
-          onDayPress={(day) => {
-            setSelectedDate(day.dateString);
-            setModalVisible(true);
-          }}
-        />
-        <Modal
-          animationType="slide"
-          transparent={true}
-          visible={modalVisible}
-          onRequestClose={() => {
-            setModalVisible(false);
-          }}
-        >
-          <View style={styles.modalContainer}>
-            <Text style={styles.modalTitle}>Dodaj Wydarzenie</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Nazwa wydarzenia"
-              onChangeText={(text) => setEventName(text)}
-            />
-            <TouchableOpacity style={styles.button} onPress={addEvent}>
-              <Text style={styles.buttonText}>Dodaj</Text>
-            </TouchableOpacity>
+      <Agenda
+        items={events}
+        renderItem={(item) => (
+          <View style={styles.item}>
+            <Text>{item.name}</Text>
           </View>
-        </Modal>
-      </View>
+        )}
+        onDayPress={(day) => {
+          setSelectedDate(day.dateString);
+          setModalVisible(true);
+        }}
+        pastScrollRange={12}
+        futureScrollRange={12}
+        hideExtraDays={false}
+        style={styles.agenda}
+      />
+{user && user.isCoach && (
+  <TouchableOpacity
+    style={styles.addButton}
+    onPress={() => {
+      console.log('Button pressed - user.isCoach:', user.isCoach); // Dodaj ten log
+      setModalVisible(true);
+    }}
+  >
+    <Text style={styles.buttonText}>Dodaj Wydarzenie</Text>
+  </TouchableOpacity>
+)}
+
+
+
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={modalVisible}
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <EventForm onClose={() => setModalVisible(false)} />
+      </Modal>
     </View>
   );
 };
@@ -92,12 +96,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#9091fd',
   },
-  calendarContent: {
-    paddingTop: 30,
-    justifyContent: 'center',
-    alignItems: 'center',
-    flex: 1,
-  },
   item: {
     backgroundColor: 'white',
     flex: 1,
@@ -106,32 +104,21 @@ const styles = StyleSheet.create({
     marginRight: 10,
     marginTop: 17,
   },
-  modalContainer: {
+  agenda: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    ...Platform.select({
+      ios: {
+        paddingTop: 64,
+      },
+      android: {},
+    }),
   },
-  modalTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 20,
-    textAlign: 'center',
-    color: 'white',
-  },
-  input: {
-    height: 40,
-    borderColor: 'gray',
-    borderWidth: 1,
-    margin: 10,
-    padding: 5,
-    backgroundColor: 'white',
-  },
-  button: {
+  addButton: {
     backgroundColor: 'blue',
     padding: 10,
     borderRadius: 5,
     marginTop: 10,
+    alignSelf: 'center',
   },
   buttonText: {
     color: 'white',

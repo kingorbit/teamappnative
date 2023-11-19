@@ -1,26 +1,26 @@
-// CalendarScreen.js
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, TextInput } from 'react-native';
 import { Calendar } from 'react-native-calendars';
 
-const CalendarScreen = () => {
-  const [selectedDate, setSelectedDate] = useState('');
-
-  const handleDayPress = (day) => {
-    // Obsługa naciśnięcia dnia
-    setSelectedDate(day.dateString);
-  };
+const CalendarScreen = ({ addEvent }) => {
+  const [selectedDate, setSelectedDate] = useState(null);
+  const [eventName, setEventName] = useState('');
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Wybierz datę:</Text>
       <Calendar
-        onDayPress={handleDayPress}
-        markedDates={{
-          [selectedDate]: { selected: true, marked: true, selectedColor: 'blue' },
+        onDayPress={(day) => {
+          setSelectedDate(day.dateString);
         }}
       />
-      <Text style={styles.selectedDate}>{selectedDate}</Text>
+      <TextInput
+        style={styles.input}
+        placeholder="Nazwa wydarzenia"
+        onChangeText={(text) => setEventName(text)}
+      />
+      <TouchableOpacity style={styles.button} onPress={() => addEvent(selectedDate, eventName)}>
+        <Text style={styles.buttonText}>Dodaj</Text>
+      </TouchableOpacity>
     </View>
   );
 };
@@ -32,14 +32,23 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: '#f0f0f0',
   },
-  title: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 10,
+  input: {
+    height: 40,
+    borderColor: 'gray',
+    borderWidth: 1,
+    margin: 10,
+    padding: 5,
+    backgroundColor: 'white',
   },
-  selectedDate: {
-    fontSize: 16,
+  button: {
+    backgroundColor: 'blue',
+    padding: 10,
+    borderRadius: 5,
     marginTop: 10,
+  },
+  buttonText: {
+    color: 'white',
+    textAlign: 'center',
   },
 });
 
