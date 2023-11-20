@@ -21,37 +21,38 @@ const FormSignUp = () => {
       Alert.alert('Błąd rejestracji', 'Proszę wypełnić wszystkie pola.');
       return;
     }
-
+  
     if (password !== confirmPassword) {
       Alert.alert('Błąd rejestracji', 'Hasła nie pasują do siebie. Wprowadź je ponownie.');
       return;
     }
-
+  
     const isValidAge = /^\d+$/.test(age) && age >= 1 && age <= 99;
     if (!isValidAge) {
       Alert.alert('Błąd rejestracji', 'Podaj prawidłowy wiek (1-99).');
       return;
     }
-
+  
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-
+  
       const userDoc = await addDoc(collection(firestore, 'users'), {
         email: email,
         firstName: firstName,
         lastName: lastName,
         age: age,
         position: position,
+        isCoach: false, // Dodaj nową opcję isCoach z wartością false
         uid: userCredential.user.uid,
       });
-
+  
       console.log('Dodano użytkownika do kolekcji "users" z ID:', userDoc.id);
       navigate('/home');
     } catch (error) {
       console.error('Błąd rejestracji', error);
       Alert.alert('Błąd rejestracji', error.message);
     }
-  };
+  }
 
   const positionOptions = ['Bramkarz', 'Obronca', 'Pomocnik', 'Napastnik'];
 

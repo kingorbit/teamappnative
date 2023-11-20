@@ -131,17 +131,19 @@ const TeamStats = () => {
             setTeamNames(userTeams.map((team) => team.name));
 
             if (userTeams.length > 0 && userData.isCoach) {
-              const coachTeamId = userTeams[0].id;
-              setTeamId(coachTeamId);
-              const teamStatsRef = doc(firestore, 'teamStats', coachTeamId);
-              const teamStatsDoc = await getDoc(teamStatsRef);
-
-              if (teamStatsDoc.exists()) {
-                const statsData = teamStatsDoc.data();
-                setTeamStats(statsData);
-                setEditedStats(statsData); // Dodane do zainicjowania stanu edytowanych statystyk
-              }
-            }
+  const coachTeamId = userTeams[0].id;
+  setTeamId(coachTeamId);
+  const currentSeason = new Date().getFullYear(); // zakładam, że sezon to rok kalendarzowy
+  const teamStatsRef = doc(firestore, 'teamStats', coachTeamId, 'seasons', currentSeason.toString());
+  
+  const teamStatsDoc = await getDoc(teamStatsRef);
+  
+  if (teamStatsDoc.exists()) {
+    const statsData = teamStatsDoc.data();
+    setTeamStats(statsData);
+    setEditedStats(statsData);
+  }
+}
           }
         } catch (error) {
           console.error('Błąd pobierania danych użytkownika', error);
@@ -154,20 +156,19 @@ const TeamStats = () => {
 
   const handleSaveStats = async () => {
     try {
-      console.log('Przed teamId:', teamId);
       if (teamId) {
-        const teamStatsRef = doc(firestore, 'teamStats', teamId);
-        console.log('teamStatsRef.path:', teamStatsRef.path);
+        const currentSeason = new Date().getFullYear(); // zakładam, że sezon to rok kalendarzowy
+        const teamStatsRef = doc(firestore, 'teamStats', teamId, 'seasons', currentSeason.toString());
+        
         await setDoc(teamStatsRef, editedStats);
-        console.log('Po setDoc');
-
+        
         // Po zapisaniu statystyk ponownie pobierz dane z bazy danych
         const updatedTeamStatsDoc = await getDoc(teamStatsRef);
         if (updatedTeamStatsDoc.exists()) {
           const updatedStatsData = updatedTeamStatsDoc.data();
           setTeamStats(updatedStatsData);
         }
-
+        
         setEditStatsModalVisible(false);
       } else {
         console.error('Nie znaleziono teamId');

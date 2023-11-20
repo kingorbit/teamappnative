@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Modal, TextInput, Platform } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Modal, TextInput, Platform, Link } from 'react-native';
 import { Agenda } from 'react-native-calendars';
 import Header from '../components/header';
 import { collection, query, where, getDocs, addDoc } from 'firebase/firestore';
@@ -107,6 +107,9 @@ const Calendar = () => {
         hideExtraDays={false}
         style={styles.agenda}
       />
+              <Link to="/home" style={styles.link}>
+          <Text style={styles.linkText}>Powrót do Home</Text>
+        </Link>
 
       {user && isCoach && (
         <TouchableOpacity style={styles.addButton} onPress={() => setEventFormVisible(true)}>
