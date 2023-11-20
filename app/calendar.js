@@ -1,48 +1,88 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Modal, TextInput, Platform } from 'react-native';
-import { onAuthStateChanged } from 'firebase/auth';
-import { auth } from '../constants/config';
 import { Agenda } from 'react-native-calendars';
 import Header from '../components/header';
-import EventForm from '../components/calendar/eventForm'; // Dodaj import komponentu formularza
+import { collection, query, where, getDocs, addDoc } from 'firebase/firestore';
+import { onAuthStateChanged } from 'firebase/auth';
+import { firestore, auth } from '../constants/config';
 
 const Calendar = () => {
   const [user, setUser] = useState(null);
   const [events, setEvents] = useState({});
   const [selectedDate, setSelectedDate] = useState(null);
-  const [modalVisible, setModalVisible] = useState(false);
+  const [isCoach, setIsCoach] = useState(false);
+  const [isEventFormVisible, setEventFormVisible] = useState(false);
   const [eventName, setEventName] = useState('');
+  const [eventCategory, setEventCategory] = useState('');
+  const [eventDate, setEventDate] = useState('');
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (userData) => {
-      console.log('onAuthStateChanged - userData:', userData); // Doda
+    const unsubscribe = onAuthStateChanged(auth, async (userData) => {
       if (userData) {
-        setUser(userData);
+        try {
+          const usersRef = collection(firestore, 'users');
+          const q = query(usersRef, where('uid', '==', userData.uid));
+          const querySnapshot = await getDocs(q);
+
+          if (!querySnapshot.empty) {
+            const userData = querySnapshot.docs[0].data();
+            setUser(userData);
+
+            if (userData.isCoach) {
+              setIsCoach(true);
+            } else {
+              setIsCoach(false);
+            }
+
+            // Pobierz wydarzenia po teamId
+            if (userData.teamId) {
+              const eventsRef = collection(firestore, 'calendars');
+              const eventsQuery = query(eventsRef, where('teamId', '==', userData.teamId));
+              const eventsSnapshot = await getDocs(eventsQuery);
+
+              if (!eventsSnapshot.empty) {
+                let updatedEvents = {};
+                eventsSnapshot.forEach((doc) => {
+                  const eventData = doc.data();
+                  const eventDate = eventData.eventDate.split('T')[0];
+                  if (!updatedEvents[eventDate]) {
+                    updatedEvents[eventDate] = [];
+                  }
+                  updatedEvents[eventDate].push(eventData);
+                });
+                setEvents(updatedEvents);
+              }
+            }
+          }
+        } catch (error) {
+          console.error('Błąd pobierania danych użytkownika', error);
+        }
       }
     });
 
-    // Pobierz wydarzenia z bazy danych lub innego źródła
-    // Przykładowe dane:
-    const fetchedEvents = {
-      '2023-11-19': [{ name: 'Mecz 1' }],
+    return () => {
+      unsubscribe();
     };
-    setEvents(fetchedEvents);
-
-    return () => unsubscribe();
   }, []);
 
-  const addEvent = () => {
-    console.log('user:', user); // Dodaj ten log
-    if (selectedDate && user && user.isCoach) {
-      console.log('Dodaję wydarzenie'); // Dodaj ten log
-      const updatedEvents = { ...events };
-      if (updatedEvents[selectedDate]) {
-        updatedEvents[selectedDate].push({ name: eventName });
-      } else {
-        updatedEvents[selectedDate] = [{ name: eventName }];
+  const addEvent = async () => {
+    if (selectedDate && user && isCoach && eventName && eventCategory && eventDate) {
+      const event = {
+        eventDate: eventDate,
+        eventId: `${user.teamId}_${user.uid}_${new Date().getTime()}`,
+        eventName: eventName,
+        eventCategory: eventCategory,
+        teamId: user.teamId,
+        uid: user.uid,
+      };
+
+      try {
+        const docRef = await addDoc(collection(firestore, 'calendars'), event);
+        console.log('Event added successfully!', docRef.id);
+        setEventFormVisible(false);
+      } catch (error) {
+        console.error('Error adding event:', error);
       }
-      setEvents(updatedEvents);
-      setModalVisible(false);
     }
   };
 
@@ -53,44 +93,58 @@ const Calendar = () => {
         items={events}
         renderItem={(item) => (
           <View style={styles.item}>
-            <Text>{item.name}</Text>
+            <Text>{item.eventName}</Text>
           </View>
         )}
         onDayPress={(day) => {
           setSelectedDate(day.dateString);
-          setModalVisible(true);
+          if (user && isCoach) {
+            setEventFormVisible(true);
+          }
         }}
         pastScrollRange={12}
         futureScrollRange={12}
         hideExtraDays={false}
         style={styles.agenda}
       />
-{user && user.isCoach && (
-  <TouchableOpacity
-    style={styles.addButton}
-    onPress={() => {
-      console.log('Button pressed - user.isCoach:', user.isCoach); // Dodaj ten log
-      setModalVisible(true);
-    }}
-  >
-    <Text style={styles.buttonText}>Dodaj Wydarzenie</Text>
-  </TouchableOpacity>
-)}
 
-
+      {user && isCoach && (
+        <TouchableOpacity style={styles.addButton} onPress={() => setEventFormVisible(true)}>
+          <Text style={styles.buttonText}>Dodaj Wydarzenie</Text>
+        </TouchableOpacity>
+      )}
 
       <Modal
         animationType="slide"
         transparent={true}
-        visible={modalVisible}
-        onRequestClose={() => setModalVisible(false)}
+        visible={isEventFormVisible}
+        onRequestClose={() => setEventFormVisible(false)}
       >
-        <EventForm onClose={() => setModalVisible(false)} />
+        <View style={styles.modalContainer}>
+          <Text style={styles.modalTitle}>Dodaj Wydarzenie</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Nazwa wydarzenia"
+            onChangeText={(text) => setEventName(text)}
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Kategoria"
+            onChangeText={(text) => setEventCategory(text)}
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Data (np. 21.11.2023 17:00)"
+            onChangeText={(text) => setEventDate(text)}
+          />
+          <TouchableOpacity style={styles.button} onPress={addEvent}>
+            <Text style={styles.buttonText}>Dodaj</Text>
+          </TouchableOpacity>
+        </View>
       </Modal>
     </View>
   );
 };
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -123,6 +177,26 @@ const styles = StyleSheet.create({
   buttonText: {
     color: 'white',
     textAlign: 'center',
+  },
+  modalContainer: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: '20%',
+  },
+  modalTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 20,
+    textAlign: 'center',
+    color: 'white',
+  },
+  button: {
+    backgroundColor: 'blue',
+    padding: 10,
+    borderRadius: 5,
+    marginTop: 10,
   },
 });
 
