@@ -5,6 +5,7 @@ import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firesto
 import Header from '../header';
 import { firestore, auth } from '../../constants/config';
 import { useNavigate } from 'react-router-native';
+import ModalDropdown from 'react-native-modal-dropdown'; // Importujemy komponent do obsługi rozwijanego menu
 
 const TeamStatsView = () => {
   const [user, setUser] = useState(null);
@@ -63,6 +64,8 @@ const TeamStatsView = () => {
   const [editStatsModalVisible, setEditStatsModalVisible] = useState(false);
   const [teamId, setTeamId] = useState(null);
   const [selectedMode, setSelectedMode] = useState('total'); // 'total', 'home', or 'away'
+  const [selectedSeason, setSelectedSeason] = useState('2023'); // Domyślny wybór sezonu
+  const [seasonOptions, setSeasonOptions] = useState(['2023', '2022', '2021']); // Lista dostępnych sezonów
 
   const navigate = useNavigate();
 
@@ -102,7 +105,6 @@ const TeamStatsView = () => {
                 console.log(statsData); // Dodaj tę linię
                 setTeamStats(statsData);
               }
-              
             }
           }
         } catch (error) {
@@ -113,6 +115,7 @@ const TeamStatsView = () => {
 
     return () => unsubscribe();
   }, []);
+
 
   return (
     <View style={styles.container}>

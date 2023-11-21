@@ -1,7 +1,24 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, Modal, TextInput, ScrollView } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
+  TouchableOpacity,
+  Modal,
+  TextInput,
+  ScrollView,
+} from 'react-native';
 import { onAuthStateChanged } from 'firebase/auth';
-import { collection, query, where, getDocs, doc, updateDoc, setDoc, getDoc } from 'firebase/firestore';
+import {
+  collection,
+  query,
+  where,
+  getDocs,
+  doc,
+  updateDoc,
+  getDoc,
+} from 'firebase/firestore';
 import Header from '../header';
 import { firestore, auth } from '../../constants/config';
 import { useNavigate } from 'react-router-native';
@@ -9,42 +26,46 @@ import { useNavigate } from 'react-router-native';
 const PlayerStats = () => {
   const [user, setUser] = useState(null);
   const [teamNames, setTeamNames] = useState([]);
+  const [userTeams, setUserTeams] = useState([]);
+  const [members, setMembers] = useState([]);
+  const [selectedPlayerId, setSelectedPlayerId] = useState(null);
   const [playerStats, setPlayerStats] = useState({
-    matchesPlayed: 0,
-    matchesPlayedHome: 0,
-    matchesPlayedAway: 0,
-    goals: 0,
-    goalsHome: 0,
-    goalsAway: 0,
     assists: 0,
-    assistsHome: 0,
     assistsAway: 0,
-    yellowCards: 0,
-    redCards: 0,
+    assistsHome: 0,
+    goals: 0,
+    goalsAway: 0,
+    goalsHome: 0,
+    matchesPlayed: 0,
+    matchesPlayedAway: 0,
+    matchesPlayedHome: 0,
     shots: 0,
-    shotsOnTarget: 0,
-    passes: 0,
-    tackles: 0,
+    shotsAway: 0,
+    shotsHome: 0,
+    yellowCards: 0,
+    yellowCardsAway: 0,
+    yellowCardsHome: 0,
   });
+
   const [editedStats, setEditedStats] = useState({
-    matchesPlayed: 0,
-    matchesPlayedHome: 0,
-    matchesPlayedAway: 0,
-    goals: 0,
-    goalsHome: 0,
-    goalsAway: 0,
     assists: 0,
-    assistsHome: 0,
     assistsAway: 0,
-    yellowCards: 0,
-    redCards: 0,
+    assistsHome: 0,
+    goals: 0,
+    goalsAway: 0,
+    goalsHome: 0,
+    matchesPlayed: 0,
+    matchesPlayedAway: 0,
+    matchesPlayedHome: 0,
     shots: 0,
-    shotsOnTarget: 0,
-    passes: 0,
-    tackles: 0,
+    shotsAway: 0,
+    shotsHome: 0,
+    yellowCards: 0,
+    yellowCardsAway: 0,
+    yellowCardsHome: 0,
   });
+
   const [editStatsModalVisible, setEditStatsModalVisible] = useState(false);
-  const [playerId, setPlayerId] = useState(null);
 
   const navigate = useNavigate();
 
@@ -72,17 +93,17 @@ const PlayerStats = () => {
               }
             }
             setTeamNames(userTeams.map((team) => team.name));
+            setUserTeams(userTeams);
 
-            if (userTeams.length > 0 && !userData.isCoach) {
-              const playerId = userData.uid;
-              setPlayerId(playerId);
-              const playerStatsRef = doc(firestore, 'playerStats', playerId);
-              const playerStatsDoc = await getDoc(playerStatsRef);
+            if (userTeams.length > 0 && userData.isCoach) {
+              // Pobierz listę zawodników
+              const teamId = userTeams[0].id; // Załóżmy, że zawsze istnieje co najmniej jedna drużyna
+              const teamRef = doc(firestore, 'teams', teamId);
+              const teamDocSnapshot = await getDoc(teamRef);
 
-              if (playerStatsDoc.exists()) {
-                const statsData = playerStatsDoc.data();
-                setPlayerStats(statsData);
-                setEditedStats(statsData); // Dodane do zainicjowania stanu edytowanych statystyk
+              if (teamDocSnapshot.exists()) {
+                const teamData = teamDocSnapshot.data();
+                setMembers(teamData.members || []);
               }
             }
           }
@@ -97,85 +118,86 @@ const PlayerStats = () => {
 
   const handleSaveStats = async () => {
     try {
-      console.log('Przed playerId:', playerId);
-      if (playerId) {
-        const playerStatsRef = doc(firestore, 'playerStats', playerId);
-        console.log('playerStatsRef.path:', playerStatsRef.path);
-        await setDoc(playerStatsRef, editedStats);
-        console.log('Po setDoc');
+      if (selectedPlayerId) {
+        const playerStatsRef = doc(firestore, 'playerStats', selectedPlayerId, 'seasons', '2023');
+        await updateDoc(playerStatsRef, { ...editedStats });
 
         // Po zapisaniu statystyk ponownie pobierz dane z bazy danych
-        const updatedPlayerStatsDoc = await getDoc(playerStatsRef);
-        if (updatedPlayerStatsDoc.exists()) {
-          const updatedStatsData = updatedPlayerStatsDoc.data();
-          setPlayerStats(updatedStatsData);
+        const updatedPlayerDoc = await getDoc(playerStatsRef);
+        if (updatedPlayerDoc.exists()) {
+          const updatedPlayerData = updatedPlayerDoc.data();
+          setPlayerStats(updatedPlayerData || {});
         }
 
         setEditStatsModalVisible(false);
       } else {
-        console.error('Nie znaleziono playerId');
+        console.error('Nie znaleziono selectedPlayerId');
       }
     } catch (error) {
       console.error('Błąd podczas zapisywania statystyk', error);
     }
   };
 
+  console.log('user', user);
+  console.log('userTeams', userTeams);
+  console.log('selectedPlayerId', selectedPlayerId);
+  console.log('playerStats', playerStats);
+  console.log('members:', members)
+  console.log('editedStats', editedStats);
+
   return (
     <View style={styles.container}>
       <Header />
       <ScrollView>
-      <View style={styles.teamStatsContainer}>
-        <Text style={styles.title}>Statystyki Zawodnika</Text>
-        {user && (
-          <View style={styles.teamInfo}>
-            {teamNames.length > 0 && (
-              <View style={styles.teamContainer}>
-                <Text style={styles.teamText}>Drużyny: </Text>
-                <Text style={styles.teamNameText}>{teamNames.join(', ')}</Text>
-              </View>
-            )}
-            {!user.isCoach && (
-              <View>
-                <TouchableOpacity
-                  style={styles.editStatsButton}
-                  onPress={() => {
-                    setEditedStats(playerStats); // Dodane do zainicjowania stanu edytowanych statystyk
-                    setEditStatsModalVisible(true);
-                  }}
-                >
-                  <Text style={styles.editStatsButtonText}>Edytuj Statystyki</Text>
-                </TouchableOpacity>
-                <FlatList
-                  data={[
-                    { label: 'Liczba rozegranych meczów', key: 'matchesPlayed' },
-                    { label: 'Liczba meczów na wyjeżdzie', key: 'matchesPlayedHome'},
-                    { label: 'Liczba meczów u siebie', key: 'matchesPlayedAway'},
-                    { label: 'Liczba strzelonych bramek', key: 'goals'},
-                    { label: 'Liczba strzelonych bramek u siebie', key: 'goalsHome'},
-                    { label: 'Liczba strzelonych bramek na wyjezdzie', key: 'goalsAway'},
-                    { label: 'Liczba asyst', key: 'assists' },
-                    { label: 'Liczba asyst u siebie', key: 'assistsHome'},
-                    { label: 'Liczba asyst na wyjezdzie', key: 'assistsAway'},
-                    { label: 'Liczba żółtych kartek', key: 'yellowCards' },
-                    { label: 'Liczba czerwonych kartek', key: 'redCards' },
-                    { label: 'Liczba strzałów', key: 'shots' },
-                    { label: 'Liczba strzałów na bramkę', key: 'shotsOnTarget' },
-                    { label: 'Liczba podań', key: 'passes' },
-                    { label: 'Liczba interwencji', key: 'tackles' },
-                  ]}
-                  renderItem={({ item }) => (
-                    <View style={styles.statItem}>
-                      <Text style={styles.statLabel}>{item.label}: </Text>
-                      <Text style={styles.statValue}>{playerStats[item.key]}</Text>
-                    </View>
-                  )}
-                  keyExtractor={(item) => item.key}
-                />
-              </View>
-            )}
-          </View>
-        )}
-      </View>
+        <View style={styles.teamStatsContainer}>
+          <Text style={styles.title}>Statystyki Zawodnika</Text>
+          {user && (
+            <View style={styles.teamInfo}>
+              {teamNames.length > 0 && (
+                <View style={styles.teamContainer}>
+                  <Text style={styles.teamText}>Drużyny: </Text>
+                  <Text style={styles.teamNameText}>{teamNames.join(', ')}</Text>
+                </View>
+              )}
+              {user.isCoach && (
+                <View>
+                  <FlatList
+                    data={members}
+                    renderItem={({ item }) => (
+                      <TouchableOpacity
+                        style={styles.playerItem}
+                        onPress={async () => {
+                          try {
+                            const playerStatsRef = doc(firestore, 'playerStats', item, 'seasons', '2023');
+                            const playerStatsDoc = await getDoc(playerStatsRef);
+
+                            if (playerStatsDoc.exists()) {
+                              const playerStatsData = playerStatsDoc.data();
+                              setSelectedPlayerId(item);
+                              setPlayerStats(playerStatsData || {});
+                              setEditedStats(playerStatsData || {});
+                              setEditStatsModalVisible(true);
+                            } else {
+                              console.error(`Dane statystyk zawodnika o uid ${item} nie istnieją.`);
+                            }
+                          } catch (error) {
+                            console.error('Błąd pobierania danych zawodnika', error);
+                          }
+                        }}
+                      >
+                        <Text style={styles.playerName}>{item}</Text>
+                      </TouchableOpacity>
+                    )}
+                    keyExtractor={(item) => item}
+                  />
+                </View>
+              )}
+                          <TouchableOpacity style={styles.link} onPress={() => navigate('/stats')}>
+          <Text style={styles.linkText}>Powrót</Text>
+        </TouchableOpacity>
+            </View>
+          )}
+        </View>
       </ScrollView>
       <Modal
         animationType="slide"
@@ -187,45 +209,41 @@ const PlayerStats = () => {
           <View style={styles.modalView}>
             <Text style={styles.modalTitle}>Edytuj Statystyki</Text>
             <ScrollView>
-            <FlatList
-              data={[
-                { label: 'Liczba rozegranych meczów', key: 'matchesPlayed' },
-                { label: 'Liczba meczów na wyjeździe', key: 'matchesPlayedHome'},
-                { label: 'Liczba meczów u siebie', key: 'matchesPlayedAway'},
-                { label: 'Liczba strzelonych bramek', key: 'goals'},
-                { label: 'Liczba strzelonych bramek u siebie', key: 'goalsHome'},
-                { label: 'Liczba strzelonych bramek na wyjezdzie', key: 'goalsAway'},
-                { label: 'Liczba asyst', key: 'assists' },
-                { label: 'Liczba asyst u siebie', key: 'assistsHome'},
-                { label: 'Liczba asyst na wyjezdzie', key: 'assistsAway'},
-                { label: 'Liczba żółtych kartek', key: 'yellowCards' },
-                { label: 'Liczba czerwonych kartek', key: 'redCards' },
-                { label: 'Liczba strzałów', key: 'shots' },
-                { label: 'Liczba strzałów na bramkę', key: 'shotsOnTarget' },
-                { label: 'Liczba podań', key: 'passes' },
-                { label: 'Liczba interwencji', key: 'tackles' },
-              ]}
-              renderItem={({ item }) => (
-                <View style={styles.editStatItem}>
-                  <Text style={styles.editStatLabel}>{item.label}</Text>
-                  <TextInput
-                    style={styles.editStatInput}
-                    keyboardType="numeric"
-                    value={editedStats[item.key].toString()}
-                    onChangeText={(text) => {
-                      const updatedStats = { ...editedStats, [item.key]: parseInt(text) || 0 };
-                      setEditedStats(updatedStats);
-                    }}
-                  />
-                </View>
-              )}
-              keyExtractor={(item) => item.key}
-            />
+              <FlatList
+                data={[
+                  { label: 'Liczba rozegranych meczów', key: 'matchesPlayed' },
+                  { label: 'Liczba meczów na wyjeździe', key: 'matchesPlayedHome' },
+                  { label: 'Liczba meczów u siebie', key: 'matchesPlayedAway' },
+                  { label: 'Liczba strzelonych bramek', key: 'goals' },
+                  { label: 'Liczba strzelonych bramek u siebie', key: 'goalsHome' },
+                  { label: 'Liczba strzelonych bramek na wyjeździe', key: 'goalsAway' },
+                  { label: 'Liczba asyst', key: 'assists' },
+                  { label: 'Liczba asyst u siebie', key: 'assistsHome' },
+                  { label: 'Liczba asyst na wyjeździe', key: 'assistsAway' },
+                  { label: 'Liczba żółtych kartek', key: 'yellowCards' },
+                  { label: 'Liczba żółtych kartek u siebie', key: 'yellowCardsHome' },
+                  { label: 'Liczba żółtych kartek na wyjeździe', key: 'yellowCardsAway' },
+                  { label: 'Liczba strzałów', key: 'shots' },
+                  { label: 'Liczba strzałów na bramkę', key: 'shotsOnTarget' },
+                ]}
+                renderItem={({ item }) => (
+                  <View style={styles.editStatItem}>
+                    <Text style={styles.editStatLabel}>{item.label}</Text>
+                    <TextInput
+                      style={styles.editStatInput}
+                      keyboardType="numeric"
+                      value={(editedStats[item.key] || '').toString()}
+                      onChangeText={(text) => {
+                        const updatedStats = { ...editedStats, [item.key]: parseInt(text) || 0 };
+                        setEditedStats(updatedStats);
+                      }}
+                    />
+                  </View>
+                )}
+                keyExtractor={(item) => item.key}
+              />
             </ScrollView>
-            <TouchableOpacity
-              style={styles.saveStatsButton}
-              onPress={handleSaveStats}
-            >
+            <TouchableOpacity style={styles.saveStatsButton} onPress={handleSaveStats}>
               <Text style={styles.saveStatsButtonText}>Zapisz</Text>
             </TouchableOpacity>
             <TouchableOpacity
@@ -270,26 +288,15 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginLeft: 5,
   },
-  editStatsButton: {
+  playerItem: {
     backgroundColor: '#3498db',
     padding: 10,
     borderRadius: 5,
+    marginVertical: 5,
   },
-  editStatsButtonText: {
+  playerName: {
     color: 'white',
     fontWeight: 'bold',
-  },
-  statItem: {
-    flexDirection: 'row',
-    marginBottom: 5,
-  },
-  statLabel: {
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  statValue: {
-    fontSize: 16,
-    marginLeft: 5,
   },
   centeredView: {
     flex: 1,
