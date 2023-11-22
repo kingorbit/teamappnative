@@ -268,488 +268,43 @@ const TeamStats = () => {
         )}
       </View>
       <Modal
-        animationType="slide"
-        transparent={true}
-        visible={editStatsModalVisible}
-        onRequestClose={() => setEditStatsModalVisible(false)}
-      >
-        <ScrollView style={styles.modalContainer}>
-        <View style={styles.modalContainer}>
-          <Text style={styles.modalTitle}>Edytuj Statystyki</Text>
-          <Text style={styles.inputLabel}>Liczba rozegranych meczów</Text>
+  animationType="slide"
+  transparent={true}
+  visible={editStatsModalVisible}
+  onRequestClose={() => setEditStatsModalVisible(false)}
+>
+  <ScrollView style={styles.modalContainer}>
+    <View style={styles.modalContent}>
+      <Text style={styles.modalTitle}>Edytuj Statystyki</Text>
+      
+      {Object.entries(editedStats).map(([key, value]) => (
+        <View key={key} style={styles.inputContainer}>
+          <Text style={styles.inputLabel}>{key}</Text>
           <TextInput
             style={styles.input}
-            value={editedStats.matchesPlayed.toString()}
+            value={value.toString()}
             onChangeText={(text) =>
               setEditedStats({
                 ...editedStats,
-                matchesPlayed: parseInt(text) || 0,
+                [key]: parseInt(text) || 0,
               })
             }
           />
-          <Text style={styles.inputLabel}>Liczba rozegranych meczów u siebie</Text>
-                    <TextInput
-            style={styles.input}
-            value={editedStats.matchesPlayedHome.toString()}
-            onChangeText={(text) =>
-              setEditedStats({
-                ...editedStats,
-                matchesPlayedHome: parseInt(text) || 0,
-              })
-            }
-          />
-          <Text style={styles.inputLabel}>Liczba rozegranych meczów na wyjezdzie</Text>
-                    <TextInput
-            style={styles.input}
-            value={editedStats.matchesPlayedAway.toString()}
-            onChangeText={(text) =>
-              setEditedStats({
-                ...editedStats,
-                matchesPlayedAway: parseInt(text) || 0,
-              })
-            }
-          />
-          <Text style={styles.inputLabel}>Liczba wygranych </Text>
-                    <TextInput
-            style={styles.input}
-            value={editedStats.wins.toString()}
-            onChangeText={(text) =>
-              setEditedStats({
-                ...editedStats,
-                wins: parseInt(text) || 0,
-              })
-            }
-          />
-                    <Text style={styles.inputLabel}>Liczba wygranych u siebie</Text>
-                              <TextInput
-            style={styles.input}
-            value={editedStats.winsHome.toString()}
-            onChangeText={(text) =>
-              setEditedStats({
-                ...editedStats,
-                winsHome: parseInt(text) || 0,
-              })
-            }
-          />
-          <Text style={styles.inputLabel}>Liczba wygranych na wyjezdzie</Text>
-                    <TextInput
-            style={styles.input}
-            value={editedStats.winsAway.toString()}
-            onChangeText={(text) =>
-              setEditedStats({
-                ...editedStats,
-                winsAway: parseInt(text) || 0,
-              })
-            }
-          />
-<Text style={styles.inputLabel}>Liczba remisow</Text>
-          <TextInput
-            style={styles.input}
-            value={editedStats.draws.toString()}
-            onChangeText={(text) =>
-              setEditedStats({
-                ...editedStats,
-                draws: parseInt(text) || 0,
-              })
-            }
-          />
-          <Text style={styles.inputLabel}>Liczba remisow u siebie</Text>
-                              <TextInput
-            style={styles.input}
-            value={editedStats.drawsHome.toString()}
-            onChangeText={(text) =>
-              setEditedStats({
-                ...editedStats,
-                drawsHome: parseInt(text) || 0,
-              })
-            }
-          />
-          <Text style={styles.inputLabel}>Liczba remisow na wyjezdzie</Text>
-                              <TextInput
-            style={styles.input}
-            value={editedStats.drawsAway.toString()}
-            onChangeText={(text) =>
-              setEditedStats({
-                ...editedStats,
-                drawsAway: parseInt(text) || 0,
-              })
-            }
-          />
-          <Text style={styles.inputLabel}>Liczba przegranych</Text>
-          <TextInput
-            style={styles.input}
-            value={editedStats.losses.toString()}
-            onChangeText={(text) =>
-              setEditedStats({
-                ...editedStats,
-                losses: parseInt(text) || 0,
-              })
-            }
-          />
-          <Text style={styles.inputLabel}>Liczba przegranych u siebie</Text>
-                              <TextInput
-            style={styles.input}
-            value={editedStats.lossesHome.toString()}
-            onChangeText={(text) =>
-              setEditedStats({
-                ...editedStats,
-                lossesHome: parseInt(text) || 0,
-              })
-            }
-          />
-          <Text style={styles.inputLabel}>Liczba przegranych na wyjezdzie</Text>
-                              <TextInput
-            style={styles.input}
-            value={editedStats.lossesAway.toString()}
-            onChangeText={(text) =>
-              setEditedStats({
-                ...editedStats,
-                lossesAway: parseInt(text) || 0,
-              })
-            }
-          />
-          <Text style={styles.inputLabel}>Liczba goli</Text>
-                              <TextInput
-            style={styles.input}
-            value={editedStats.goals.toString()}
-            onChangeText={(text) =>
-              setEditedStats({
-                ...editedStats,
-                goals: parseInt(text) || 0,
-              })
-            }
-          />
-          <Text style={styles.inputLabel}>Liczba goli u siebie</Text>
-                              <TextInput
-            style={styles.input}
-            value={editedStats.goalsHome.toString()}
-            onChangeText={(text) =>
-              setEditedStats({
-                ...editedStats,
-                goalsHome: parseInt(text) || 0,
-              })
-            }
-          />
-          <Text style={styles.inputLabel}>Liczba goli na wyjezdzie</Text>
-                              <TextInput
-            style={styles.input}
-            value={editedStats.goalsAway.toString()}
-            onChangeText={(text) =>
-              setEditedStats({
-                ...editedStats,
-                goalsAway: parseInt(text) || 0,
-              })
-            }
-          />
-          <Text style={styles.inputLabel}>Liczba goli straconych</Text>
-                              <TextInput
-            style={styles.input}
-            value={editedStats.goalsLost.toString()}
-            onChangeText={(text) =>
-              setEditedStats({
-                ...editedStats,
-                goalsLost: parseInt(text) || 0,
-              })
-            }
-          />
-          <Text style={styles.inputLabel}>Liczba goli straconych u siebie</Text>
-                              <TextInput
-            style={styles.input}
-            value={editedStats.goalsLostHome.toString()}
-            onChangeText={(text) =>
-              setEditedStats({
-                ...editedStats,
-                goalsLostHome: parseInt(text) || 0,
-              })
-            }
-          />
-          <Text style={styles.inputLabel}>Liczba goli straconych na wyjezdzie</Text>
-                              <TextInput
-            style={styles.input}
-            value={editedStats.goalsLostAway.toString()}
-            onChangeText={(text) =>
-              setEditedStats({
-                ...editedStats,
-                goalsLostAway : parseInt(text) || 0,
-              })
-            }
-          />
-          <Text style={styles.inputLabel}>Liczba strzalow</Text>
-                              <TextInput
-            style={styles.input}
-            value={editedStats.shots.toString()}
-            onChangeText={(text) =>
-              setEditedStats({
-                ...editedStats,
-                shots: parseInt(text) || 0,
-              })
-            }
-          />
-          <Text style={styles.inputLabel}>Liczba strzalow u siebie</Text>
-                              <TextInput
-            style={styles.input}
-            value={editedStats.shotsHome.toString()}
-            onChangeText={(text) =>
-              setEditedStats({
-                ...editedStats,
-                shotsHome: parseInt(text) || 0,
-              })
-            }
-          />
-          <Text style={styles.inputLabel}>Liczba strzalow na wyjezdzie</Text>
-                              <TextInput
-            style={styles.input}
-            value={editedStats.shotsAway.toString()}
-            onChangeText={(text) =>
-              setEditedStats({
-                ...editedStats,
-                shotsAway: parseInt(text) || 0,
-              })
-            }
-          />
-          <Text style={styles.inputLabel}>Liczba celnych strzalow</Text>
-                              <TextInput
-            style={styles.input}
-            value={editedStats.shotsOnTarget.toString()}
-            onChangeText={(text) =>
-              setEditedStats({
-                ...editedStats,
-                shotsOnTarget: parseInt(text) || 0,
-              })
-            }
-          />
-          <Text style={styles.inputLabel}>Liczba celnych strzalow u siebie</Text>
-                              <TextInput
-            style={styles.input}
-            value={editedStats.shotsOnTargetHome.toString()}
-            onChangeText={(text) =>
-              setEditedStats({
-                ...editedStats,
-                shotsOnTargetHome: parseInt(text) || 0,
-              })
-            }
-          />
-          <Text style={styles.inputLabel}>Liczba celnych strzalow na wyjezdzie</Text>
-                              <TextInput
-            style={styles.input}
-            value={editedStats.shotsOnTargetAway.toString()}
-            onChangeText={(text) =>
-              setEditedStats({
-                ...editedStats,
-                shotsOnTargetAway: parseInt(text) || 0,
-              })
-            }
-          />
-          <Text style={styles.inputLabel}>Posiadanie pilki</Text>
-                              <TextInput
-            style={styles.input}
-            value={editedStats.ballPossesion.toString()}
-            onChangeText={(text) =>
-              setEditedStats({
-                ...editedStats,
-                ballPossesion: parseInt(text) || 0,
-              })
-            }
-          />
-          <Text style={styles.inputLabel}>Posiadanie pilki u siebie</Text>
-                              <TextInput
-            style={styles.input}
-            value={editedStats.ballPossesionHome.toString()}
-            onChangeText={(text) =>
-              setEditedStats({
-                ...editedStats,
-                ballPossesionHome: parseInt(text) || 0,
-              })
-            }
-          />
-          <Text style={styles.inputLabel}>Posiadanie pilki na wyjezdzie</Text>
-                              <TextInput
-            style={styles.input}
-            value={editedStats.ballPossesionAway.toString()}
-            onChangeText={(text) =>
-              setEditedStats({
-                ...editedStats,
-                ballPossesionAway: parseInt(text) || 0,
-              })
-            }
-          />
-          <Text style={styles.inputLabel}>Liczba rzutow roznych</Text>
-                              <TextInput
-            style={styles.input}
-            value={editedStats.corners.toString()}
-            onChangeText={(text) =>
-              setEditedStats({
-                ...editedStats,
-                corners: parseInt(text) || 0,
-              })
-            }
-          />
-          <Text style={styles.inputLabel}>Liczba rzutow roznych u siebie</Text>
-                              <TextInput
-            style={styles.input}
-            value={editedStats.cornersHome.toString()}
-            onChangeText={(text) =>
-              setEditedStats({
-                ...editedStats,
-                cornersHome: parseInt(text) || 0 ,
-              })
-            }
-          />
-          <Text style={styles.inputLabel}>Liczba rzutow roznych na wyjezdzie</Text>
-                              <TextInput
-            style={styles.input}
-            value={editedStats.cornersAway.toString()}
-            onChangeText={(text) =>
-              setEditedStats({
-                ...editedStats,
-                cornersAway: parseInt(text) || 0,
-              })
-            }
-          />
-          <Text style={styles.inputLabel}>Liczba fauli</Text>
-                              <TextInput
-            style={styles.input}
-            value={editedStats.Fouls.toString()}
-            onChangeText={(text) =>
-              setEditedStats({
-                ...editedStats,
-                Fouls: parseInt(text) || 0,
-              })
-            }
-          />
-          <Text style={styles.inputLabel}>Liczba fauli u siebie</Text>
-                              <TextInput
-            style={styles.input}
-            value={editedStats.FoulsHome.toString()}
-            onChangeText={(text) =>
-              setEditedStats({
-                ...editedStats,
-                FoulsHome: parseInt(text) || 0,
-              })
-            }
-          />
-          <Text style={styles.inputLabel}>Liczba fauli na wyjezdzue</Text>
-                              <TextInput
-            style={styles.input}
-            value={editedStats.FoulsAway.toString()}
-            onChangeText={(text) =>
-              setEditedStats({
-                ...editedStats,
-                FoulsAway: parseInt(text) || 0,
-              })
-            }
-          />
-          <Text style={styles.inputLabel}>Liczba kontuzji</Text>
-                              <TextInput
-            style={styles.input}
-            value={editedStats.Injury.toString()}
-            onChangeText={(text) =>
-              setEditedStats({
-                ...editedStats,
-                Injury: parseInt(text) || 0,
-              })
-            }
-          />
-          <Text style={styles.inputLabel}>Liczba kontuzji u siebie</Text>
-                              <TextInput
-            style={styles.input}
-            value={editedStats.InjuryHome.toString()}
-            onChangeText={(text) =>
-              setEditedStats({
-                ...editedStats,
-                InjuryHome: parseInt(text) || 0,
-              })
-            }
-          />
-          <Text style={styles.inputLabel}>Liczba kontuzji na wyjezdzie</Text>
-                              <TextInput
-            style={styles.input}
-            value={editedStats.InjuryAway.toString()}
-            onChangeText={(text) =>
-              setEditedStats({
-                ...editedStats,
-                InjuryAway: parseInt(text) || 0,
-              })
-            }
-          />
-          <Text style={styles.inputLabel}>Liczba podan</Text>
-                              <TextInput
-            style={styles.input}
-            value={editedStats.Pass.toString()}
-            onChangeText={(text) =>
-              setEditedStats({
-                ...editedStats,
-                Pass: parseInt(text) || 0,
-              })
-            }
-          />
-          <Text style={styles.inputLabel}>Liczba podan u siebie</Text>
-                              <TextInput
-            style={styles.input}
-            value={editedStats.PassHome.toString()}
-            onChangeText={(text) =>
-              setEditedStats({
-                ...editedStats,
-                PassHome: parseInt(text) || 0,
-              })
-            }
-          />
-          <Text style={styles.inputLabel}>Liczba podan na wyjezdzie</Text>
-                              <TextInput
-            style={styles.input}
-            value={editedStats.PassAway.toString()}
-            onChangeText={(text) =>
-              setEditedStats({
-                ...editedStats,
-                PassAway: parseInt(text) || 0,
-              })
-            }
-          />
-          <Text style={styles.inputLabel}>Liczba odbiorow</Text>
-                              <TextInput
-            style={styles.input}
-            value={editedStats.Tackles.toString()}
-            onChangeText={(text) =>
-              setEditedStats({
-                ...editedStats,
-                Tackles: parseInt(text) || 0,
-              })
-            }
-          />
-          <Text style={styles.inputLabel}>Liczba odbiorow u siebie</Text>
-                              <TextInput
-            style={styles.input}
-            value={editedStats.TacklesHome.toString()}
-            onChangeText={(text) =>
-              setEditedStats({
-                ...editedStats,
-                TacklesHome: parseInt(text) || 0,
-              })
-            }
-          />
-          <Text style={styles.inputLabel}>Liczba odbiorow na wyjezdzie</Text>
-                              <TextInput
-            style={styles.input}
-            value={editedStats.TacklesAway.toString()}
-            onChangeText={(text) =>
-              setEditedStats({
-                ...editedStats,
-                TacklesAway: parseInt(text) || 0,
-              })
-            }
-          />
-          <TouchableOpacity style={[styles.button, { backgroundColor: 'green' }]} onPress={handleSaveStats}>
-            <Text>Zapisz</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.button, { backgroundColor: 'red' }]}
-            onPress={() => setEditStatsModalVisible(false)}
-          >
-            <Text>Powrót</Text>
-          </TouchableOpacity>
         </View>
-        </ScrollView>
-      </Modal>
+      ))}
+
+      <TouchableOpacity style={[styles.button, { backgroundColor: 'green' }]} onPress={handleSaveStats}>
+        <Text>Zapisz</Text>
+      </TouchableOpacity>
+      <TouchableOpacity
+        style={[styles.button, { backgroundColor: 'red' }]}
+        onPress={() => setEditStatsModalVisible(false)}
+      >
+        <Text>Powrót</Text>
+      </TouchableOpacity>
+    </View>
+  </ScrollView>
+</Modal>
       </ScrollView>
     </View>
   );
@@ -844,9 +399,14 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: 'black',
   },
-  modalContainer: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  modalContent: {
+    backgroundColor: 'white',
+    padding: 20,
+    borderRadius: 10,
+    margin: 20,
+  },
+  inputContainer: {
+    marginBottom: 15,
   },
   modalTitle: {
     fontSize: 24,
