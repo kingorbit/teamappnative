@@ -1,230 +1,161 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, TouchableOpacity, Modal, TouchableHighlight } from 'react-native';
 import { onAuthStateChanged } from 'firebase/auth';
-import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
+import { auth, firestore } from '../../constants/config';
+import { getDocs, collection, query, where, doc, getDoc } from 'firebase/firestore';
 import Header from '../header';
-import { firestore, auth } from '../../constants/config';
 import { useNavigate } from 'react-router-native';
-import ModalDropdown from 'react-native-modal-dropdown'; // Importujemy komponent do obsługi rozwijanego menu
 
 const TeamStatsView = () => {
   const [user, setUser] = useState(null);
-  const [teamNames, setTeamNames] = useState([]);
-  const [teamStats, setTeamStats] = useState({
-    total: {
-      matchesPlayed: 0,
-      wins: 0,
-      draws: 0,
-      losses: 0,
-      goals: 0,
-      goalsLost: 0,
-      shots: 0,
-      shotsOnTarget: 0,
-      ballPossession: 0,
-      corners: 0,
-      fouls: 0,
-      injuries: 0,
-      passes: 0,
-      tackles: 0,
-    },
-    home: {
-      matchesPlayedHome: 0,
-      wins: 0,
-      draws: 0,
-      losses: 0,
-      goals: 0,
-      goalsLost: 0,
-      shots: 0,
-      shotsOnTarget: 0,
-      ballPossession: 0,
-      corners: 0,
-      fouls: 0,
-      injuries: 0,
-      passes: 0,
-      tackles: 0,
-    },
-    away: {
-      matchesPlayed: 0,
-      wins: 0,
-      draws: 0,
-      losses: 0,
-      goals: 0,
-      goalsLost: 0,
-      shots: 0,
-      shotsOnTarget: 0,
-      ballPossession: 0,
-      corners: 0,
-      fouls: 0,
-      injuries: 0,
-      passes: 0,
-      tackles: 0,
-    },
-  });
-
-  const [editStatsModalVisible, setEditStatsModalVisible] = useState(false);
-  const [teamId, setTeamId] = useState(null);
-  const [selectedMode, setSelectedMode] = useState('total'); // 'total', 'home', or 'away'
-  const [selectedSeason, setSelectedSeason] = useState('2023'); // Domyślny wybór sezonu
-  const [seasonOptions, setSeasonOptions] = useState(['2023', '2022', '2021']); // Lista dostępnych sezonów
-
+  const [teamData, setTeamData] = useState(null);
+  const [teamStats, setTeamStats] = useState(null);
+  const [isModalVisible, setModalVisible] = useState(false);
+  const [selectedSeason, setSelectedSeason] = useState('2023'); // Domyślny sezon
   const navigate = useNavigate();
 
+
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (userData) => {
-      if (userData) {
-        try {
-          const usersRef = collection(firestore, 'users');
-          const q = query(usersRef, where('uid', '==', userData.uid));
-          const querySnapshot = await getDocs(q);
+    const fetchData = async (userData) => {
+      try {
+        console.log('Próba pobrania danych zespołu dla użytkownika:', userData);
+        console.log('UID użytkownika:', userData.uid);
 
-          if (!querySnapshot.empty) {
-            const userData = querySnapshot.docs[0].data();
-            setUser(userData);
+        const teamsRef = collection(firestore, 'teams');
+        const teamsQuery = query(teamsRef, where('members', 'array-contains', userData.uid));
+        const teamsSnapshot = await getDocs(teamsQuery);
 
-            const teamsRef = collection(firestore, 'teams');
-            const teamsQuery = query(teamsRef, where('members', 'array-contains', userData.uid));
-            const teamsSnapshot = await getDocs(teamsQuery);
+        if (!teamsSnapshot.empty) {
+          // Zakładamy, że użytkownik należy do jednego zespołu (możesz dostosować ten fragment, jeśli użytkownik może należeć do wielu zespołów)
+          const teamDoc = teamsSnapshot.docs[0];
+          const teamData = teamDoc.data();
+          setTeamData(teamData);
+          console.log('Dane zespołu:', teamData);
 
-            const userTeams = [];
-            for (const teamDoc of teamsSnapshot.docs) {
-              const teamData = teamDoc.data();
-              if (teamData.members && teamData.members.includes(userData.uid)) {
-                userTeams.push({ id: teamDoc.id, name: teamData.name });
-              }
-            }
-            setTeamNames(userTeams.map((team) => team.name));
+          // Pobierz dane zespołowe
+          const teamStatsRef = doc(firestore, 'teamStats', teamDoc.id, 'seasons', selectedSeason);
+          const teamStatsDoc = await getDoc(teamStatsRef);
 
-            if (userTeams.length) {
-              const coachTeamId = userTeams[0].id;
-              setTeamId(coachTeamId);
-              const teamStatsRef = doc(firestore, 'teamStats', coachTeamId);
-              const teamStatsDoc = await getDoc(teamStatsRef);
-
-              if (teamStatsDoc.exists()) {
-                const statsData = teamStatsDoc.data();
-                console.log(statsData); // Dodaj tę linię
-                setTeamStats(statsData);
-              }
-            }
+          if (teamStatsDoc.exists()) {
+            const teamStatsData = teamStatsDoc.data();
+            setTeamStats(teamStatsData);
+            console.log('Dane zespołowe:', teamStatsData);
+          } else {
+            console.log('Brak danych zespołowych dla wybranego sezonu');
           }
-        } catch (error) {
-          console.error('Błąd pobierania danych użytkownika', error);
+        } else {
+          console.log('Brak zespołu dla użytkownika');
         }
+      } catch (error) {
+        console.error('Błąd pobierania danych:', error);
+      }
+    };
+
+    const unsubscribe = onAuthStateChanged(auth, (userData) => {
+      if (userData) {
+        setUser(userData);
+        console.log('Zalogowano użytkownika:', userData);
+        fetchData(userData);
+      } else {
+        console.log('Użytkownik wylogowany');
       }
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [selectedSeason]); // Dodane selectedSeason do zależności useEffect
 
+  const handleSeasonChange = (season) => {
+    setSelectedSeason(season);
+    setModalVisible(!isModalVisible);
+  };
+
+  const toggleModal = () => {
+    setModalVisible(!isModalVisible);
+  };
+
+  if (!teamData) {
+    return <Text style={styles.noData}>Brak danych zespołu</Text>;
+  }
 
   return (
     <View style={styles.container}>
       <Header />
-      <ScrollView>
-        <View style={styles.teamStatsContainer}>
-          <Text style={styles.title}>Statystyki Drużyny</Text>
-          {user && (
-            <View style={styles.teamInfo}>
-              {teamNames.length > 0 && (
-                <View style={styles.teamContainer}>
-                  <Text style={styles.teamText}>Drużyny: </Text>
-                  <Text style={styles.teamNameText}>{teamNames.join(', ')}</Text>
-                </View>
-              )}
-              { (
-                <View>
-                  <FlatList
-                    data={[
-                      { label: 'Total', key: 'total' },
-                      { label: 'Home', key: 'home' },
-                      { label: 'Away', key: 'away' },
-                    ]}
-                    keyExtractor={(item) => item.key}
-                    renderItem={({ item }) => (
-                      <TouchableOpacity
-                        style={[styles.modeButton, selectedMode === item.key && styles.selectedModeButton]}
-                        onPress={() => setSelectedMode(item.key)}
-                      >
-                        <Text style={styles.modeButtonText}>{item.label}</Text>
-                      </TouchableOpacity>
-                    )}
-                    horizontal
-                  />
-                  <FlatList
-                    data={[
-                      { label: 'Liczba rozegranych meczów', key: 'matchesPlayed' },
-                      { label: 'Liczba wygranych', key: 'wins' },
-                      { label: 'Liczba remisów', key: 'draws' },
-                      { label: 'Liczba porażek', key: 'losses' },
-                      { label: 'Liczba strzelonych bramek', key: 'goals' },
-                      { label: 'Liczba straconych bramek', key: 'goalsLost' },
-                      { label: 'Liczba strzałów', key: 'shots' },
-                      { label: 'Liczba celnych strzałów', key: 'shotsOnTarget' },
-                      { label: 'Posiadanie piłki', key: 'ballPossession', unit: '%' },
-                      { label: 'Liczba rzutów rożnych', key: 'corners' },
-                      { label: 'Liczba fauli', key: 'fouls' },
-                      { label: 'Liczba kontuzji', key: 'injuries' },
-                      { label: 'Liczba podań', key: 'passes' },
-                      { label: 'Liczba odbiorów', key: 'tackles' },
-                    ]}
-                    keyExtractor={(item) => item.label}
-                    renderItem={({ item }) => (
-                      <View style={styles.statsItem}>
-                        <Text style={styles.statsLabel}>{item.label}</Text>
-                        <Text style={styles.statsValue}>
-                          {teamStats && teamStats[selectedMode] ? teamStats[selectedMode][item.key] : 'Brak danych'}{item.unit}
-                        </Text>
-                      </View>
-                    )}
-                  />
-                </View>
-              )}
-              <TouchableOpacity style={styles.link} onPress={() => navigate('/stats')}>
-                <Text style={styles.linkText}>Powrót</Text>
-              </TouchableOpacity>
+      <View style={styles.contentContainer}>
+        <Text style={styles.title}>Statystyki Zespołowe</Text>
+
+        <TouchableOpacity onPress={toggleModal} style={styles.seasonButton}>
+          <Text>Aktualny sezon: {selectedSeason}</Text>
+        </TouchableOpacity>
+
+        <Modal
+          animationType="slide"
+          transparent={true}
+          visible={isModalVisible}
+          onRequestClose={() => {
+            setModalVisible(!isModalVisible);
+          }}
+        >
+          <View style={styles.centeredView}>
+            <View style={styles.modalView}>
+              <Text style={styles.modalText}>Wybierz sezon</Text>
+
+              <TouchableHighlight
+                style={{ ...styles.openButton, backgroundColor: '#2196F3' }}
+                onPress={() => handleSeasonChange('2022')}
+              >
+                <Text style={styles.textStyle}>Sezon 2022</Text>
+              </TouchableHighlight>
+
+              <TouchableHighlight
+                style={{ ...styles.openButton, backgroundColor: '#2196F3' }}
+                onPress={() => handleSeasonChange('2023')}
+              >
+                <Text style={styles.textStyle}>Sezon 2023</Text>
+              </TouchableHighlight>
             </View>
-          )}
-        </View>
-      </ScrollView>
+            
+          </View>
+        </Modal>
+
+        {teamStats ? (
+          <View style={styles.statsContainer}>
+            <Text style={styles.statItem}>Mecze zespołu: {teamStats.matchesPlayed}</Text>
+            <Text style={styles.statItem}>Bramki zespołu: {teamStats.goals}</Text>
+            {/* Dodaj inne statystyki zespołowe, jakie są dostępne w kolekcji teamStats */}
+          </View>
+        ) : (
+          <Text style={styles.noData}>Brak danych zespołowych dla wybranego sezonu</Text>
+        )}
+          <TouchableOpacity style={styles.link} onPress={() => navigate('/stats')}>
+            <Text style={styles.linkText}>Powrót</Text>
+          </TouchableOpacity>
+      </View>
+      
     </View>
   );
 };
 
-const styles = StyleSheet.create({
+const styles = {
   container: {
-    flex: 1,
     backgroundColor: '#9091fd',
+    flex: 1,
   },
-  teamStatsContainer: {
-    paddingTop: 30,
+  contentContainer: {
+    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    flex: 1,
-  },
-  teamContainer:{
-    marginTop: 20,
+    padding: 20,
   },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
+    marginBottom: 20,
     textAlign: 'center',
-    color: 'white',
-  },
-  teamInfo: {
-    fontSize: 18,
-    color: 'white',
-  },
-  userText: {
-    color: 'white',
-  },
-  inputLabel: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: 'white',
   },
   link: {
     padding: 10,
-    margin: 10,
+    marginTop: 70,
+    marginLeft: 10,
     borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
@@ -232,97 +163,68 @@ const styles = StyleSheet.create({
     elevation: 3,
     width: '75%',
     backgroundColor: '#f0f0f0',
-  },
-  linkText: {
-    fontSize: 18,
-    fontWeight: 'bold',
+    },
+    linkText: {
     color: 'black',
-  },
-  teamContainer: {
-    marginTop: 10,
-    alignContent: 'center',
-    alignItems: 'center',
-  },
-  teamText: {
-    fontSize: 18,
     fontWeight: 'bold',
-    color: 'white',
+    },
+  seasonButton: {
+    padding: 10,
+    backgroundColor: '#f0f0f0',
+    borderRadius: 5,
   },
-  teamNameText: {
+  statsContainer: {
+    marginTop: 10,
+    width: '100%',
+  },
+  statItem: {
     fontSize: 18,
-    color: 'white',
-  },
-  statsItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
     marginBottom: 10,
   },
-  statsLabel: {
-    fontSize: 16,
-    color: 'white',
-    fontWeight: 'bold',
-  },
-  statsValue: {
-    fontSize: 16,
-    color: 'white',
-  },
-  editStatsButton: {
-    padding: 10,
-    margin: 10,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-    textAlign: 'center',
-    elevation: 3,
-    width: '75%',
-    backgroundColor: '#f0f0f0',
-  },
-  editStatsButtonText: {
+  noData: {
     fontSize: 18,
-    fontWeight: 'bold',
-    color: 'black',
+    color: 'red',
   },
-  modalContainer: {
+  // Modal styles
+  centeredView: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-  },
-  modalTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 20,
-    textAlign: 'center',
-    color: 'white',
-  },
-  input: {
-    height: 40,
-    borderColor: 'gray',
-    borderWidth: 1,
-    margin: 10,
-    padding: 5,
-    backgroundColor: 'white',
-  },
-  button: {
-    backgroundColor: 'blue',
-    padding: 10,
-    borderRadius: 5,
-    marginTop: 10,
-  },
-  modeButton: {
-    padding: 10,
-    marginRight: 10,
-    borderRadius: 10,
-    alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#f0f0f0',
+    alignItems: 'center',
+    marginTop: 22,
   },
-  selectedModeButton: {
-    backgroundColor: '#9091fd',
+  modalView: {
+    margin: 20,
+    backgroundColor: 'white',
+    borderRadius: 20,
+    padding: 35,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
   },
-  modeButtonText: {
-    fontSize: 18,
+  openButton: {
+    backgroundColor: '#F194FF',
+    borderRadius: 10,
+    padding: 10,
+    elevation: 2,
+    marginBottom: 10,
+  },
+  textStyle: {
+    color: 'white',
     fontWeight: 'bold',
-    color: 'black',
+    textAlign: 'center',
   },
-});
+  modalText: {
+    marginBottom: 15,
+    textAlign: 'center',
+    fontWeight: 'bold',
+    fontSize: 18,
+  },
+};
 
 export default TeamStatsView;
