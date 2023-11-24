@@ -46,7 +46,9 @@
     "react-native-screens": "~3.22.0",
     "react-native-svg": "^13.14.0",
     "react-native-web": "~0.19.6",
-    "react-router-native": "^6.18.0"
+    "react-router-native": "^6.18.0",
+    "save": "^2.9.0",
+    "styled-components": "^6.1.1"
   },
   "devDependencies": {
     "@babel/core": "^7.19.3",

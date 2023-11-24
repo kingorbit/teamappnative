@@ -18,7 +18,6 @@ const Profil = () => {
     position: '',
     isCoach: '',
     phoneNumber: '',
-    
   });
 
   useEffect(() => {
@@ -94,7 +93,7 @@ const Profil = () => {
   return (
     <View style={styles.container}>
       <Header user={user} setUser={setUser} />
-      <View style={styles.calendarContent}>
+      <View style={styles.profileContent}>
         <Text style={styles.title}>Twój Profil</Text>
         {user && (
           <View style={styles.detailsContainer}>
@@ -110,98 +109,96 @@ const Profil = () => {
             <Text style={styles.label}>Numer telefonu: {user.phoneNumber || 'Brak Telefonu'}</Text>
           </View>
         )}
-<TouchableOpacity
-  style={styles.editButton}
-  onPress={() => {
-    setEditedData({
-      firstName: user?.firstName || '',
-      lastName: user?.lastName || '',
-      email: user?.email || '',
-      position: user?.position || '',
-      phoneNumber: user?.phoneNumber || '',
-      age: user?.age || '',
-      uid: user?.uid || '',
-      isCoach: user?.isCoach || '',
-    });
-    setEditModalVisible(true);
-  }}
->
-  <Text style={styles.buttonText}>Edytuj Profil</Text>
-</TouchableOpacity>
+        <TouchableOpacity
+          style={styles.editButton}
+          onPress={() => {
+            setEditedData({
+              firstName: user?.firstName || '',
+              lastName: user?.lastName || '',
+              email: user?.email || '',
+              position: user?.position || '',
+              phoneNumber: user?.phoneNumber || '',
+              age: user?.age || '',
+              uid: user?.uid || '',
+              isCoach: user?.isCoach || '',
+            });
+            setEditModalVisible(true);
+          }}
+        >
+          <Text style={styles.buttonText}>Edytuj Profil</Text>
+        </TouchableOpacity>
         <Link to="/home" style={styles.link}>
           <Text style={styles.linkText}>Powrót do Home</Text>
         </Link>
       </View>
 
     {/* Modal do edycji profili */}
-<Modal animationType="slide" transparent={true} visible={isEditModalVisible}>
-  <View style={styles.modalContainer}>
-  <View style={styles.modalContent}>
-    <Text style={styles.modalTitle}>Edytuj Profil</Text>
-    <View style={styles.inputContainer}>
-      <Text style={styles.label}>Imię</Text>
-      <TextInput
-        style={styles.input}
-        value={editedData.firstName}
-        onChangeText={(text) => setEditedData({ ...editedData, firstName: text })}
-      />
-    </View>
-    <View style={styles.inputContainer}>
-      <Text style={styles.label}>Nazwisko</Text>
-      <TextInput
-        style={styles.input}
-        value={editedData.lastName}
-        onChangeText={(text) => setEditedData({ ...editedData, lastName: text })}
-      />
-    </View>
-    <View style={styles.inputContainer}>
-      <Text style={styles.label}>Email</Text>
-      <TextInput
-        style={styles.input}
-        value={editedData.email}
-        onChangeText={(text) => setEditedData({ ...editedData, email: text })}
-      />
-    </View>
-    <View style={styles.inputContainer}>
-      
-    {!user?.isCoach && (  // Dodajemy warunek, aby wyświetlać tylko gdy użytkownik nie jest trenerem
+    <Modal animationType="slide" transparent={true} visible={isEditModalVisible}>
+      <View style={styles.modalContainer}>
+        <View style={styles.modalContent}>
+          <Text style={styles.modalTitle}>Edytuj Profil</Text>
+          <View style={styles.inputContainer}>
+            <Text style={styles.label}>Imię</Text>
             <TextInput
               style={styles.input}
-              placeholder="Pozycja"
-              value={editedData.position}
-              onChangeText={(text) => setEditedData({ ...editedData, position: text })}
+              value={editedData.firstName}
+              onChangeText={(text) => setEditedData({ ...editedData, firstName: text })}
             />
-          )}
-    </View>
-    <View style={styles.inputContainer}>
-      <Text style={styles.label}>Wiek</Text>
-      <TextInput
-        style={styles.input}
-        value={editedData.age.toString()}
-        onChangeText={(text) => setEditedData({ ...editedData, age: text })}
-      />
-    </View>
-    <View style={styles.inputContainer}>
-      <Text style={styles.label}>Numer telefonu</Text>
-      <TextInput
-        style={styles.input}
-        value={editedData.phoneNumber.toString()}
-        onChangeText={(text) => setEditedData({ ...editedData, phoneNumber: text })}
-      />
-    </View>
-    <TouchableOpacity style={styles.button} onPress={handleUpdate}>
-      <Text style={styles.buttonText}>Zapisz</Text>
-    </TouchableOpacity>
-    <TouchableOpacity style={styles.button} onPress={() => setEditModalVisible(false)}>
-      <Text style={styles.buttonText}>Anuluj</Text>
-    </TouchableOpacity>
+          </View>
+          <View style={styles.inputContainer}>
+            <Text style={styles.label}>Nazwisko</Text>
+            <TextInput
+              style={styles.input}
+              value={editedData.lastName}
+              onChangeText={(text) => setEditedData({ ...editedData, lastName: text })}
+            />
+          </View>
+          <View style={styles.inputContainer}>
+            <Text style={styles.label}>Email</Text>
+            <TextInput
+              style={styles.input}
+              value={editedData.email}
+              onChangeText={(text) => setEditedData({ ...editedData, email: text })}
+            />
+          </View>
+          <View style={styles.inputContainer}>
+            {!user?.isCoach && (
+              <TextInput
+                style={styles.input}
+                placeholder="Pozycja"
+                value={editedData.position}
+                onChangeText={(text) => setEditedData({ ...editedData, position: text })}
+              />
+            )}
+          </View>
+          <View style={styles.inputContainer}>
+            <Text style={styles.label}>Wiek</Text>
+            <TextInput
+              style={styles.input}
+              value={editedData.age.toString()}
+              onChangeText={(text) => setEditedData({ ...editedData, age: text })}
+            />
+          </View>
+          <View style={styles.inputContainer}>
+            <Text style={styles.label}>Numer telefonu</Text>
+            <TextInput
+              style={styles.input}
+              value={editedData.phoneNumber.toString()}
+              onChangeText={(text) => setEditedData({ ...editedData, phoneNumber: text })}
+            />
+          </View>
+          <TouchableOpacity style={styles.button} onPress={handleUpdate}>
+            <Text style={styles.buttonText}>Zapisz</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.button} onPress={() => setEditModalVisible(false)}>
+            <Text style={styles.buttonText}>Anuluj</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </Modal>
   </View>
-  </View>
-</Modal>
-    </View>
-    
-  );
-};
+);
+            }
 
 const styles = StyleSheet.create({
   container: {
@@ -217,7 +214,7 @@ const styles = StyleSheet.create({
   },
   inputContainer: {
     marginBottom: 10,
-    width: '60%', // Ustaw stałą szerokość dla wszystkich pól wejściowych
+    width: '60%',
   },
   input: {
     width: '100%',
@@ -262,7 +259,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: 'black',
   },
-  calendarContent: {
+  profileContent: {
     paddingTop: 30,
     justifyContent: 'center',
     alignItems: 'center',

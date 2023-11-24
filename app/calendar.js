@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Modal, TextInput, Platform, Link } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Modal, TextInput, Platform } from 'react-native';
 import { Agenda } from 'react-native-calendars';
 import Header from '../components/header';
-import { collection, query, where, getDocs, addDoc } from 'firebase/firestore';
+import { collection, getDocs, query, where } from 'firebase/firestore';
 import { onAuthStateChanged } from 'firebase/auth';
 import { firestore, auth } from '../constants/config';
 
@@ -15,6 +15,7 @@ const Calendar = () => {
   const [eventName, setEventName] = useState('');
   const [eventCategory, setEventCategory] = useState('');
   const [eventDate, setEventDate] = useState('');
+  const [teams, setTeams] = useState([]); // Dodane
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (userData) => {
@@ -23,35 +24,92 @@ const Calendar = () => {
           const usersRef = collection(firestore, 'users');
           const q = query(usersRef, where('uid', '==', userData.uid));
           const querySnapshot = await getDocs(q);
-
+  
           if (!querySnapshot.empty) {
             const userData = querySnapshot.docs[0].data();
             setUser(userData);
-
-            if (userData.isCoach) {
-              setIsCoach(true);
-            } else {
-              setIsCoach(false);
-            }
-
-            // Pobierz wydarzenia po teamId
-            if (userData.teamId) {
-              const eventsRef = collection(firestore, 'calendars');
-              const eventsQuery = query(eventsRef, where('teamId', '==', userData.teamId));
-              const eventsSnapshot = await getDocs(eventsQuery);
-
-              if (!eventsSnapshot.empty) {
-                let updatedEvents = {};
-                eventsSnapshot.forEach((doc) => {
-                  const eventData = doc.data();
-                  const eventDate = eventData.eventDate.split('T')[0];
-                  if (!updatedEvents[eventDate]) {
-                    updatedEvents[eventDate] = [];
-                  }
-                  updatedEvents[eventDate].push(eventData);
-                });
-                setEvents(updatedEvents);
+  
+            // Sprawdź, czy użytkownik jest w zespołach
+            const teamsRef = collection(firestore, 'teams');
+            const teamsQuery = query(teamsRef, where('members', 'array-contains', userData.uid));
+            const teamsSnapshot = await getDocs(teamsQuery);
+  
+            const userTeams = [];
+            for (const teamDoc of teamsSnapshot.docs) {
+              const teamData = teamDoc.data();
+  
+              // Pobierz imiona i nazwiska członków zespołu
+              const membersData = [];
+              for (const memberUid of teamData.members) {
+                const memberQuery = query(usersRef, where('uid', '==', memberUid));
+                const memberSnapshot = await getDocs(memberQuery);
+  
+                if (!memberSnapshot.empty) {
+                  const memberData = memberSnapshot.docs[0].data();
+                  membersData.push(`${memberData.firstName} ${memberData.lastName}`);
+                }
               }
+  
+              userTeams.push({
+                team: teamData,
+                members: membersData,
+              });
+            }
+            setTeams(userTeams);
+  
+            // Uzyskaj teamId
+            const teamId = userTeams.length > 0 ? userTeams[0].team.teamId : null;
+  
+            if (teamId) {
+              // Log 1
+              console.log('Team ID:', teamId);
+  
+              // Pobierz wydarzenia po teamId
+              const eventsRef = collection(firestore, 'calendars', teamId, 'years', '2023', 'months');
+              const eventsQuerySnapshot = await getDocs(eventsRef);
+  
+              if (!eventsQuerySnapshot.empty) {
+                let updatedEvents = {};
+  
+                for (const monthDoc of eventsQuerySnapshot.docs) {
+                  const monthData = monthDoc.data();
+  
+                  // Log 2
+                  console.log('Miesiąc:', monthData);
+  
+                  const month = monthData.month; // Dodać poprawne pobieranie miesiąca
+  
+                  const daysRef = collection(monthDoc.ref, 'days');
+                  const daysQuerySnapshot = await getDocs(daysRef);
+  
+                  if (!daysQuerySnapshot.empty) {
+                    let monthEvents = {};
+  
+                    // Log 3
+                    console.log('Dni w miesiącu:', daysQuerySnapshot.docs.length);
+  
+                    for (const dayDoc of daysQuerySnapshot.docs) {
+                      const dayData = dayDoc.data();
+  
+                      // Log 4
+                      console.log('Dzień:', dayData);
+  
+                      monthEvents[dayData.day] = dayData.events; // Dodać poprawne pobieranie wydarzeń dla danego dnia
+                    }
+  
+                    updatedEvents[month] = monthEvents;
+                  }
+                }
+  
+                // Log 5
+                console.log('Pobrano wszystkie dane:', updatedEvents);
+  
+                setEvents(updatedEvents);
+              } else {
+                console.log('Brak wydarzeń dla zespołu');
+              }
+            } else {
+              console.log('Użytkownik nie ma przypisanego zespołu');
             }
           }
         } catch (error) {
@@ -59,11 +117,12 @@ const Calendar = () => {
         }
       }
     });
-
+  
     return () => {
       unsubscribe();
     };
   }, []);
+  
 
   const addEvent = async () => {
     if (selectedDate && user && isCoach && eventName && eventCategory && eventDate) {
@@ -77,7 +136,10 @@ const Calendar = () => {
       };
 
       try {
-        const docRef = await addDoc(collection(firestore, 'calendars'), event);
+        const docRef = await addDoc(collection(firestore, 'calendars', user.teamId, 'years', '2023', 'months', '11', 'days'), {
+          day: 24,
+          events: [event],
+        });
         console.log('Event added successfully!', docRef.id);
         setEventFormVisible(false);
       } catch (error) {
@@ -85,69 +147,73 @@ const Calendar = () => {
       }
     }
   };
+  
 
   return (
     <View style={styles.container}>
-      <Header user={user} setUser={setUser} />
-      <Agenda
-        items={events}
-        renderItem={(item) => (
-          <View style={styles.item}>
-            <Text>{item.eventName}</Text>
-          </View>
-        )}
-        onDayPress={(day) => {
-          setSelectedDate(day.dateString);
-          if (user && isCoach) {
-            setEventFormVisible(true);
-          }
-        }}
-        pastScrollRange={12}
-        futureScrollRange={12}
-        hideExtraDays={false}
-        style={styles.agenda}
-      />
-              <Link to="/home" style={styles.link}>
-          <Text style={styles.linkText}>Powrót do Home</Text>
-        </Link>
-
-      {user && isCoach && (
-        <TouchableOpacity style={styles.addButton} onPress={() => setEventFormVisible(true)}>
-          <Text style={styles.buttonText}>Dodaj Wydarzenie</Text>
-        </TouchableOpacity>
-      )}
-
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={isEventFormVisible}
-        onRequestClose={() => setEventFormVisible(false)}
-      >
-        <View style={styles.modalContainer}>
-          <Text style={styles.modalTitle}>Dodaj Wydarzenie</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Nazwa wydarzenia"
-            onChangeText={(text) => setEventName(text)}
-          />
-          <TextInput
-            style={styles.input}
-            placeholder="Kategoria"
-            onChangeText={(text) => setEventCategory(text)}
-          />
-          <TextInput
-            style={styles.input}
-            placeholder="Data (np. 21.11.2023 17:00)"
-            onChangeText={(text) => setEventDate(text)}
-          />
-          <TouchableOpacity style={styles.button} onPress={addEvent}>
-            <Text style={styles.buttonText}>Dodaj</Text>
-          </TouchableOpacity>
+    <Header user={user} setUser={setUser} />
+    <Agenda
+      items={formattedEvents}
+      renderItem={(item) => (
+        <View style={styles.item}>
+          {item.map((event) => (
+            <Text key={event.eventId}>{event.eventName}</Text>
+          ))}
         </View>
-      </Modal>
-    </View>
+      )}
+      onDayPress={(day) => {
+        setSelectedDate(day.dateString);
+        if (user && isCoach) {
+          setEventFormVisible(true);
+        }
+      }}
+      pastScrollRange={12}
+      futureScrollRange={12}
+      hideExtraDays={false}
+      style={styles.agenda}
+    />
+    <TouchableOpacity style={styles.homeButton} onPress={() => navigate('/home')}>
+      <Text style={styles.linkText}>Powrót do Home</Text>
+    </TouchableOpacity>
+
+    {user && isCoach && (
+      <TouchableOpacity style={styles.addButton} onPress={() => setEventFormVisible(true)}>
+        <Text style={styles.buttonText}>Dodaj Wydarzenie</Text>
+      </TouchableOpacity>
+    )}
+
+    <Modal
+      animationType="slide"
+      transparent={true}
+      visible={isEventFormVisible}
+      onRequestClose={() => setEventFormVisible(false)}
+    >
+      <View style={styles.modalContainer}>
+        <Text style={styles.modalTitle}>Dodaj Wydarzenie</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Nazwa wydarzenia"
+          onChangeText={(text) => setEventName(text)}
+        />
+        <TextInput
+          style={styles.input}
+          placeholder="Kategoria"
+          onChangeText={(text) => setEventCategory(text)}
+        />
+        <TextInput
+          style={styles.input}
+          placeholder="Data (np. 21.11.2023 17:00)"
+          onChangeText={(text) => setEventDate(text)}
+        />
+        <TouchableOpacity style={styles.button} onPress={addEvent}>
+          <Text style={styles.buttonText}>Dodaj</Text>
+        </TouchableOpacity>
+      </View>
+    </Modal>
+  </View>
   );
 };
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
