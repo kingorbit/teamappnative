@@ -22,6 +22,9 @@ import TeamStats from "../components/stats/teamStats";
 import TeamStatsView from "../components/stats/teamStatsView";
 import PlayerStats from "../components/stats/playerStats";
 import PlayerStatsView from "../components/stats/playerStatsView";
+import ForgetPass from "../components/forgetpass";
+import NavigationBar from '../components/navBar';
+import LoadingPage from "../components/loadingPage";
 
  
 
@@ -31,6 +34,7 @@ const App = () => {
     <NativeRouter>
       <Routes>
         <Route path="/" element={<WelcomeScreen />} />
+        <Route path="/loadingPage" element={<LoadingPage />} /> 
         <Route path="/home" element={<Home />} />
         <Route path="/calendar" element={<Calendar />} />
         <Route path="/chat" element={<Chat />} />
@@ -51,6 +55,9 @@ const App = () => {
         <Route path="/teamStatsView" element={<TeamStatsView />} />
         <Route path="/playerStats" element={<PlayerStats />} />
         <Route path="/playerStatsView" element={<PlayerStatsView />} />
+        <Route path="/forgetpass" element={<ForgetPass />} />
+        <Route path="/navBar" element={<NavigationBar />} />
+
 
       </Routes>
     </NativeRouter>

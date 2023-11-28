@@ -5,6 +5,7 @@ import Header from '../components/header';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import { onAuthStateChanged } from 'firebase/auth';
 import { firestore, auth } from '../constants/config';
+import NavigationBar from '../components/navBar';
 
 const Calendar = () => {
   const [user, setUser] = useState(null);

@@ -29,6 +29,7 @@ import { firestore, auth, storage } from '../constants/config';
 import { useNavigate } from 'react-router-native';
 import ImagePicker from 'react-native-image-picker';
 import { FontAwesome } from '@expo/vector-icons';
+import NavigationBar from '../components/navBar';
 
 const Chat = () => {
   const [user, setUser] = useState(null);
@@ -270,12 +271,10 @@ const Chat = () => {
                 {teamChat ? 'Chat ogólny' : 'Chat Zespołu'}
               </Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.homeButton} onPress={() => navigate('/home')}>
-              <Text style={styles.linkText}>Powrót do Home</Text>
-            </TouchableOpacity>
           </>
         )}
       </View>
+      <NavigationBar></NavigationBar>
     </View>
   );
 };

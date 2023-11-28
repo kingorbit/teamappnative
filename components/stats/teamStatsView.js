@@ -120,8 +120,11 @@ const TeamStatsView = () => {
         {teamStats ? (
           <View style={styles.statsContainer}>
             <Text style={styles.statItem}>Mecze zespołu: {teamStats.matchesPlayed}</Text>
+            <Text style={styles.statItem}>Mecze zespołu: {teamStats.matchesPlayed}</Text>
             <Text style={styles.statItem}>Bramki zespołu: {teamStats.goals}</Text>
-            {/* Dodaj inne statystyki zespołowe, jakie są dostępne w kolekcji teamStats */}
+            <Text style={styles.statItem}>Mecze zespołu: {teamStats.matchesPlayed}</Text>
+            <Text style={styles.statItem}>Mecze zespołu: {teamStats.matchesPlayed}</Text>
+
           </View>
         ) : (
           <Text style={styles.noData}>Brak danych zespołowych dla wybranego sezonu</Text>

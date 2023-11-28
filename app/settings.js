@@ -6,6 +6,7 @@ import { collection, query, where, getDocs } from 'firebase/firestore';
 import { auth, firestore } from '../constants/config';
 import Header from '../components/header';
 import Footer from '../components/footer';
+import NavigationBar from '../components/navBar';
 
 const Settings = () => {
   const [user, setUser] = useState(null);
@@ -109,12 +110,8 @@ const Settings = () => {
         </TouchableOpacity>
 
         {renderInformation()}
-
-        <Link to="/home" style={styles.link}>
-          <Text style={styles.linkText}>Powrót do Home</Text>
-        </Link>
       </View>
-      <Footer />
+<NavigationBar></NavigationBar>
     </View>
   );
 };

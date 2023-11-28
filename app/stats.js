@@ -5,6 +5,7 @@ import Header from '../components/header';
 import { collection, query, where, getDocs, doc } from 'firebase/firestore';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { firestore, auth } from '../constants/config';
+import NavigationBar from '../components/navBar';
 
 
 const Stats = () => {
@@ -80,6 +81,7 @@ const Stats = () => {
           <Text style={styles.linkText}>Powrót</Text>
         </Link>
       </View>
+      <NavigationBar></NavigationBar>
     </View>
   );
 };

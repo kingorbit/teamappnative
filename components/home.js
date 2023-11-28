@@ -4,6 +4,9 @@ import { Link } from 'react-router-native';
 import { onAuthStateChanged, signOut } from 'firebase/auth'; // Importuj funkcje onAuthStateChanged, auth i signOut
 import { auth } from '../constants/config'; 
 import Header from './header';
+import NavigationBar from './navBar';
+
+
 
 const Home = () => {
   const [user, setUser] = useState(null);
@@ -41,6 +44,7 @@ const Home = () => {
       <Link to="/settings" style={styles.link}>
         <Text style={styles.linkText}>Ustawienia</Text>
       </Link>
+      <NavigationBar></NavigationBar>
       </View>
     </View>
   );

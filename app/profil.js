@@ -5,6 +5,7 @@ import Header from '../components/header';
 import { onAuthStateChanged } from 'firebase/auth';
 import { collection, query, where, getDoc, doc, getDocs, updateDoc } from 'firebase/firestore';
 import { firestore, auth } from '../constants/config';
+import NavigationBar from '../components/navBar';
 
 const Profil = () => {
   const [user, setUser] = useState(null);
@@ -196,6 +197,7 @@ const Profil = () => {
         </View>
       </View>
     </Modal>
+    <NavigationBar></NavigationBar>
   </View>
 );
             }

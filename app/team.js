@@ -5,6 +5,7 @@ import Header from '../components/header';
 import { collection, query, where, getDocs, doc } from 'firebase/firestore';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { firestore, auth } from '../constants/config';
+import NavigationBar from '../components/navBar';
 
 const Team = () => {
   const [user, setUser] = useState(null);
@@ -91,12 +92,11 @@ const Team = () => {
             <Link to="/yourTeam" style={styles.link}>
               <Text style={styles.linkText}>Twoja Drużyna</Text>
             </Link>
-            <Link to="/home" style={styles.link}>
-              <Text style={styles.linkText}>Powrót do Home</Text>
-            </Link>
+
           </>
         )}
       </View>
+      <NavigationBar></NavigationBar>
     </View>
   );
 };

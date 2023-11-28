@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { TextInput, View, Alert, TouchableOpacity, Text, StyleSheet } from 'react-native';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '../constants/config';
-import { useNavigate } from 'react-router-native'; // Importuj useNavigate
+import { useNavigate } from 'react-router-native';
 
 const FormLogin = () => {
   const [email, setEmail] = useState('');
@@ -20,9 +20,13 @@ const FormLogin = () => {
     }
   };
 
+  const handleForgotPassword = () => {
+    // Navigate to the forgetpass.js screen here
+    navigate('/forgetpass');
+  };
+
   return (
     <View style={styles.container}>
-      
       <TextInput
         style={styles.input}
         placeholder="Email"
@@ -36,9 +40,13 @@ const FormLogin = () => {
         onChangeText={setPassword}
         secureTextEntry
       />
+            <TouchableOpacity onPress={handleForgotPassword}>
+        <Text style={styles.forgotPasswordText}>Zapomniałeś hasła?</Text>
+      </TouchableOpacity>
       <TouchableOpacity style={styles.button} onPress={handleLogin}>
         <Text style={styles.buttonText}>Zaloguj</Text>
       </TouchableOpacity>
+
     </View>
   );
 };
@@ -75,6 +83,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     elevation: 3,
     width: '50%',
+  },
+  forgotPasswordText: {
+    color: 'white', // Zmiana koloru tekstu na biały
+    marginTop: 10,
+    textDecorationLine: 'underline',
   },
 });
 

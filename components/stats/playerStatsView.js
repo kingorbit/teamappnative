@@ -189,18 +189,18 @@ const PlayerStatsView = () => {
             <Text style={styles.statItem}>Mecze rozegrane: {playerStats.matchesPlayed}</Text>
             <Text style={styles.statItem}>Mecze rozegrane u siebie: {playerStats.matchesPlayedHome}</Text>
             <Text style={styles.statItem}>Mecze rozegrane na wyjezdzie {playerStats.matchesPlayedAway}</Text>
-            <Text style={styles.statItem}>Strzały: {playerStats.goals}</Text>
-            <Text style={styles.statItem}>Żółte kartki: {playerStats.goalsHome}</Text>
-            <Text style={styles.statItem}>Żółte kartki: {playerStats.goalsAway}</Text>
-            <Text style={styles.statItem}>Żółte kartki: {playerStats.assists}</Text>
-            <Text style={styles.statItem}>Żółte kartki: {playerStats.assistsHome}</Text>
-            <Text style={styles.statItem}>Żółte kartki: {playerStats.assistsAway}</Text>
-            <Text style={styles.statItem}>Żółte kartki: {playerStats.shots}</Text>
-            <Text style={styles.statItem}>Żółte kartki: {playerStats.shotsHome}</Text>
-            <Text style={styles.statItem}>Żółte kartki: {playerStats.shotsAway}</Text>
+            <Text style={styles.statItem}>Bramki: {playerStats.goals}</Text>
+            <Text style={styles.statItem}>Bramki u siebie: {playerStats.goalsHome}</Text>
+            <Text style={styles.statItem}>Bramki na wyjeżdzie: {playerStats.goalsAway}</Text>
+            <Text style={styles.statItem}>Asysty: {playerStats.assists}</Text>
+            <Text style={styles.statItem}>Asysty u siebie: {playerStats.assistsHome}</Text>
+            <Text style={styles.statItem}>Asysty na wyjezdzie: {playerStats.assistsAway}</Text>
+            <Text style={styles.statItem}>Strzały: {playerStats.shots}</Text>
+            <Text style={styles.statItem}>Strzały u siebie: {playerStats.shotsHome}</Text>
+            <Text style={styles.statItem}>Strzały na wyjezdzie: {playerStats.shotsAway}</Text>
             <Text style={styles.statItem}>Żółte kartki: {playerStats.yellowCards}</Text>
-            <Text style={styles.statItem}>Żółte kartki: {playerStats.yellowCardsHome}</Text>
-            <Text style={styles.statItem}>Żółte kartki: {playerStats.yellowCardsAway}</Text>
+            <Text style={styles.statItem}>Żółte kartki u siebie: {playerStats.yellowCardsHome}</Text>
+            <Text style={styles.statItem}>Żółte kartki na wyjezdzie: {playerStats.yellowCardsAway}</Text>
 
           </View>
         )}
