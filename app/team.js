@@ -57,6 +57,15 @@ const Team = () => {
       <Header user={user} setUser={setUser} />
       <View style={styles.teamContent}>
         <Text style={styles.title}>Zarządzanie Zespołami</Text>
+
+        {user && (
+          // Pozostałe linki dostępne dla wszystkich zalogowanych użytkowników
+          <>
+            <Link to="/yourTeam" style={styles.link}>
+              <Text style={styles.linkText}>Skład</Text>
+            </Link>
+          </>
+        )}
         {user && user.isCoach && (
           <>
             {/* Linki dla trenera */}
@@ -72,6 +81,12 @@ const Team = () => {
             <Link to="/deleteTeam" style={styles.link}>
               <Text style={styles.linkText}>Usuń Drużynę</Text>
             </Link>
+            <Link to="/playerStats" style={styles.link}>
+              <Text style={styles.linkText}>Indywidualne - Trener</Text>
+            </Link>
+            <Link to="/teamStats" style={styles.link}>
+              <Text style={styles.linkText}>Drużyny - Trener</Text>
+            </Link>           
           </>
         )}
         {user && !isCoach && !isInTeam && (
@@ -82,17 +97,22 @@ const Team = () => {
         )}
         {user && !isCoach && isInTeam && (
           // Link tylko dla zwykłego użytkownika będącego w zespole
+          <>
+          <Link to="/leaveTeam" style={styles.link}>
+            <Text style={styles.linkText}>Wyniki</Text>
+          </Link>
+          <Link to="/leaveTeam" style={styles.link}>
+            <Text style={styles.linkText}>Tabela</Text>
+          </Link>
           <Link to="/leaveTeam" style={styles.link}>
             <Text style={styles.linkText}>Opuść Zespół</Text>
           </Link>
-        )}
-        {user && (
-          // Pozostałe linki dostępne dla wszystkich zalogowanych użytkowników
-          <>
-            <Link to="/yourTeam" style={styles.link}>
-              <Text style={styles.linkText}>Twoja Drużyna</Text>
-            </Link>
-
+          <Link to="/teamStatsView" style={styles.link}>
+            <Text style={styles.linkText}>Statystyki Drużyny</Text>
+          </Link>
+          <Link to="/playerStatsView" style={styles.link}>
+              <Text style={styles.linkText}>Statystyki Indywidualne</Text>
+          </Link>
           </>
         )}
       </View>
