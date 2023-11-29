@@ -15,31 +15,31 @@ const Navbar = () => {
     <View style={styles.navbar}>
       <Link to="/calendar" style={[styles.navItem, isTabActive('/calendar') && styles.activeTab]}>
         <>
-          <Icon name="calendar" size={25} color="white" />
+          <Icon name="calendar" size={20} color="white" />
           <Text style={[styles.tabText, isTabActive('/calendar') && styles.activeTabText]}>Kalendarz</Text>
         </>
       </Link>
       <Link to="/chat" style={[styles.navItem, isTabActive('/chat') && styles.activeTab]}>
         <>
-          <Icon name="comments" size={25} color="white" />
+          <Icon name="comments" size={20} color="white" />
           <Text style={[styles.tabText, isTabActive('/chat') && styles.activeTabText]}>Wiadomości</Text>
         </>
       </Link>
       <Link to="/home" style={[styles.navItem, isTabActive('/home') && styles.activeTab]}>
         <>
-          <Icon name="home" size={30} color="white" />
+          <Icon name="home" size={25} color="white" />
           <Text style={[styles.tabText, isTabActive('/home') && styles.activeTabText]}>Strona Główna</Text>
         </>
       </Link>
       <Link to="/team" style={[styles.navItem, isTabActive('/team') && styles.activeTab]}>
         <>
-          <Icon name="users" size={25} color="white" />
+          <Icon name="users" size={20} color="white" />
           <Text style={[styles.tabText, isTabActive('/team') && styles.activeTabText]}>Twój Zespół</Text>
         </>
       </Link>
       <Link to="/settings" style={[styles.navItem, isTabActive('/settings') && styles.activeTab]}>
         <>
-          <Icon name="cog" size={25} color="white" />
+          <Icon name="cog" size={20} color="white" />
           <Text style={[styles.tabText, isTabActive('/settings') && styles.activeTabText]}>Ustawienia</Text>
         </>
       </Link>

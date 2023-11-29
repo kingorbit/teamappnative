@@ -3,7 +3,7 @@ import * as React from 'react';
 import { NativeRouter, Routes, Route } from "react-router-native";
 import WelcomeScreen from '../components/WelcomeScreen';
 import Home from '../components/home';
-import Calendar from './calendar';
+import CalendarScreen from './calendar';
 import Chat from './chat';
 import Team from './team';
 import Stats from './stats'
@@ -36,7 +36,7 @@ const App = () => {
         <Route path="/" element={<WelcomeScreen />} />
         <Route path="/loadingPage" element={<LoadingPage />} /> 
         <Route path="/home" element={<Home />} />
-        <Route path="/calendar" element={<Calendar />} />
+        <Route path="/calendar" element={<CalendarScreen />} />
         <Route path="/chat" element={<Chat />} />
         <Route path="/team" element={<Team />} />
         <Route path="/stats" element={<Stats />} />
