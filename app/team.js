@@ -61,9 +61,6 @@ const Team = () => {
         {user && (
           // Pozostałe linki dostępne dla wszystkich zalogowanych użytkowników
           <>
-            <Link to="/yourTeam" style={styles.link}>
-              <Text style={styles.linkText}>Skład</Text>
-            </Link>
           </>
         )}
         {user && user.isCoach && (
@@ -98,6 +95,9 @@ const Team = () => {
         {user && !isCoach && isInTeam && (
           // Link tylko dla zwykłego użytkownika będącego w zespole
           <>
+            <Link to="/yourTeam" style={styles.link}>
+              <Text style={styles.linkText}>Skład</Text>
+            </Link>
           <Link to="/leaveTeam" style={styles.link}>
             <Text style={styles.linkText}>Wyniki</Text>
           </Link>

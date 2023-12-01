@@ -62,7 +62,9 @@
     "react-router-native": "^6.18.0",
     "save": "^2.9.0",
     "styled-components": "^6.1.1",
-    "uuid": "^9.0.1"
+    "uuid": "^9.0.1",
+    "expo-notifications": "~0.20.1",
+    "expo-permissions": "~14.2.1"
   },
   "devDependencies": {
     "@babel/core": "^7.19.3",

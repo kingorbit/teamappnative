@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { TextInput, View, Alert, TouchableOpacity, Text, StyleSheet, KeyboardAvoidingView } from 'react-native';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { auth, firestore } from '../constants/config';
-import { collection, addDoc } from 'firebase/firestore';
+import { collection, addDoc, doc, setDoc } from 'firebase/firestore';
 import { useNavigate } from 'react-router-native';
 import ModalDropdown from 'react-native-modal-dropdown';
 
@@ -21,47 +21,46 @@ const FormSignUp = () => {
       Alert.alert('Błąd rejestracji', 'Proszę wypełnić wszystkie pola.');
       return;
     }
-  
+
     if (password !== confirmPassword) {
       Alert.alert('Błąd rejestracji', 'Hasła nie pasują do siebie. Wprowadź je ponownie.');
       return;
     }
-  
+
     const isValidAge = /^\d+$/.test(age) && age >= 1 && age <= 99;
     if (!isValidAge) {
       Alert.alert('Błąd rejestracji', 'Podaj prawidłowy wiek (1-99).');
       return;
     }
-  
+
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-  
-      const userDoc = await addDoc(collection(firestore, 'users'), {
+
+      // Dodaj użytkownika do kolekcji "users"
+      const userRef = doc(firestore, 'users', userCredential.user.uid);
+      await setDoc(userRef, {
         email: email,
         firstName: firstName,
         lastName: lastName,
         age: age,
         position: position,
-        isCoach: false, // Dodaj nową opcję isCoach z wartością false
+        isCoach: false,
         uid: userCredential.user.uid,
       });
-  
-      console.log('Dodano użytkownika do kolekcji "users" z ID:', userDoc.id);
+
       navigate('/home');
     } catch (error) {
       console.error('Błąd rejestracji', error);
       Alert.alert('Błąd rejestracji', error.message);
     }
-  }
+  };
 
   const positionOptions = ['Bramkarz', 'Obronca', 'Pomocnik', 'Napastnik'];
 
   return (
     <KeyboardAvoidingView style={styles.container} behavior="padding" keyboardVerticalOffset={-500}>
       <View style={styles.formContainer}>
-      <Text style={styles.title}>
-      Team App
-    </Text>
+        <Text style={styles.title}>Team App</Text>
         <TextInput
           style={styles.input}
           placeholder="Imię"

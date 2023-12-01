@@ -1,6 +1,8 @@
 import "expo-router/entry";
 import * as React from 'react';
 import { NativeRouter, Routes, Route } from "react-router-native";
+import NotificationPermissionHandler from '../components/notifications/notificationPermision'; // Dodane
+import EventNotificationScheduler from '../components/notifications/notificationScheduler'; // Dodane
 import WelcomeScreen from '../components/WelcomeScreen';
 import Home from '../components/home';
 import CalendarScreen from './calendar';
@@ -25,9 +27,6 @@ import PlayerStatsView from "../components/stats/playerStatsView";
 import ForgetPass from "../components/forgetpass";
 import NavigationBar from '../components/navBar';
 import LoadingPage from "../components/loadingPage";
-
- 
-
 
 const App = () => {
   return (
@@ -58,6 +57,15 @@ const App = () => {
         <Route path="/forgetpass" element={<ForgetPass />} />
         <Route path="/navBar" element={<NavigationBar />} />
 
+        {/* Dodane: Obsługa powiadomień */}
+        <Route
+          path="/notificationPermision"
+          element={<NotificationPermissionHandler />}
+        />
+        <Route
+          path="/notificationScheduler"
+          element={<EventNotificationScheduler />}
+        />
 
       </Routes>
     </NativeRouter>

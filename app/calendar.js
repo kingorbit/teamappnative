@@ -10,6 +10,7 @@ import NavigationBar from '../components/navBar';
 import { LocaleConfig } from 'react-native-calendars';
 import ModalDropdown from 'react-native-modal-dropdown';
 import Icon from 'react-native-vector-icons/FontAwesome'; 
+import EventNotificationScheduler from '../components/notifications/notificationScheduler';
 
 LocaleConfig.locales['pl'] = {
   monthNames: [
@@ -69,6 +70,7 @@ const CalendarScreen = () => {
   const [isDeleteConfirmationVisible, setDeleteConfirmationVisible] = useState(false);
   const [isEditFormVisible, setEditFormVisible] = useState(false);
   const [editedEvent, setEditedEvent] = useState(null);
+  const [userIsInTeam, setUserIsInTeam] = useState(false); // Dodajemy userIsInTeam jako nowy stan
 
 
   useEffect(() => {
@@ -135,22 +137,6 @@ const CalendarScreen = () => {
                   teamEvents.forEach((event) => {
                     // Przekształć datę do odpowiedniego formatu
                     const formattedDate = event.eventDate.split(' ')[0];
-                    let selectedDayBackgroundColor = 'black'; // Kolor domyślny
-                  switch (event.eventCategory) {
-    case 'Mecz Pucharowy':
-      selectedDayBackgroundColor = 'red';
-      break;
-    case 'Mecz Ligowy':
-      selectedDayBackgroundColor = 'green';
-      break;
-    case 'Trening':
-      selectedDayBackgroundColor = 'blue';
-      break;
-    // Dodaj inne przypadki dla innych kategorii
-    default:
-      break;
-  }
-
                     markedDates[formattedDate] = {
                       selected: true,
                       marked: true,
@@ -160,6 +146,10 @@ const CalendarScreen = () => {
                   });
                   console.log('Marked dates:', markedDates);
                   setMarkedDates(markedDates);
+                  setUserIsInTeam(true);
+                }
+                else{
+                  setUserIsInTeam(false);
                 }
               }
             }
@@ -182,7 +172,7 @@ const CalendarScreen = () => {
         console.error('Proszę wypełnić wszystkie pola');
         return;
       }
-
+  
       const newEvent = {
         eventName,
         eventCategory,
@@ -190,27 +180,31 @@ const CalendarScreen = () => {
         teamId: teams.length > 0 ? teams[0].team.teamId : '', // Ustawia teamId na pierwszy zespół trenera
         // Dodaj inne pola, jeśli są potrzebne
       };
-
+  
       const eventsRef = collection(firestore, 'events');
-      await addDoc(eventsRef, newEvent);
-
-      setEvents((prevEvents) => [...prevEvents, newEvent]);
-
+      const docRef = await addDoc(eventsRef, newEvent);
+      const eventId = docRef.id;
+  
+      // Dodajemy unikalne ID do wydarzenia
+      await updateDoc(doc(eventsRef, eventId), { id: eventId });
+  
+      setEvents((prevEvents) => [...prevEvents, { ...newEvent, id: eventId }]);
+  
       const formattedDate = eventDate.split(' ')[0];
       setMarkedDates((prevMarkedDates) => ({
         ...prevMarkedDates,
         [formattedDate]: {
           selected: true,
           marked: true,
-          dotColor: 'blacks',
-          eventData: newEvent,
+          dotColor: 'black',
+          eventData: { ...newEvent, id: eventId },
         },
       }));
       setEventName(''); // Wyczyszczenie pola eventName
       setEventCategory(''); // Wyczyszczenie pola eventCategory
       setEventDate(''); // Wyczyszczenie pola eventDate
-    // Możesz dodać więcej pól, jeśli to konieczne
-
+      // Możesz dodać więcej pól, jeśli to konieczne
+  
       setEventFormVisible(false);
     } catch (error) {
       console.error('Błąd dodawania zdarzenia', error);
@@ -239,15 +233,18 @@ const CalendarScreen = () => {
           });
   
           // Zaktualizuj stan lokalny
-          const updatedEvents = events.map((event) =>
-            event.id === editedEvent.id ? { ...event, ...editedEvent } : event
+          setEvents((prevEvents) =>
+            prevEvents.map((event) =>
+              event.id === editedEvent.id ? { ...event, ...editedEvent } : event
+            )
           );
-          setEvents(updatedEvents);
   
           // Zaktualizuj markedDates, jeśli data się zmieniła
-          if (editedEvent.eventDate !== selectedEventDetails.eventDate) {
+          if (selectedEventDetails && editedEvent.eventDate !== selectedEventDetails.eventDate) {
             const updatedMarkedDates = { ...markedDates };
-            delete updatedMarkedDates[selectedEventDetails.eventDate.split(' ')[0]];
+            if (selectedEventDetails.eventDate) {
+              delete updatedMarkedDates[selectedEventDetails.eventDate.split(' ')[0]];
+            }
             updatedMarkedDates[editedEvent.eventDate.split(' ')[0]] = {
               selected: true,
               marked: true,
@@ -267,7 +264,7 @@ const CalendarScreen = () => {
       console.error('Błąd aktualizacji wydarzenia', error);
     }
   };
-
+  
   const deleteEvent = async () => {
     try {
       if (selectedEventDetails && selectedEventDetails.id) {
@@ -297,6 +294,20 @@ const CalendarScreen = () => {
     }
   };
   const renderUpcomingEvents = () => {
+    // Sprawdź, czy użytkownik jest w zespole
+    if (!userIsInTeam) {
+      return (
+        <View style={styles.upcomingEventsContainer}>
+          <Text style={styles.sectionTitle}>Najbliższe wydarzenia:</Text>
+          <View style={styles.joinTeamMessage}>
+            <Text style={styles.joinTeamMessageText}>
+              Dołącz do zespołu, aby zobaczyć wydarzenia!
+            </Text>
+          </View>
+        </View>
+      );
+    }
+  
     const upcomingEvents = events
       .filter((event) => new Date(event.eventDate) >= new Date())
       .sort((a, b) => new Date(a.eventDate) - new Date(b.eventDate))
@@ -325,6 +336,7 @@ const CalendarScreen = () => {
     );
   };
   
+  
   // Funkcja do obliczania pozostałych dni do zdarzenia
   const calculateDaysRemaining = (eventDate) => {
     const today = new Date();
@@ -344,6 +356,7 @@ const CalendarScreen = () => {
           <ScrollView style={styles.childcontainer}>
       <Header user={user} setUser={setUser} />
       <Text style={styles.title}>Kalendarz</Text>
+      <EventNotificationScheduler events={events} />
       <View style={styles.calendarcontainer}>
       <Calendar
   markedDates={markedDates}
@@ -645,6 +658,17 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     textAlign: 'center',
     marginBottom: 15,
+  },
+  joinTeamMessage: {
+    backgroundColor: 'red',
+    borderRadius: 10,
+    padding: 15,
+    marginTop: 10,
+  },
+  joinTeamMessageText: {
+    color: 'white',
+    fontSize: 16,
+    textAlign: 'center',
   },
   input: {
     height: 40,

@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Switch, TouchableOpacity, Alert } from 'react-native';
-import { Link } from 'react-router-native';
 import { onAuthStateChanged, sendPasswordResetEmail } from 'firebase/auth';
-import { collection, query, where, getDocs } from 'firebase/firestore';
+import { collection, query, where, getDoc, updateDoc, doc, setDoc } from 'firebase/firestore';
 import { auth, firestore } from '../constants/config';
 import Header from '../components/header';
 import Footer from '../components/footer';
@@ -15,35 +14,76 @@ const Settings = () => {
   const [showPasswordReset, setShowPasswordReset] = useState(false);
   const [userEmail, setUserEmail] = useState('');
   const [showInformation, setShowInformation] = useState(false);
-
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (userData) => {
       if (userData) {
         setUser(userData);
         try {
-          const usersRef = collection(firestore, 'users');
-          const q = query(usersRef, where('uid', '==', userData.uid));
-          const querySnapshot = await getDocs(q);
-
-          if (!querySnapshot.empty) {
-            const userDataFromFirestore = querySnapshot.docs[0].data();
+          const userDocRef = doc(firestore, 'users', userData.uid);
+  
+          // Sprawdź, czy istnieje dokument o nazwie UID użytkownika
+          const userDocSnapshot = await getDoc(userDocRef);
+  
+          if (userDocSnapshot.exists()) {
+            const userDataFromFirestore = userDocSnapshot.data();
             setUserEmail(userDataFromFirestore.email || '');
+            setNotificationsEnabled(userDataFromFirestore.notificationsEnabled || false);
+            setDarkModeEnabled(userDataFromFirestore.darkModeEnabled || false);
+  
+            // Aktualizuj istniejący dokument
+            await updateDoc(userDocRef, {
+              notificationsEnabled: userDataFromFirestore.notificationsEnabled || false,
+              darkModeEnabled: userDataFromFirestore.darkModeEnabled || false,
+            });
+          } else {
+            // Zmiana nazwy dokumentu na UID użytkownika
+            const renamedDocRef = doc(firestore, 'users', userData.uid);
+  
+            // Utwórz nowy dokument z nową nazwą
+            await setDoc(renamedDocRef, {
+              uid: userData.uid,
+              email: userData.email,
+              notificationsEnabled: false, // Możesz ustawić domyślne wartości
+              darkModeEnabled: false,
+            });
           }
         } catch (error) {
-          console.error('Błąd podczas pobierania danych użytkownika:', error.message);
+          console.error('Błąd podczas pobierania/dodawania danych użytkownika:', error.message);
         }
       }
     });
-
+  
     return () => unsubscribe();
   }, []);
 
-  const handleNotificationsToggle = () => {
-    setNotificationsEnabled((prev) => !prev);
+  const handleNotificationsToggle = async () => {
+    try {
+      // Aktualizuj stan w bazie danych
+      const userDocRef = doc(firestore, 'users', user.uid);
+      await updateDoc(userDocRef, {
+        notificationsEnabled: !notificationsEnabled,
+      });
+
+      // Aktualizuj lokalny stan
+      setNotificationsEnabled((prev) => !prev);
+    } catch (error) {
+      console.error('Błąd podczas aktualizacji ustawień powiadomień:', error.message);
+    }
   };
 
-  const handleDarkModeToggle = () => {
-    setDarkModeEnabled((prev) => !prev);
+  const handleDarkModeToggle = async () => {
+    try {
+      // Aktualizuj stan w bazie danych
+      const userDocRef = doc(firestore, 'users', user.uid);
+      await updateDoc(userDocRef, {
+        darkModeEnabled: !darkModeEnabled,
+      });
+
+      // Aktualizuj lokalny stan
+      setDarkModeEnabled((prev) => !prev);
+    } catch (error) {
+      console.error('Błąd podczas aktualizacji ustawień trybu ciemnego:', error.message);
+    }
   };
 
   const handlePasswordReset = async () => {
@@ -111,7 +151,7 @@ const Settings = () => {
 
         {renderInformation()}
       </View>
-<NavigationBar></NavigationBar>
+      <NavigationBar></NavigationBar>
     </View>
   );
 };
@@ -141,6 +181,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
     borderRadius: 10,
     elevation: 3,
+    height: 90,
   },
   optionText: {
     fontSize: 18,
