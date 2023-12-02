@@ -78,6 +78,12 @@ const Team = () => {
             <Link to="/deleteTeam" style={styles.link}>
               <Text style={styles.linkText}>Usuń Drużynę</Text>
             </Link>
+            <Link to="/resultsCoach" style={styles.link}>
+              <Text style={styles.linkText}>Wyniki - Trener</Text>
+            </Link>
+            <Link to="/tableCoach" style={styles.link}>
+              <Text style={styles.linkText}>Tabela - Trener</Text>
+            </Link>    
             <Link to="/playerStats" style={styles.link}>
               <Text style={styles.linkText}>Indywidualne - Trener</Text>
             </Link>
@@ -98,10 +104,10 @@ const Team = () => {
             <Link to="/yourTeam" style={styles.link}>
               <Text style={styles.linkText}>Skład</Text>
             </Link>
-          <Link to="/leaveTeam" style={styles.link}>
+          <Link to="/results" style={styles.link}>
             <Text style={styles.linkText}>Wyniki</Text>
           </Link>
-          <Link to="/leaveTeam" style={styles.link}>
+          <Link to="/table" style={styles.link}>
             <Text style={styles.linkText}>Tabela</Text>
           </Link>
           <Link to="/leaveTeam" style={styles.link}>

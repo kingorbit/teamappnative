@@ -6,7 +6,7 @@ import Header from '../header';
 import { firestore, auth } from '../../constants/config';
 import { useNavigate } from 'react-router-native';
 
-const YourTeam = () => {
+const Table = () => {
   const [user, setUser] = useState(null);
   const [teams, setTeams] = useState([]);
   const navigate = useNavigate();
@@ -67,33 +67,7 @@ const YourTeam = () => {
     <View style={styles.container}>
       <Header user={user} setUser={setUser} />
       <View style={styles.teamContent}>
-        {teams.length > 0 ? (
-          <>
-            <Text style={styles.title}>Twoje Zespoły</Text>
-            {teams.map((team, index) => (
-              <View key={index} style={styles.teamInfo}>
-  <Text style={styles.info}>Nazwa Zespołu: {team.team.name}</Text>
-  <Text style={styles.info}>Opis: {team.team.description}</Text>
-  <Text style={styles.membersTitle}>Członkowie:</Text>
-  <View style={styles.membersContainer}>
-    {team.members.map((member, memberIndex) => (
-      <View key={memberIndex} style={styles.memberContainer}>
-        <Text style={styles.member}>
-          {member.position} {member.firstName} {member.lastName}
-          {member.isCoach ? ' (Trener)' : ''}
-        </Text>
-      </View>
-    ))}
-  </View>
-</View>
-            ))}
-          </>
-        ) : (
-          <Text style={styles.info}>Nie jesteś członkiem żadnego zespołu.</Text>
-        )}
-        <TouchableOpacity style={styles.button} onPress={() => navigate('/team')}>
-          <Text style={styles.buttonText}>Powrót</Text>
-        </TouchableOpacity>
+
       </View>
     </View>
   );
@@ -156,4 +130,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default YourTeam;
+export default Table;

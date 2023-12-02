@@ -15,6 +15,7 @@ const Header = () => {
   const navigate = useNavigate();
 
 
+
   
 
   useEffect(() => {
@@ -63,37 +64,53 @@ const Header = () => {
       });
   };
 
+  const navigateToUserProfile = () => {
+    navigate('/profil')
+  };
+  const navigateToHome = () => {
+    navigate('/home')
+  };
+  const navigateToTeam = () => {
+    navigate('/yourTeam')
+  };
+
+
+
   return (
     <View style={styles.header}>
       <Image source={require('../assets/logo.png')} style={styles.logo} />
-      <Text style={styles.appTitle}>
-        Team App
-      </Text>
+      <TouchableOpacity onPress={navigateToHome}>
+        <Text style={styles.appTitle}>
+          Team App
+        </Text>
+      </TouchableOpacity>
       {user && (
         <View style={styles.userDetails}>
           <View style={styles.userInfo}>
-            <Text style={styles.userText}>
-            <Icon name="user" size={15} color="white" /> {user.firstName} {user.lastName}
-            </Text>
+            <TouchableOpacity onPress={navigateToUserProfile}>
+              <Text style={styles.userText}>
+                <Icon name="user" size={15} color="white" /> {user.firstName} {user.lastName}
+              </Text>
+            </TouchableOpacity>
             {teamNames.length > 0 && (
               <View style={styles.teamContainer}>
-                <Text style={styles.teamText}>
-                  <Icon name="users" size={15} color="white" />
-                </Text>
-                <Text style={styles.teamNameText}>{teamNames.join(', ')}</Text>
+                <TouchableOpacity onPress={navigateToTeam}>
+                <Text style={styles.teamNameText}><Icon style={styles.teamText} name="users" size={15} color="white" /> {teamNames.join(', ')}</Text>
+              </TouchableOpacity>
               </View>
             )}
           </View>
           <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
             <Text style={styles.logoutText}>
-              <Icon name="sign-out-alt" size={20} color="black" /> 
+              <Icon name="sign-out-alt" size={20} color="black" />
             </Text>
           </TouchableOpacity>
         </View>
       )}
     </View>
   );
-};
+
+            };
 
 const styles = StyleSheet.create({
   header: {
