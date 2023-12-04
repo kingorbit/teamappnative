@@ -14,10 +14,6 @@ const Header = () => {
   const [teamNames, setTeamNames] = useState([]);
   const navigate = useNavigate();
 
-
-
-  
-
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (userData) => {
       if (userData) {
