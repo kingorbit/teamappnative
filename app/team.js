@@ -136,7 +136,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    marginBottom: 20,
+    marginBottom: 10,
     textAlign: 'center',
   },
   link: {
@@ -156,7 +156,6 @@ const styles = StyleSheet.create({
     color: 'black',
   },
   teamContent: {
-    paddingTop: 30,
     justifyContent: 'center',
     alignItems: 'center',
     flex: 1,

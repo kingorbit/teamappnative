@@ -30,6 +30,7 @@ import LoadingPage from "../components/loadingPage";
 import Results from "../components/team/results";
 import Table from "../components/team/table";
 import ResultsCoach from "../components/team/resultsCoach";
+import TableCoach from "../components/team/tableCoach";
 
 const App = () => {
   return (
@@ -60,6 +61,7 @@ const App = () => {
         <Route path="/forgetpass" element={<ForgetPass />} />
         <Route path="/navBar" element={<NavigationBar />} />
         <Route path="/table" element={<Table />} />
+        <Route path="/tableCoach" element={<TableCoach />} />
         <Route path="/results" element={<Results />} />
         <Route path="/resultsCoach" element={<ResultsCoach />} />
 

@@ -7,7 +7,7 @@ import TableItem from './tableItem';
 import Header from '../header'; // Import Header z odpowiedniego katalogu
 import NavigationBar from '../navBar';
 
-const Table = () => {
+const TableCoach = () => {
   const [teams, setTeams] = useState([]);
   const windowWidth = useWindowDimensions().width;
   const isSmallScreen = windowWidth < 600;
@@ -97,4 +97,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default Table;
+export default TableCoach;
