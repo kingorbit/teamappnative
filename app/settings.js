@@ -1,11 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Switch, TouchableOpacity, Alert } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  Switch,
+  TouchableOpacity,
+  Alert,
+} from 'react-native';
 import { onAuthStateChanged, sendPasswordResetEmail } from 'firebase/auth';
 import { collection, query, where, getDoc, updateDoc, doc, setDoc } from 'firebase/firestore';
 import { auth, firestore } from '../constants/config';
 import Header from '../components/header';
-import Footer from '../components/footer';
 import NavigationBar from '../components/navBar';
+import { lightTheme, darkTheme } from '../components/theme'; // Dodaj import
 
 const Settings = () => {
   const [user, setUser] = useState(null);
@@ -14,6 +21,7 @@ const Settings = () => {
   const [showPasswordReset, setShowPasswordReset] = useState(false);
   const [userEmail, setUserEmail] = useState('');
   const [showInformation, setShowInformation] = useState(false);
+  
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (userData) => {
       if (userData) {
@@ -71,20 +79,19 @@ const Settings = () => {
     }
   };
 
-  const handleDarkModeToggle = async () => {
-    try {
-      // Aktualizuj stan w bazie danych
-      const userDocRef = doc(firestore, 'users', user.uid);
-      await updateDoc(userDocRef, {
-        darkModeEnabled: !darkModeEnabled,
-      });
-
-      // Aktualizuj lokalny stan
-      setDarkModeEnabled((prev) => !prev);
-    } catch (error) {
-      console.error('Błąd podczas aktualizacji ustawień trybu ciemnego:', error.message);
-    }
+  const handleThemeToggle = () => {
+    const newDarkMode = !darkModeEnabled;
+  
+    // Aktualizuj stan w bazie danych
+    const userDocRef = doc(firestore, 'users', user.uid);
+    updateDoc(userDocRef, {
+      darkModeEnabled: newDarkMode,
+    });
+  
+    // Aktualizuj lokalny stan
+    setDarkModeEnabled(newDarkMode);
   };
+
 
   const handlePasswordReset = async () => {
     try {
@@ -111,20 +118,28 @@ const Settings = () => {
     return null;
   };
 
+  const theme = darkModeEnabled ? darkTheme : lightTheme;
+
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: theme.backgroundColor }]}>
       <Header user={user} setUser={setUser} />
       <View style={styles.settingsContent}>
-        <Text style={styles.title}>Ustawienia Aplikacji</Text>
+        <Text style={[styles.title, { color: theme.textColor }]}>Ustawienia Aplikacji</Text>
 
-        <View style={styles.optionContainer}>
-          <Text style={styles.optionText}>Powiadomienia</Text>
-          <Switch value={notificationsEnabled} onValueChange={handleNotificationsToggle} />
+        <View style={[styles.optionContainer, { backgroundColor: 'white' }]}>
+          <Text style={[styles.optionText, { color: 'black' }]}>Powiadomienia</Text>
+          <Switch
+            value={notificationsEnabled}
+            onValueChange={handleNotificationsToggle}
+          />
         </View>
 
-        <View style={styles.optionContainer}>
-          <Text style={styles.optionText}>Motyw</Text>
-          <Switch value={darkModeEnabled} onValueChange={handleDarkModeToggle} />
+        <View style={[styles.optionContainer, { backgroundColor: 'white' }]}>
+          <Text style={[styles.optionText, { color: 'black' }]}>Motyw</Text>
+          <Switch
+            value={darkModeEnabled}
+            onValueChange={handleThemeToggle}
+          />
         </View>
 
         {showPasswordReset ? (
@@ -143,10 +158,10 @@ const Settings = () => {
         )}
 
         <TouchableOpacity
-          style={styles.optionContainer}
+          style={[styles.optionContainer]}
           onPress={() => setShowInformation((prev) => !prev)}
         >
-          <Text style={styles.optionText}>Informacje</Text>
+          <Text style={[styles.optionText]}>Informacje</Text>
         </TouchableOpacity>
 
         {renderInformation()}
@@ -159,7 +174,6 @@ const Settings = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#9091fd',
   },
   title: {
     fontSize: 24,

@@ -4,6 +4,7 @@ import { collection, addDoc, doc, updateDoc } from 'firebase/firestore';
 import { firestore, auth } from '../../constants/config';
 import { onAuthStateChanged } from 'firebase/auth';
 import { useNavigate } from 'react-router-native';
+import Header from '../header';
 
 const CreateTeam = () => {
   const navigate = useNavigate();
@@ -69,6 +70,7 @@ const CreateTeam = () => {
 
   return (
     <View style={styles.container}>
+      <Header></Header>
       <View style={styles.teamContent}>
         <Text style={styles.title}>Utwórz Zespół</Text>
         <TextInput

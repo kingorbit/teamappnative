@@ -129,7 +129,7 @@ const TeamStatsView = () => {
         ) : (
           <Text style={styles.noData}>Brak danych zespołowych dla wybranego sezonu</Text>
         )}
-          <TouchableOpacity style={styles.link} onPress={() => navigate('/stats')}>
+          <TouchableOpacity style={styles.link} onPress={() => navigate('/teams')}>
             <Text style={styles.linkText}>Powrót</Text>
           </TouchableOpacity>
       </View>

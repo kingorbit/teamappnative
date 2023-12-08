@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-nati
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import { firestore } from '../../constants/config';
 import { useNavigate } from 'react-router-native';
+import Header from '../header';
 
 const TeamsList = () => {
   const navigate = useNavigate();
@@ -45,7 +46,9 @@ const TeamsList = () => {
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
+    <View style={styles.container} >
+      <Header></Header>
+    <ScrollView contentContainerStyle={styles.listcontainer}>
       <Text style={styles.title}>Lista Zespołów</Text>
       {teams.map((team) => (
         <TouchableOpacity key={team.id} style={styles.team} onPress={() => navigate(`/team/${team.id}`)}>
@@ -62,16 +65,20 @@ const TeamsList = () => {
         <Text style={styles.linkText}>Powrót</Text>
       </TouchableOpacity>
     </ScrollView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
+flex: 1,
+backgroundColor: '#9091fd',
+  },
+  listcontainer:{
     flexGrow: 1,
-    backgroundColor: '#9091fd',
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
+    padding: 40,
   },
   title: {
     fontSize: 24,
@@ -84,7 +91,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     padding: 20,
     marginBottom: 20,
-    width: '100%',
+    width: '70%',
     alignItems: 'center', // Centrowanie tekstu
   },
   teamName: {

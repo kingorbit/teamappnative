@@ -5,6 +5,7 @@ import { collection, query, where, getDocs, getDoc } from 'firebase/firestore';
 import Header from '../header';
 import { firestore, auth } from '../../constants/config';
 import { useNavigate } from 'react-router-native';
+import NavigationBar from '../navBar';
 
 const YourTeam = () => {
   const [user, setUser] = useState(null);
@@ -95,6 +96,7 @@ const YourTeam = () => {
           <Text style={styles.buttonText}>Powrót</Text>
         </TouchableOpacity>
       </View>
+      <NavigationBar></NavigationBar>
     </View>
   );
 };
@@ -114,6 +116,7 @@ const styles = StyleSheet.create({
     color: 'white',
   },
   teamContent: {
+    flex: 1,
     padding: 20,
     justifyContent: 'center',
     alignItems: 'center',

@@ -8,7 +8,6 @@ import Home from '../components/home';
 import CalendarScreen from './calendar';
 import Chat from './chat';
 import Team from './team';
-import Stats from './stats'
 import Profil from './profil';
 import Settings from './settings'
 import CreateTeam from "../components/team/createTeam";
@@ -42,7 +41,6 @@ const App = () => {
         <Route path="/calendar" element={<CalendarScreen />} />
         <Route path="/chat" element={<Chat />} />
         <Route path="/team" element={<Team />} />
-        <Route path="/stats" element={<Stats />} />
         <Route path="/profil" element={<Profil />} />
         <Route path="/settings" element={<Settings />} />
         <Route path="/createTeam" element={<CreateTeam />} />

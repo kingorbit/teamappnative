@@ -4,6 +4,7 @@ import { collection, query, where, getDocs, doc, deleteDoc } from 'firebase/fire
 import { firestore, auth } from '../../constants/config';
 import { onAuthStateChanged } from 'firebase/auth';
 import { useNavigate } from 'react-router-native';
+import Header from '../header';
 
 const DeleteTeam = () => {
   const navigate = useNavigate();
@@ -61,6 +62,7 @@ const DeleteTeam = () => {
 
   return (
     <View style={styles.container}>
+      <Header></Header>
       <View style={styles.teamContent}>
         <Text style={styles.title}>Usuń Zespół</Text>
         <TextInput

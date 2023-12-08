@@ -1,33 +1,68 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { onAuthStateChanged } from 'firebase/auth';
-import { getFirestore, collection, query, where, onSnapshot, getDocs, orderBy, limit } from 'firebase/firestore';
+import { firestore } from '../constants/config';
+import { getFirestore, collection, query, where, onSnapshot, getDocs, orderBy, limit, doc, getDoc } from 'firebase/firestore';
 import { auth } from '../constants/config';
 import Header from './header';
 import NavigationBar from './navBar';
 
-
 const Home = () => {
   const [user, setUser] = useState(null);
+  const [userAdditionalData, setUserAdditionalData] = useState(null);
   const [coachMessages, setCoachMessages] = useState([]);
   const [upcomingEvent, setUpcomingEvent] = useState(null);
 
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (userData) => {
-      if (userData) {
-        setUser(userData);
-        fetchCoachMessages(userData.uid);
-        findUpcomingEvent();
-      }
-    });
+  const fetchUserData = async (userId) => {
+    const userDocRef = doc(firestore, 'users', userId);
+    const userDoc = await getDoc(userDocRef);
 
-    return () => unsubscribe();
-  }, []);
+    if (userDoc.exists()) {
+      const userData = userDoc.data();
+      return userData;
+    }
+
+    return null;
+  };
+
+  const fetchLatestEvent = async () => {
+    const currentDate = new Date().toISOString();
+    const eventsQuery = query(
+      collection(getFirestore(), 'events'),
+      where('eventDate', '>=', currentDate),
+      orderBy('eventDate'),
+      limit(1)
+    );
+  
+    const eventsSnapshot = await getDocs(eventsQuery);
+  
+    if (!eventsSnapshot.empty) {
+      const latestEventData = eventsSnapshot.docs[0].data();
+      return latestEventData;
+    }
+  
+    return null;
+  };
+  
+
+  const fetchLatestEventData = async () => {
+    const latestEvent = await fetchLatestEvent();
+    setUpcomingEvent(latestEvent);
+  };
+
+  const calculateDaysRemaining = (eventDate) => {
+    const today = new Date();
+    const eventDateTime = new Date(eventDate);
+
+    // Oblicz różnicę między dzisiaj a datą wydarzenia
+    const timeDifference = eventDateTime.getTime() - today.getTime();
+    const daysRemaining = Math.ceil(timeDifference / (1000 * 60 * 60 * 24));
+
+    return daysRemaining > 0 ? `Za ${daysRemaining} dni` : 'Dziś';
+  };
 
   const fetchCoachMessages = async (userId) => {
-    const db = getFirestore();
-
-    const teamsQuery = query(collection(db, 'teams'), where('members', 'array-contains', userId));
+    const teamsQuery = query(collection(firestore, 'teams'), where('members', 'array-contains', userId));
     const teamsSnapshot = await getDocs(teamsQuery);
 
     let userTeamId = null;
@@ -41,7 +76,7 @@ const Home = () => {
       return;
     }
 
-    const coachMessagesQuery = query(collection(db, 'coachMessages'), where('teamId', '==', userTeamId));
+    const coachMessagesQuery = query(collection(firestore, 'coachMessages'), where('teamId', '==', userTeamId));
 
     const unsubscribe = onSnapshot(coachMessagesQuery, (querySnapshot) => {
       const messages = [];
@@ -58,28 +93,29 @@ const Home = () => {
     return () => unsubscribe();
   };
 
-  const findUpcomingEvent = async () => {
-    const db = getFirestore();
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (userData) => {
+      if (userData) {
+        const { uid } = userData;
+        setUser(userData);
+        const userAdditionalData = await fetchUserData(uid);
+        setUserAdditionalData(userAdditionalData);
+        fetchCoachMessages(uid);
+        fetchLatestEventData();
+      }
+    });
 
-    const eventsQuery = query(
-      collection(db, 'events'),
-      where('eventDate', '>=', new Date()),
-      orderBy('eventDate'),
-      limit(1)
-    );
-
-    const eventsSnapshot = await getDocs(eventsQuery);
-
-    if (!eventsSnapshot.empty) {
-      const upcomingEventData = eventsSnapshot.docs[0].data();
-      setUpcomingEvent(upcomingEventData);
-    }
-  };
+    return () => unsubscribe();
+  }, []);
 
   return (
     <View style={styles.container}>
       <Header user={user} setUser={setUser} />
       <ScrollView style={styles.contentContainer}>
+        <Text style={styles.welcomeText}>
+          {`Witaj ${userAdditionalData ? `${userAdditionalData.firstName} ${userAdditionalData.lastName}` : ''} w Team App!`}
+        </Text>
+
         <Text style={styles.sectionTitle}>Najnowsze Wiadomości od Trenera</Text>
         <View style={styles.messagesContainer}>
           {coachMessages.map((message) => (
@@ -90,13 +126,14 @@ const Home = () => {
             </View>
           ))}
         </View>
-
+        <Text style={styles.sectionTitle}>Najbliższe wydarzenie!</Text>
         {upcomingEvent && (
           <View style={styles.upcomingEventContainer}>
-            <Text style={styles.sectionTitle}>Nadchodzące Wydarzenie</Text>
             <View style={styles.eventContainer}>
               <Text style={styles.eventTitle}>{upcomingEvent.title}</Text>
-              <Text style={styles.eventDate}>{`Data: ${upcomingEvent.date.toDate().toLocaleDateString()}`}</Text>
+              <Text style={styles.eventTitle}>{upcomingEvent.eventName}</Text>
+              <Text style={styles.eventDate}>{`Data: ${new Date(upcomingEvent.eventDate).toDateString()}`}</Text>
+              <Text style={styles.daysRemainingText}>{calculateDaysRemaining(upcomingEvent.eventDate)}</Text>
             </View>
           </View>
         )}
@@ -113,6 +150,13 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     padding: 20,
+  },
+  welcomeText: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: 'white',
+    marginBottom: 20,
+    alignSelf: 'center',
   },
   sectionTitle: {
     fontSize: 24,

@@ -254,7 +254,7 @@ const PlayerStats = () => {
               )}
             </View>
           )}
-          <TouchableOpacity style={styles.link} onPress={() => navigate('/stats')}>
+          <TouchableOpacity style={styles.link} onPress={() => navigate('/teams')}>
             <Text style={styles.linkText}>Powrót</Text>
           </TouchableOpacity>
         </View>

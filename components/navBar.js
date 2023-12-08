@@ -61,6 +61,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   activeTab: {
+    transform: '1.5',
     height: 60,
     backgroundColor: '#24243f', // Kolor aktywnej zakładki
     borderRadius: 15,
