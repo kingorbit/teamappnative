@@ -295,7 +295,7 @@ const styles = StyleSheet.create({
     marginBottom: 5,
   },
   title: {
-    fontSize: 24,
+    fontSize: 18,
     fontWeight: 'bold',
     textAlign: 'center',
     color: 'white',
@@ -307,7 +307,7 @@ const styles = StyleSheet.create({
     margin: 10,
   },
   chooseImageButtonText: {
-    fontSize: 16,
+    fontSize: 12,
     fontWeight: 'bold',
     color: 'black',
     textAlign: 'center',
@@ -351,18 +351,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: 5,
   },
   messageSender: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: 'bold',
     color: 'white',
   },
   messageText: {
-    fontSize: 14,
+    fontSize: 12,
     color: 'white',
     paddingVertical: 7,
   },
   messageImage: {
     width: 150,
-    height: 200,
+    height: 150,
     marginVertical: 5,
   },
   messageTimestamp: {
@@ -391,7 +391,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   leadMoreButtonText:{
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: 'bold',
     color: 'black',
   },
@@ -404,7 +404,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   sendButtonText: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: 'bold',
     color: 'black',
   },
@@ -417,7 +417,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#f0f0f0',
   },
   toggleButtonText: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: 'bold',
     color: 'black',
   },

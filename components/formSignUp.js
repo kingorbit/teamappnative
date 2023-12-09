@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { TextInput, View, Alert, TouchableOpacity, Text, StyleSheet, KeyboardAvoidingView } from 'react-native';
+import { TextInput, View, Alert, TouchableOpacity, Text, StyleSheet, KeyboardAvoidingView, Image } from 'react-native';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { auth, firestore } from '../constants/config';
-import { collection, addDoc, doc, setDoc } from 'firebase/firestore';
+import { doc, setDoc } from 'firebase/firestore';
 import { useNavigate } from 'react-router-native';
 import ModalDropdown from 'react-native-modal-dropdown';
 
@@ -60,7 +60,8 @@ const FormSignUp = () => {
   return (
     <KeyboardAvoidingView style={styles.container} behavior="padding" keyboardVerticalOffset={-500}>
       <View style={styles.formContainer}>
-        <Text style={styles.title}>Team App</Text>
+      <Image source={require('../assets/logo.png')} style={styles.logo} />
+        <Text style={styles.title}>Rejestracja Zawodnik</Text>
         <TextInput
           style={styles.input}
           placeholder="Imię"
@@ -127,7 +128,7 @@ const FormSignUp = () => {
       justifyContent: 'center',
       alignItems: 'center',
       paddingHorizontal: 20,
-      backgroundColor: '#9091fd',
+      backgroundColor: '#24243f',
     },
     formContainer: {
       width: '100%',
@@ -135,10 +136,9 @@ const FormSignUp = () => {
       alignItems: 'center',
     },
     link: {
+      marginVertical: 20,
       padding: 20,
-      margin: 10,
-      padding: 20,
-      backgroundColor: 'white',
+      backgroundColor: '#9091fd',
       borderRadius: 10,
       alignItems: 'center',
       justifyContent: 'center',
@@ -148,7 +148,12 @@ const FormSignUp = () => {
     linkText: {
       fontSize: 18,
       fontWeight: 'bold',
-      color: 'black',
+      color: 'white',
+    },
+    logo: {
+      width: 80,
+      height: 75,
+      borderRadius: 10,
     },
     input: {
       width: '70%',
@@ -169,11 +174,11 @@ const FormSignUp = () => {
     buttonText: {
       fontSize: 18,
       fontWeight: 'bold',
-      color: 'black',
+      color: 'white',
     },
     button: {
       padding: 20,
-      backgroundColor: 'white',
+      backgroundColor: '#9091fd',
       borderRadius: 10,
       alignItems: 'center',
       justifyContent: 'center',

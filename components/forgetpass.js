@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { TextInput, View, TouchableOpacity, Text, Alert, StyleSheet } from 'react-native';
+import { TextInput, View, TouchableOpacity, Text, Alert, StyleSheet, Image } from 'react-native';
 import { sendPasswordResetEmail } from 'firebase/auth';
 import { auth } from '../constants/config';
 import { useNavigate } from 'react-router-native';
@@ -20,7 +20,8 @@ const ForgetPass = ({ navigateToHome }) => {
 
   return (
     <View style={styles.container}>
-      <View style={styles.forgotcontainer}>
+      <View style={styles.forgotContainer}>
+      <Image source={require('../assets/logo.png')} style={styles.logo} />
         <Text style={styles.header}>Zapomniałeś hasła?</Text>
         <TextInput
           style={styles.input}
@@ -32,24 +33,22 @@ const ForgetPass = ({ navigateToHome }) => {
           <Text style={styles.buttonText}>Wyślij</Text>
         </TouchableOpacity>
 
-        <View style={styles.goBackContainer}>
         <TouchableOpacity style={styles.goBackButton} onPress={() => navigate('/')}>
-          <Text style={styles.linkText}>Powrót</Text>
+          <Text style={styles.goBackText}>Powrót</Text>
         </TouchableOpacity>
-        </View>
       </View>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container:{
+  container: {
     flex: 1,
-    backgroundColor: '#9091fd',
-
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#24243f',
   },
-  forgotcontainer: {
-    flex: 1,
+  forgotContainer: {
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 20,
@@ -59,6 +58,7 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     marginBottom: 20,
+    color: 'white',
   },
   input: {
     width: '100%',
@@ -73,25 +73,23 @@ const styles = StyleSheet.create({
   buttonText: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: 'black',
+    color: 'white',
   },
   button: {
     padding: 20,
     margin: 10,
-    backgroundColor: 'white',
+    backgroundColor: '#9091fd',
     borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
     elevation: 3,
     width: '70%',
   },
-  goBackContainer: {
-    marginTop: 20,
-  },
   goBackButton: {
+    marginTop: 20,
     padding: 20,
     margin: 10,
-    backgroundColor: 'white',
+    backgroundColor: '#9091fd',
     borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
@@ -99,10 +97,17 @@ const styles = StyleSheet.create({
     width: '70%',
   },
   goBackText: {
-    color: 'black',
+    fontSize: 18,
+    color: 'white',
     textAlign: 'center',
     fontWeight: 'bold',
   },
+  logo: {
+    width: 200,
+    height: 200,
+    marginVertical: 25,
+    borderRadius: 20,
+  }
 });
 
 export default ForgetPass;

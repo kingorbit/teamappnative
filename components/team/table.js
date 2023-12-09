@@ -1,16 +1,18 @@
 // Table.js
 import React, { useState, useEffect } from 'react';
 import { View, Text, FlatList, StyleSheet, useWindowDimensions } from 'react-native';
-import { collection, getDocs } from 'firebase/firestore';
-import { firestore } from '../../constants/config';
+import { collection, getDocs, doc, getDoc } from 'firebase/firestore';
+import { firestore, auth } from '../../constants/config';
 import TableItem from './tableItem';
 import Header from '../header'; // Import Header z odpowiedniego katalogu
 import NavigationBar from '../navBar';
+import { lightTheme, darkTheme } from '../theme';
 
 const Table = () => {
   const [teams, setTeams] = useState([]);
   const windowWidth = useWindowDimensions().width;
   const isSmallScreen = windowWidth < 600;
+  const [theme, setTheme] = useState(darkTheme);
 
   useEffect(() => {
     const fetchTableData = async () => {
@@ -18,7 +20,7 @@ const Table = () => {
         const tableRef = collection(firestore, 'table');
         const tableSnapshot = await getDocs(tableRef);
         const tableData = tableSnapshot.docs.map((doc) => doc.data());
-
+  
         // Sortowanie danych: najpierw po punktach, a potem po bramkach strzelonych
         tableData.sort((a, b) => {
           if (a.points !== b.points) {
@@ -27,15 +29,38 @@ const Table = () => {
             return b.goals - a.goals; // Sortuj malejąco po bramkach strzelonych
           }
         });
-
+  
         setTeams(tableData);
+  
+        // Pobierz ID użytkownika, aby przekazać je do funkcji fetchUserSettings
+        const authUser = auth.currentUser;
+        if (authUser) {
+          fetchUserSettings(authUser.uid);
+        } else {
+          console.error('Błąd pobierania ID użytkownika');
+        }
       } catch (error) {
         console.error('Błąd pobierania danych tabeli', error);
       }
     };
-
+  
     fetchTableData();
-  }, []);
+  }, []); // Pusta zależność, aby useEffect działał tylko raz po zamontowaniu komponentu
+  
+  const fetchUserSettings = async (uid) => {
+    try {
+      const userDocRef = doc(firestore, 'users', uid);
+      const userDocSnapshot = await getDoc(userDocRef);
+
+      if (userDocSnapshot.exists()) {
+        const userDataFromFirestore = userDocSnapshot.data();
+        const darkModeEnabled = userDataFromFirestore.darkModeEnabled || false;
+        setTheme(darkModeEnabled ? darkTheme : lightTheme);
+      }
+    } catch (error) {
+      console.error('Error fetching user settings:', error.message);
+    }
+  };
 
   const renderTableHeader = () => {
     const headers = isSmallScreen
@@ -53,7 +78,7 @@ const Table = () => {
   };
 
   return (
-    <View style={styles.container}>
+<View style={[styles.container, { backgroundColor: theme.backgroundColor }]}>
       <Header /> 
         <View style={styles.tablecontainer}>
           <Text style={styles.title}>Tabela</Text>

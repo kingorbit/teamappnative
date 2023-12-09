@@ -1,15 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, Modal } from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, Modal, ScrollView } from 'react-native';
 import { Link } from 'react-router-native';
 import Header from '../components/header';
 import { onAuthStateChanged } from 'firebase/auth';
 import { collection, query, where, getDoc, doc, getDocs, updateDoc } from 'firebase/firestore';
 import { firestore, auth } from '../constants/config';
 import NavigationBar from '../components/navBar';
+import { lightTheme, darkTheme } from '../components/theme';
+import Icon from 'react-native-vector-icons/FontAwesome';
 
 const Profil = () => {
   const [user, setUser] = useState(null);
   const [isEditModalVisible, setEditModalVisible] = useState(false);
+  const [theme, setTheme] = useState(darkTheme);
   const [editedData, setEditedData] = useState({
     firstName: '',
     lastName: '',
@@ -33,6 +36,9 @@ const Profil = () => {
             console.log(doc.id, ' => ', doc.data());
             setUser(doc.data());
           });
+
+          // Dodane wywołanie funkcji fetchUserSettings
+          fetchUserSettings(userData.uid);
         } catch (error) {
           console.error('Błąd pobierania danych użytkownika', error);
         }
@@ -41,6 +47,21 @@ const Profil = () => {
 
     return () => unsubscribe();
   }, []);
+
+  const fetchUserSettings = async (uid) => {
+    try {
+      const userDocRef = doc(firestore, 'users', uid);
+      const userDocSnapshot = await getDoc(userDocRef);
+  
+      if (userDocSnapshot.exists()) {
+        const userDataFromFirestore = userDocSnapshot.data();
+        const darkModeEnabled = userDataFromFirestore.darkModeEnabled || false;
+        setTheme(darkModeEnabled ? darkTheme : lightTheme);
+      }
+    } catch (error) {
+      console.error('Error fetching user settings:', error.message);
+    }
+  };
 
   const handleUpdate = async () => {
     try {
@@ -89,29 +110,50 @@ const Profil = () => {
       console.error('Błąd aktualizacji danych użytkownika', error);
     }
   };
-  
-  
+
+  const getAvatarInitials = (firstName, lastName) => {
+    const initials = firstName.charAt(0) + lastName.charAt(0);
+    return initials.toUpperCase();
+  };
+
   return (
-    <View style={styles.container}>
+<View style={[styles.container, { backgroundColor: theme.backgroundColor }]}>
       <Header user={user} setUser={setUser} />
       <View style={styles.profileContent}>
         <Text style={styles.title}>Twój Profil</Text>
+        <View style={styles.avatarContainer}>
+        <View style={[styles.avatar, { backgroundColor: 'purple' }]}>
+          <Text style={styles.avatarText}>
+            {user && user.firstName && user.lastName
+              ? getAvatarInitials(user.firstName, user.lastName)
+              : ''}
+          </Text>
+        </View>
+      </View>
         {user && (
           <View style={styles.detailsContainer}>
-            <Text style={styles.label}>ID: {user.uid}</Text>
-            <Text style={styles.label}>Imię: {user.firstName}</Text>
-            <Text style={styles.label}>Nazwisko: {user.lastName}</Text>
-            <Text style={styles.label}>Email: {user.email}</Text>
-            <Text style={styles.label}>Wiek: {user.age}</Text>
-            <Text style={styles.label}>Pozycja: {user.position || 'Brak Pozycji - Trener'}</Text>
             <Text style={styles.label}>
-              Trener: {user.isCoach ? (user.position ? 'Tak' : 'Trener') : 'Nie'}
+              <Icon name="user" size={20} color="white" /> Imię i nazwisko {user.firstName} {user.lastName}
             </Text>
-            <Text style={styles.label}>Numer telefonu: {user.phoneNumber || 'Brak Telefonu'}</Text>
+            <Text style={styles.label}>
+              <Icon name="envelope" size={20} color="white" /> Email: {user.email}
+            </Text>
+            <Text style={styles.label}>
+              <Icon name="birthday-cake" size={20} color="white" /> Wiek: {user.age}
+            </Text>
+            <Text style={styles.label}>
+              <Icon name="futbol-o" size={20} color="white" /> Pozycja: {user.position || 'Brak Pozycji - Trener'}
+            </Text>
+            <Text style={styles.label}>
+              <Icon name="users" size={20} color="white" /> Trener: {user.isCoach ? (user.position ? 'Tak' : 'Trener') : 'Nie'}
+            </Text>
+            <Text style={styles.label}>
+              <Icon name="phone" size={20} color="white" /> Numer telefonu: {user.phoneNumber || 'Brak Telefonu'}
+            </Text>
           </View>
         )}
         <TouchableOpacity
-          style={styles.editButton}
+          style={[styles.link, { backgroundColor: theme.buttonColor }]}
           onPress={() => {
             setEditedData({
               firstName: user?.firstName || '',
@@ -126,81 +168,95 @@ const Profil = () => {
             setEditModalVisible(true);
           }}
         >
-          <Text style={styles.buttonText}>Edytuj Profil</Text>
+          <Text style={[styles.linkText, { color: theme.textColor }]}>Edytuj Profil</Text>
         </TouchableOpacity>
-        <Link to="/home" style={styles.link}>
-          <Text style={styles.linkText}>Powrót do Home</Text>
-        </Link>
       </View>
 
-    {/* Modal do edycji profili */}
-    <Modal animationType="slide" transparent={true} visible={isEditModalVisible}>
-      <View style={styles.modalContainer}>
-        <View style={styles.modalContent}>
-          <Text style={styles.modalTitle}>Edytuj Profil</Text>
-          <View style={styles.inputContainer}>
-            <Text style={styles.label}>Imię</Text>
-            <TextInput
-              style={styles.input}
-              value={editedData.firstName}
-              onChangeText={(text) => setEditedData({ ...editedData, firstName: text })}
-            />
-          </View>
-          <View style={styles.inputContainer}>
-            <Text style={styles.label}>Nazwisko</Text>
-            <TextInput
-              style={styles.input}
-              value={editedData.lastName}
-              onChangeText={(text) => setEditedData({ ...editedData, lastName: text })}
-            />
-          </View>
-          <View style={styles.inputContainer}>
-            <Text style={styles.label}>Email</Text>
-            <TextInput
-              style={styles.input}
-              value={editedData.email}
-              onChangeText={(text) => setEditedData({ ...editedData, email: text })}
-            />
-          </View>
-          <View style={styles.inputContainer}>
-            {!user?.isCoach && (
+      {/* Modal do edycji profili */}
+      <Modal animationType="slide" transparent={true} visible={isEditModalVisible}>
+      <ScrollView contentContainerStyle={styles.modalScrollView}>
+        <View style={styles.modalContainer}>
+          <View style={[styles.modalContent, { backgroundColor: theme.backgroundColor }]}>
+            <Text style={[styles.modalTitle, { color: theme.textColor }]}>Edytuj Profil</Text>
+            <View style={styles.inputContainer}>
+              <Text style={[styles.label, { color: theme.textColor }]}>
+                <Icon name="user" size={20}/> Imię
+              </Text>
               <TextInput
                 style={styles.input}
-                placeholder="Pozycja"
-                value={editedData.position}
-                onChangeText={(text) => setEditedData({ ...editedData, position: text })}
+                value={editedData.firstName}
+                onChangeText={(text) => setEditedData({ ...editedData, firstName: text })}
               />
-            )}
+            </View>
+            <View style={styles.inputContainer}>
+            <Text style={[styles.label, { color: theme.textColor }]}>
+                <Icon name="user" size={20}/> Nazwisko
+              </Text>
+              <TextInput
+                style={styles.input}
+                value={editedData.lastName}
+                onChangeText={(text) => setEditedData({ ...editedData, lastName: text })}
+              />
+            </View>
+            <View style={styles.inputContainer}>
+            <Text style={[styles.label, { color: theme.textColor }]}>
+                <Icon name="envelope" size={20} /> Email
+              </Text>
+              <TextInput
+                style={styles.input}
+                value={editedData.email}
+                onChangeText={(text) => setEditedData({ ...editedData, email: text })}
+              />
+            </View>
+            <View style={styles.inputContainer}>
+            <Text style={[styles.label, { color: theme.textColor }]}>
+            <Icon name="futbol-o" size={20} /> Pozycja
+            </Text>
+              {!user?.isCoach && (
+                <View>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Pozycja"
+                    value={editedData.position}
+                    onChangeText={(text) => setEditedData({ ...editedData, position: text })}
+                  />
+                </View>
+              )}
+            </View>
+            <View style={styles.inputContainer}>
+            <Text style={[styles.label, { color: theme.textColor }]}>
+                <Icon name="birthday-cake" size={20} /> Wiek
+              </Text>
+              <TextInput
+                style={styles.input}
+                value={editedData.age.toString()}
+                onChangeText={(text) => setEditedData({ ...editedData, age: text })}
+              />
+            </View>
+            <View style={styles.inputContainer}>
+            <Text style={[styles.label, { color: theme.textColor }]}>
+                <Icon name="phone" size={20} /> Numer telefonu
+              </Text>
+              <TextInput
+                style={styles.input}
+                value={editedData.phoneNumber.toString()}
+                onChangeText={(text) => setEditedData({ ...editedData, phoneNumber: text })}
+              />
+            </View>
+            <TouchableOpacity style={[styles.link, { backgroundColor: theme.succes }]} onPress={handleUpdate}>
+              <Text style={[styles.linkText, { color: theme.textColor }]}>Zapisz</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={[styles.link, { backgroundColor: theme.cancel }]} onPress={() => setEditModalVisible(false)}>
+              <Text style={[styles.linkText, { color: theme.textColor }]}>Anuluj</Text>
+            </TouchableOpacity>
           </View>
-          <View style={styles.inputContainer}>
-            <Text style={styles.label}>Wiek</Text>
-            <TextInput
-              style={styles.input}
-              value={editedData.age.toString()}
-              onChangeText={(text) => setEditedData({ ...editedData, age: text })}
-            />
-          </View>
-          <View style={styles.inputContainer}>
-            <Text style={styles.label}>Numer telefonu</Text>
-            <TextInput
-              style={styles.input}
-              value={editedData.phoneNumber.toString()}
-              onChangeText={(text) => setEditedData({ ...editedData, phoneNumber: text })}
-            />
-          </View>
-          <TouchableOpacity style={styles.button} onPress={handleUpdate}>
-            <Text style={styles.buttonText}>Zapisz</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.button} onPress={() => setEditModalVisible(false)}>
-            <Text style={styles.buttonText}>Anuluj</Text>
-          </TouchableOpacity>
         </View>
-      </View>
-    </Modal>
-    <NavigationBar></NavigationBar>
-  </View>
-);
-            }
+        </ScrollView>
+      </Modal>
+      <NavigationBar></NavigationBar>
+    </View>
+  );
+};
 
 const styles = StyleSheet.create({
   container: {
@@ -208,32 +264,41 @@ const styles = StyleSheet.create({
     backgroundColor: '#9091fd',
   },
   title: {
-    fontSize: 24,
+    fontSize: 26,
     fontWeight: 'bold',
-    marginBottom: 20,
+    marginBottom: 30,
     textAlign: 'center',
     color: 'white',
   },
-  inputContainer: {
-    marginBottom: 10,
-    width: '60%',
+  detailsContainer: {
+    alignItems: 'center',
+    marginBottom: 20,
   },
-  input: {
-    width: '100%',
-    height: 40,
-    marginBottom: 10,
-    paddingHorizontal: 10,
-    backgroundColor: 'white',
-    borderRadius: 5,
-    borderWidth: 1,
-    borderColor: '#ccc',
+  avatarContainer: {
+    alignItems: 'center',
+    marginTop: 20,
+  },
+  avatar: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginVertical: 20,
+  },
+  avatarText: {
+    fontSize: 24,
+    color: 'white',
+    fontWeight: 'bold',
   },
   label: {
     fontSize: 16,
-    marginBottom: 5,
+    marginBottom: 10,
     fontWeight: 'bold',
+    color: 'white',
+    textAlign: 'center',
   },
-  button: {
+  editButton: {
     marginTop: 20,
     padding: 15,
     backgroundColor: '#f0f0f0',
@@ -267,13 +332,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flex: 1,
   },
-  editButton: {
-    marginTop: 20,
-    padding: 15,
-    backgroundColor: '#f0f0f0',
-    borderRadius: 8,
-    alignItems: 'center',
-  },
   modalContainer: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
@@ -281,11 +339,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: '5%',
     paddingHorizontal: 20,
+    borderRadius: 20,
   },
   modalContent: {
     backgroundColor: 'white',
     borderRadius: 10,
-    padding: 10,
+    padding: 20,
     alignItems: 'center',
     width: '80%',
     shadowColor: '#000',
@@ -302,7 +361,33 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 20,
     textAlign: 'center',
-    color: 'white',
+    color: 'black',
+  },
+  inputContainer: {
+    marginBottom: 20,
+    width: '80%',
+  },
+  input: {
+    width: '100%',
+    height: 40,
+    marginBottom: 10,
+    paddingHorizontal: 10,
+    backgroundColor: 'white',
+    borderRadius: 5,
+    borderWidth: 1,
+    borderColor: '#ccc',
+  },
+  inputLine: {
+    height: 2,
+    backgroundColor: 'black',
+    marginVertical: 5,
+  },
+  button: {
+    marginTop: 20,
+    padding: 15,
+    backgroundColor: '#f0f0f0',
+    borderRadius: 8,
+    alignItems: 'center',
   },
 });
 

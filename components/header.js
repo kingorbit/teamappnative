@@ -72,27 +72,30 @@ const Header = () => {
 
 
 
+
   return (
     <View style={styles.header}>
       <Image source={require('../assets/logo.png')} style={styles.logo} />
       <TouchableOpacity onPress={navigateToHome}>
-        <Text style={styles.appTitle}>
-          Team App
-        </Text>
+        <Text style={styles.appTitle}>Team App</Text>
       </TouchableOpacity>
       {user && (
         <View style={styles.userDetails}>
           <View style={styles.userInfo}>
             <TouchableOpacity onPress={navigateToUserProfile}>
               <Text style={styles.userText}>
-                <Icon name="user" size={15} color="white" /> {user.firstName} {user.lastName}
+                <Icon name="user" size={15} color="white" />{' '}
+                {user.firstName} {user.lastName}
               </Text>
             </TouchableOpacity>
             {teamNames.length > 0 && (
               <View style={styles.teamContainer}>
                 <TouchableOpacity onPress={navigateToTeam}>
-                <Text style={styles.teamNameText}><Icon style={styles.teamText} name="users" size={15} color="white" /> {teamNames.join(', ')}</Text>
-              </TouchableOpacity>
+                  <Text style={styles.teamNameText}>
+                    <Icon name="users" size={15} color="white" />{' '}
+                    {teamNames.join(', ')}
+                  </Text>
+                </TouchableOpacity>
               </View>
             )}
           </View>
@@ -105,8 +108,8 @@ const Header = () => {
       )}
     </View>
   );
+};
 
-            };
 
 const styles = StyleSheet.create({
   header: {
@@ -128,31 +131,24 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     textAlign: 'center',
   },
-  teamContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
   teamText: {
     color: 'white',
     fontWeight: 'bold',
   },
   teamNameText: {
+    marginVertical: 3,
     color: 'white',
-    marginLeft: 5,
+    fontSize: 12,
+    fontWeight: 'bold',
   },
   userDetails: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
     marginLeft: 'auto',
-  },
-  userInfo: {
-    flexDirection: 'column',
-    alignItems: 'flex-start',
   },
   logoutButton: {
     backgroundColor: 'white',
-    padding: 8,
+    padding: 5,
     borderRadius: 5,
     marginLeft: 10,
   },
@@ -165,8 +161,6 @@ const styles = StyleSheet.create({
   teamText: {
     color: 'white',
     fontWeight: 'bold',
-    marginBottom: 5,
-    marginTop: 8,
   },
   logoutText: {
     fontSize: 10,

@@ -2,15 +2,17 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Link } from 'react-router-native';
 import Header from '../components/header';
-import { collection, query, where, getDocs, doc } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { firestore, auth } from '../constants/config';
 import NavigationBar from '../components/navBar';
+import { lightTheme, darkTheme } from '../components/theme';
 
 const Team = () => {
   const [user, setUser] = useState(null);
   const [isCoach, setIsCoach] = useState(false);
   const [isInTeam, setIsInTeam] = useState(false);
+  const [theme, setTheme] = useState(darkTheme);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (authUser) => {
@@ -19,22 +21,23 @@ const Team = () => {
           const usersRef = collection(firestore, 'users');
           const q = query(usersRef, where('uid', '==', authUser.uid));
           const querySnapshot = await getDocs(q);
-
+  
           if (!querySnapshot.empty) {
             const userData = querySnapshot.docs[0].data();
             setUser(userData);
             setIsCoach(userData.isCoach || false);
-
-            // Sprawdź, czy użytkownik jest w zespole
+  
             const teamsRef = collection(firestore, 'teams');
             const teamsQuery = query(teamsRef, where('members', 'array-contains', authUser.uid));
             const teamsSnapshot = await getDocs(teamsQuery);
-
+  
             if (!teamsSnapshot.empty) {
               setIsInTeam(true);
             } else {
               setIsInTeam(false);
             }
+  
+            fetchUserSettings(authUser.uid);
           } else {
             setUser(null);
             setIsCoach(false);
@@ -45,18 +48,34 @@ const Team = () => {
         }
       }
     });
-
+  
     return () => {
       unsubscribe();
     };
   }, []);
+  
 
+  const fetchUserSettings = async (uid) => {
+    try {
+      const userDocRef = doc(firestore, 'users', uid);
+      const userDocSnapshot = await getDoc(userDocRef);
+  
+      if (userDocSnapshot.exists()) {
+        const userDataFromFirestore = userDocSnapshot.data();
+        const darkModeEnabled = userDataFromFirestore.darkModeEnabled || false;
+        setTheme(darkModeEnabled ? darkTheme : lightTheme);
+      }
+    } catch (error) {
+      console.error('Error fetching user settings:', error.message);
+    }
+  };
+  
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: theme.backgroundColor }]}>
       <Header user={user} setUser={setUser} />
       <View style={styles.teamContent}>
-        <Text style={styles.title}>Zarządzanie Zespołami</Text>
+      <Text style={[styles.title, { color: theme.textColor }]}>Zarządzanie Zespołami</Text>
 
         {user && (
           // Pozostałe linki dostępne dla wszystkich zalogowanych użytkowników
@@ -66,58 +85,58 @@ const Team = () => {
         {user && user.isCoach && (
           <>
             {/* Linki dla trenera */}
-            <Link to="/manageTeam" style={styles.link}>
-              <Text style={styles.linkText}>Zarządzaj Drużyną</Text>
+            <Link to="/manageTeam" style={[styles.link, { backgroundColor: theme.buttonColor }]}>
+            <Text style={[styles.linkText, { color: theme.textColor }]}>Zarządzaj Drużyną</Text>
             </Link>
-            <Link to="/createTeam" style={styles.link}>
-              <Text style={styles.linkText}>Utwórz Zespół</Text>
+            <Link to="/createTeam" style={[styles.link, { backgroundColor: theme.buttonColor }]}>
+              <Text style={[styles.linkText, { color: theme.textColor }]}>Utwórz Zespół</Text>
             </Link>
-            <Link to="/listTeam" style={styles.link}>
-              <Text style={styles.linkText}>Lista Zespołów</Text>
+            <Link to="/listTeam" style={[styles.link, { backgroundColor: theme.buttonColor }]}>
+              <Text style={[styles.linkText, { color: theme.textColor }]}>Lista Zespołów</Text>
             </Link>
-            <Link to="/deleteTeam" style={styles.link}>
-              <Text style={styles.linkText}>Usuń Drużynę</Text>
+            <Link to="/deleteTeam" style={[styles.link, { backgroundColor: theme.buttonColor }]}>
+              <Text style={[styles.linkText, { color: theme.textColor }]}>Usuń Drużynę</Text>
             </Link>
-            <Link to="/resultsCoach" style={styles.link}>
-              <Text style={styles.linkText}>Wyniki - Trener</Text>
+            <Link to="/resultsCoach" style={[styles.link, { backgroundColor: theme.buttonColor }]}>
+              <Text style={[styles.linkText, { color: theme.textColor }]}>Wyniki - Trener</Text>
             </Link>
-            <Link to="/tableCoach" style={styles.link}>
-              <Text style={styles.linkText}>Tabela - Trener</Text>
+            <Link to="/tableCoach" style={[styles.link, { backgroundColor: theme.buttonColor }]}>
+              <Text style={[styles.linkText, { color: theme.textColor }]}>Tabela - Trener</Text>
             </Link>    
-            <Link to="/playerStats" style={styles.link}>
-              <Text style={styles.linkText}>Indywidualne - Trener</Text>
+            <Link to="/playerStats" style={[styles.link, { backgroundColor: theme.buttonColor }]}>
+              <Text style={[styles.linkText, { color: theme.textColor }]}>Indywidualne - Trener</Text>
             </Link>
-            <Link to="/teamStats" style={styles.link}>
-              <Text style={styles.linkText}>Drużyny - Trener</Text>
+            <Link to="/teamStats" style={[styles.link, { backgroundColor: theme.buttonColor }]}>
+              <Text style={[styles.linkText, { color: theme.textColor }]}>Drużyny - Trener</Text>
             </Link>           
           </>
         )}
         {user && !isCoach && !isInTeam && (
           // Link tylko dla zwykłego użytkownika
-          <Link to="/joinTeam" style={styles.link}>
-            <Text style={styles.linkText}>Dołącz do Zespołu</Text>
+          <Link to="/joinTeam" style={[styles.link, { backgroundColor: theme.buttonColor }]}>
+            <Text style={[styles.linkText, { color: theme.textColor }]}>Dołącz do Zespołu</Text>
           </Link>
         )}
         {user && !isCoach && isInTeam && (
           // Link tylko dla zwykłego użytkownika będącego w zespole
           <>
-            <Link to="/yourTeam" style={styles.link}>
-              <Text style={styles.linkText}>Skład</Text>
+            <Link to="/yourTeam" style={[styles.link, { backgroundColor: theme.buttonColor }]}>
+              <Text style={[styles.linkText, { color: theme.textColor }]}>Skład</Text>
             </Link>
-          <Link to="/results" style={styles.link}>
-            <Text style={styles.linkText}>Wyniki</Text>
+          <Link to="/results" style={[styles.link, { backgroundColor: theme.buttonColor }]}>
+            <Text style={[styles.linkText, { color: theme.textColor }]}>Wyniki</Text>
           </Link>
-          <Link to="/table" style={styles.link}>
-            <Text style={styles.linkText}>Tabela</Text>
+          <Link to="/table" style={[styles.link, { backgroundColor: theme.buttonColor }]}>
+            <Text style={[styles.linkText, { color: theme.textColor }]}>Tabela</Text>
           </Link>
-          <Link to="/leaveTeam" style={styles.link}>
-            <Text style={styles.linkText}>Opuść Zespół</Text>
+          <Link to="/leaveTeam" style={[styles.link, { backgroundColor: theme.buttonColor }]}>
+            <Text style={[styles.linkText, { color: theme.textColor }]}>Opuść Zespół</Text>
           </Link>
-          <Link to="/teamStatsView" style={styles.link}>
-            <Text style={styles.linkText}>Statystyki Drużyny</Text>
+          <Link to="/teamStatsView" style={[styles.link, { backgroundColor: theme.buttonColor }]}>
+            <Text style={[styles.linkText, { color: theme.textColor }]}>Statystyki Drużyny</Text>
           </Link>
-          <Link to="/playerStatsView" style={styles.link}>
-              <Text style={styles.linkText}>Statystyki Indywidualne</Text>
+          <Link to="/playerStatsView" style={[styles.link, { backgroundColor: theme.buttonColor }]}>
+              <Text style={[styles.linkText, { color: theme.textColor }]}>Statystyki Indywidualne</Text>
           </Link>
           </>
         )}
@@ -131,7 +150,6 @@ const Team = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#9091fd',
   },
   title: {
     fontSize: 24,
@@ -148,7 +166,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     elevation: 3,
     width: '50%',
-    backgroundColor: '#f0f0f0',
   },
   linkText: {
     fontSize: 18,

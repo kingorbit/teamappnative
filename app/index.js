@@ -25,7 +25,6 @@ import PlayerStats from "../components/stats/playerStats";
 import PlayerStatsView from "../components/stats/playerStatsView";
 import ForgetPass from "../components/forgetpass";
 import NavigationBar from '../components/navBar';
-import LoadingPage from "../components/loadingPage";
 import Results from "../components/team/results";
 import Table from "../components/team/table";
 import ResultsCoach from "../components/team/resultsCoach";
@@ -36,7 +35,6 @@ const App = () => {
     <NativeRouter>
       <Routes>
         <Route path="/" element={<WelcomeScreen />} />
-        <Route path="/loadingPage" element={<LoadingPage />} /> 
         <Route path="/home" element={<Home />} />
         <Route path="/calendar" element={<CalendarScreen />} />
         <Route path="/chat" element={<Chat />} />

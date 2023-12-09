@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Animated, ActivityIndicator, Image } from 'react-native';
 import { onAuthStateChanged } from 'firebase/auth';
 import { firestore } from '../constants/config';
 import { getFirestore, collection, query, where, onSnapshot, getDocs, orderBy, limit, doc, getDoc } from 'firebase/firestore';
@@ -12,6 +12,8 @@ const Home = () => {
   const [userAdditionalData, setUserAdditionalData] = useState(null);
   const [coachMessages, setCoachMessages] = useState([]);
   const [upcomingEvent, setUpcomingEvent] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const spinValue = new Animated.Value(0);
 
   const fetchUserData = async (userId) => {
     const userDocRef = doc(firestore, 'users', userId);
@@ -94,6 +96,7 @@ const Home = () => {
   };
 
   useEffect(() => {
+    
     const unsubscribe = onAuthStateChanged(auth, async (userData) => {
       if (userData) {
         const { uid } = userData;
@@ -108,37 +111,73 @@ const Home = () => {
     return () => unsubscribe();
   }, []);
 
+  useEffect(() => {
+    // Symulacja opóźnienia ładowania
+    const loadingTimeout = setTimeout(() => {
+      setIsLoading(false);
+    }, 2000);
+
+    // Animacja obracającego się koła
+    Animated.loop(
+      Animated.timing(spinValue, {
+        toValue: 1,
+        duration: 1000,
+        useNativeDriver: true,
+      })
+    ).start();
+
+    return () => clearTimeout(loadingTimeout);
+  }, [spinValue]);
+
+  const spin = spinValue.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '360deg'],
+  });
+
+  
   return (
     <View style={styles.container}>
-      <Header user={user} setUser={setUser} />
-      <ScrollView style={styles.contentContainer}>
-        <Text style={styles.welcomeText}>
-          {`Witaj ${userAdditionalData ? `${userAdditionalData.firstName} ${userAdditionalData.lastName}` : ''} w Team App!`}
-        </Text>
+      {isLoading ? (
+        <View style={styles.loadingContainer}>
+                  <Image source={require('../assets/logo.png')} style={styles.logo} />
+          <ActivityIndicator size="large" color="#9091fd" style={styles.loadingIndicator} />
+          <Animated.View style={{ transform: [{ rotate: spin }] }}>
 
-        <Text style={styles.sectionTitle}>Najnowsze Wiadomości od Trenera</Text>
-        <View style={styles.messagesContainer}>
-          {coachMessages.map((message) => (
-            <View key={message.id} style={styles.messageContainer}>
-              <Text style={styles.messageTitle}>{message.name}</Text>
-              <Text style={styles.messageText}>{message.messages}</Text>
-              <Text style={styles.messageDate}>{`Dodane: ${message.data}`}</Text>
-            </View>
-          ))}
+          </Animated.View>
         </View>
-        <Text style={styles.sectionTitle}>Najbliższe wydarzenie!</Text>
-        {upcomingEvent && (
-          <View style={styles.upcomingEventContainer}>
-            <View style={styles.eventContainer}>
-              <Text style={styles.eventTitle}>{upcomingEvent.title}</Text>
-              <Text style={styles.eventTitle}>{upcomingEvent.eventName}</Text>
-              <Text style={styles.eventDate}>{`Data: ${new Date(upcomingEvent.eventDate).toDateString()}`}</Text>
-              <Text style={styles.daysRemainingText}>{calculateDaysRemaining(upcomingEvent.eventDate)}</Text>
+      ) : (
+        <>
+          <Header user={user} setUser={setUser} />
+          <ScrollView style={styles.contentContainer}>
+            <Text style={styles.welcomeText}>
+              {`Witaj ${userAdditionalData ? `${userAdditionalData.firstName} ${userAdditionalData.lastName}` : ''} w Team App!`}
+            </Text>
+  
+            <Text style={styles.sectionTitle}>Najnowsze Wiadomości od Trenera</Text>
+            <View style={styles.messagesContainer}>
+              {coachMessages.map((message) => (
+                <View key={message.id} style={styles.messageContainer}>
+                  <Text style={styles.messageTitle}>{message.name}</Text>
+                  <Text style={styles.messageText}>{message.messages}</Text>
+                  <Text style={styles.messageDate}>{`Dodane: ${message.data}`}</Text>
+                </View>
+              ))}
             </View>
-          </View>
-        )}
-      </ScrollView>
-      <NavigationBar />
+            <Text style={styles.sectionTitle}>Najbliższe wydarzenie!</Text>
+            {upcomingEvent && (
+              <View style={styles.upcomingEventContainer}>
+                <View style={styles.eventContainer}>
+                  <Text style={styles.eventTitle}>{upcomingEvent.title}</Text>
+                  <Text style={styles.eventTitle}>{upcomingEvent.eventName}</Text>
+                  <Text style={styles.eventDate}>{`Data: ${new Date(upcomingEvent.eventDate).toDateString()}`}</Text>
+                  <Text style={styles.daysRemainingText}>{calculateDaysRemaining(upcomingEvent.eventDate)}</Text>
+                </View>
+              </View>
+            )}
+          </ScrollView>
+          <NavigationBar />
+        </>
+      )}
     </View>
   );
 };
@@ -146,7 +185,7 @@ const Home = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#9091fd',
+    backgroundColor: '#24243f',
   },
   contentContainer: {
     padding: 20,
@@ -220,6 +259,25 @@ const styles = StyleSheet.create({
     color: 'black',
     marginBottom: 10,
     alignSelf: 'center',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingIndicator: {
+    marginBottom: 20,
+  },
+  logo: {
+    width: 150, // Dostosuj szerokość loga według potrzeb
+    height: 150, // Dostosuj wysokość loga według potrzeb
+    resizeMode: 'contain',
+    borderRadius: 15,
+  },
+  rotatingCircle: {
+    width: 50,
+    height: 50,
+    marginTop: 10,
   },
 });
 

@@ -108,8 +108,8 @@ const Settings = () => {
   const renderInformation = () => {
     if (showInformation) {
       return (
-        <View style={styles.informationContainer}>
-          <Text style={styles.informationText}>
+        <View style={[styles.informationContainer, { backgroundColor: theme.buttonColor }]}>
+          <Text style={[styles.informationText, { color: theme.textColor }]}>
             Lorem Ipsum is simply dummy text of the printing and typesetting industry.
           </Text>
         </View>
@@ -126,16 +126,16 @@ const Settings = () => {
       <View style={styles.settingsContent}>
         <Text style={[styles.title, { color: theme.textColor }]}>Ustawienia Aplikacji</Text>
 
-        <View style={[styles.optionContainer, { backgroundColor: 'white' }]}>
-          <Text style={[styles.optionText, { color: 'black' }]}>Powiadomienia</Text>
+        <View style={[styles.optionContainer, { backgroundColor: theme.buttonColor }]}>
+          <Text style={[styles.optionText, { color: theme.textColor }]}>Powiadomienia</Text>
           <Switch
             value={notificationsEnabled}
             onValueChange={handleNotificationsToggle}
           />
         </View>
 
-        <View style={[styles.optionContainer, { backgroundColor: 'white' }]}>
-          <Text style={[styles.optionText, { color: 'black' }]}>Motyw</Text>
+        <View style={[styles.optionContainer, { backgroundColor: theme.buttonColor }]}>
+          <Text style={[styles.optionText, { color: theme.textColor }]}>Motyw</Text>
           <Switch
             value={darkModeEnabled}
             onValueChange={handleThemeToggle}
@@ -143,25 +143,25 @@ const Settings = () => {
         </View>
 
         {showPasswordReset ? (
-          <View style={styles.optionContainer}>
-            <Text style={styles.optionText}>Zresetuj Hasło</Text>
+          <View style={[styles.optionContainer, { backgroundColor: theme.buttonColor }]}>
+            <Text style={[styles.optionText, { color: theme.textColor }]}>Zresetuj Hasło</Text>
             <TouchableOpacity style={styles.button} onPress={handlePasswordReset}>
               <Text style={styles.buttonText}>Resetuj Hasło</Text>
             </TouchableOpacity>
           </View>
         ) : (
-          <View style={styles.optionContainer}>
-            <Text style={styles.optionText} onPress={() => setShowPasswordReset(true)}>
+          <View style={[styles.optionContainer, { backgroundColor: theme.buttonColor }]}>
+            <Text style={[styles.optionText, { color: theme.textColor }]} onPress={() => setShowPasswordReset(true)}>
               Zmień hasło ({userEmail})
             </Text>
           </View>
         )}
 
         <TouchableOpacity
-          style={[styles.optionContainer]}
+          style={[styles.optionContainer, { backgroundColor: theme.buttonColor }]}
           onPress={() => setShowInformation((prev) => !prev)}
         >
-          <Text style={[styles.optionText]}>Informacje</Text>
+          <Text style={[styles.optionText, { color: theme.textColor }]}>Informacje</Text>
         </TouchableOpacity>
 
         {renderInformation()}

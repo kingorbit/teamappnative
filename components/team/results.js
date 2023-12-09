@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Modal, ScrollView } from 'react-native';
 import { onAuthStateChanged } from 'firebase/auth';
-import { collection, query, where, getDocs } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
 import Header from '../header';
 import { firestore, auth } from '../../constants/config';
 import NavigationBar from '../navBar';
 import { useNavigate } from 'react-router-native';
+import { lightTheme, darkTheme } from '../theme';
 
 const Results = () => {
   const [user, setUser] = useState(null);
@@ -16,6 +17,7 @@ const Results = () => {
   const [selectedRound, setSelectedRound] = useState(null);
   const [isSeasonModalVisible, setSeasonModalVisible] = useState(false);
   const [isRoundModalVisible, setRoundModalVisible] = useState(false);
+  const [theme, setTheme] = useState(darkTheme);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -26,44 +28,47 @@ const Results = () => {
           const teamsRef = collection(firestore, 'teams');
           const teamsQuery = query(teamsRef, where('members', 'array-contains', authUser.uid));
           const teamsSnapshot = await getDocs(teamsQuery);
-
+  
           let userTeamId = null;
-
+  
           teamsSnapshot.forEach((teamDoc) => {
             const teamData = teamDoc.data();
             if (teamData.members.includes(authUser.uid)) {
               userTeamId = teamDoc.id;
             }
           });
-
+  
           if (!userTeamId) {
             console.error('Użytkownik nie jest członkiem żadnego zespołu:', authUser.uid);
             return;
           }
-
+  
+          // Dodane wywołanie funkcji fetchUserSettings
+          fetchUserSettings(authUser.uid);
+  
           const q = query(usersRef, where('uid', '==', authUser.uid));
           const querySnapshot = await getDocs(q);
-
+  
           if (!querySnapshot.empty) {
             const userDoc = querySnapshot.docs[0];
             const userData = userDoc.data();
             setUser(userData);
-
+  
             const resultsRef = collection(firestore, 'results');
             const resultsQuery = query(resultsRef, where('teamId', '==', userTeamId));
             const resultsSnapshot = await getDocs(resultsQuery);
-
+  
             const userResults = [];
             resultsSnapshot.forEach((resultDoc) => {
               const resultData = resultDoc.data();
               userResults.push(resultData);
             });
-
+  
             setResults(userResults);
-
+  
             const uniqueSeasons = Array.from(new Set(userResults.map(result => result.season)));
             setSeasons(uniqueSeasons);
-
+  
             const uniqueRounds = Array.from(new Set(userResults.map(result => result.round)));
             setRounds(uniqueRounds);
           }
@@ -72,9 +77,10 @@ const Results = () => {
         }
       }
     });
-
+  
     return () => unsubscribe();
-  }, []);
+  }, []); // Dodane zależności, aby useEffect działał tylko raz po zamontowaniu komponentu
+  
 
   const toggleSeasonModal = () => {
     setSeasonModalVisible(!isSeasonModalVisible);
@@ -84,9 +90,24 @@ const Results = () => {
     setRoundModalVisible(!isRoundModalVisible);
   };
 
+  const fetchUserSettings = async (uid) => {
+    try {
+      const userDocRef = doc(firestore, 'users', uid);
+      const userDocSnapshot = await getDoc(userDocRef);
+
+      if (userDocSnapshot.exists()) {
+        const userDataFromFirestore = userDocSnapshot.data();
+        const darkModeEnabled = userDataFromFirestore.darkModeEnabled || false;
+        setTheme(darkModeEnabled ? darkTheme : lightTheme);
+      }
+    } catch (error) {
+      console.error('Error fetching user settings:', error.message);
+    }
+  };
+
  
   return (
-    <View style={styles.container}>
+<View style={[styles.container, { backgroundColor: theme.backgroundColor }]}>
       <Header user={user} setUser={setUser} />
       <ScrollView contentContainerStyle={styles.scrollViewContainer}>
         <View style={styles.resultsContent}>
@@ -114,11 +135,11 @@ const Results = () => {
               (selectedRound === null || result.round === selectedRound)
             ))
             .map((result) => (
-              <View key={result.resultId} style={styles.resultContainer}>
-                <Text style={styles.resultText}>{`Sezon: ${result.season}`}</Text>
-                <Text style={styles.resultText}>{`Kolejka: ${result.round}`}</Text>
-                <Text style={styles.resultText}>{`${result.match}`}</Text>
-                <Text style={styles.resultText}>{`Wynik: ${result.result}`}</Text>
+              <View key={result.resultId} style={[styles.resultContainer, { backgroundColor: theme.buttonColor }]}>
+                <Text style={[styles.resultText, { color: theme.textColor }]}>{`Sezon: ${result.season}`}</Text>
+                <Text style={[styles.resultText, { color: theme.textColor }]}>{`Kolejka: ${result.round}`}</Text>
+                <Text style={[styles.resultText, { color: theme.textColor }]}>{`${result.match}`}</Text>
+                <Text style={[styles.resultText, { color: theme.textColor }]}>{`Wynik: ${result.result}`}</Text>
               </View>
             ))}
 
@@ -130,7 +151,7 @@ const Results = () => {
             onRequestClose={toggleSeasonModal}
           >
             <View style={styles.modalContainer}>
-              <View style={styles.modalContent}>
+              <View style={[styles.modalContent, { backgroundColor: theme.buttonColor }]}>
                 {seasons.map((season) => (
                   <TouchableOpacity
                     key={season}
@@ -139,14 +160,14 @@ const Results = () => {
                       toggleSeasonModal();
                     }}
                   >
-                    <Text style={styles.modalItem}>{season}</Text>
+                    <Text style={[styles.modalItem, { color: theme.textColor }]}>{season}</Text>
                   </TouchableOpacity>
                 ))}
                 <TouchableOpacity onPress={() => {
                   setSelectedSeason(null);
                   toggleSeasonModal();
                 }}>
-                  <Text style={styles.modalItem}>Wszystkie</Text>
+                  <Text style={[styles.modalItem, { color: theme.textColor }]}>Wszystkie</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -160,7 +181,7 @@ const Results = () => {
             onRequestClose={toggleRoundModal}
           >
             <View style={styles.modalContainer}>
-              <View style={styles.modalContent}>
+            <View style={[styles.modalContent, { backgroundColor: theme.buttonColor }]}>
                 {rounds.map((round) => (
                   <TouchableOpacity
                     key={round}
@@ -169,20 +190,20 @@ const Results = () => {
                       toggleRoundModal();
                     }}
                   >
-                    <Text style={styles.modalItem}>{round}</Text>
+                    <Text style={[styles.modalItem, { color: theme.textColor }]}>{round}</Text>
                   </TouchableOpacity>
                 ))}
                 <TouchableOpacity onPress={() => {
                   setSelectedRound(null);
                   toggleRoundModal();
                 }}>
-                  <Text style={styles.modalItem}>Wszystkie</Text>
+                  <Text style={[styles.modalItem, { color: theme.textColor }]}>Wszystkie</Text>
                 </TouchableOpacity>
               </View>
             </View>
           </Modal>
-          <TouchableOpacity style={styles.button} onPress={() => navigate('/team')}>
-          <Text style={styles.buttonText}>Powrót</Text>
+          <TouchableOpacity style={[styles.button, { backgroundColor: theme.buttonColor }]} onPress={() => navigate('/team')}>
+          <Text style={[styles.buttonText, { color: theme.textColor }]}>Powrót</Text>
         </TouchableOpacity>
         </View>
       </ScrollView>
@@ -204,10 +225,14 @@ const styles = StyleSheet.create({
     color: 'white',
   },
   button: {
-    marginTop: 20,
     padding: 10,
-    backgroundColor: 'white',
-    borderRadius: 5,
+    margin: 10,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    textAlign: 'center',
+    elevation: 3,
+    width: '50%',
   },
   buttonText: {
     fontSize: 18,
@@ -224,6 +249,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 20,
     marginBottom: 20,
+    width: 220,
   },
   resultText: {
     fontSize: 16,

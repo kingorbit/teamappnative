@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Modal, TextInput, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Modal, TextInput, ScrollView, Animated, ActivityIndicator, Image } from 'react-native';
 import { Calendar } from 'react-native-calendars';
 import Header from '../components/header';
 import { collection, getDocs, query, where, addDoc, deleteDoc, doc, updateDoc, getDoc } from 'firebase/firestore';
@@ -11,6 +11,7 @@ import { LocaleConfig } from 'react-native-calendars';
 import ModalDropdown from 'react-native-modal-dropdown';
 import Icon from 'react-native-vector-icons/FontAwesome'; 
 import EventNotificationScheduler from '../components/notifications/notificationScheduler';
+
 
 LocaleConfig.locales['pl'] = {
   monthNames: [
@@ -70,8 +71,9 @@ const CalendarScreen = () => {
   const [isDeleteConfirmationVisible, setDeleteConfirmationVisible] = useState(false);
   const [isEditFormVisible, setEditFormVisible] = useState(false);
   const [editedEvent, setEditedEvent] = useState(null);
-  const [userIsInTeam, setUserIsInTeam] = useState(false); // Dodajemy userIsInTeam jako nowy stan
-
+  const [userIsInTeam, setUserIsInTeam] = useState(false); 
+  const [isLoading, setIsLoading] = useState(true);
+  const spinValue = new Animated.Value(0);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -166,6 +168,29 @@ const CalendarScreen = () => {
   
     fetchData();
   }, []);
+
+  useEffect(() => {
+    // Symulacja opóźnienia ładowania
+    const loadingTimeout = setTimeout(() => {
+      setIsLoading(false);
+    }, 2000);
+
+    // Animacja obracającego się koła
+    Animated.loop(
+      Animated.timing(spinValue, {
+        toValue: 1,
+        duration: 1000,
+        useNativeDriver: true,
+      })
+    ).start();
+
+    return () => clearTimeout(loadingTimeout);
+  }, [spinValue]);
+
+  const spin = spinValue.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '360deg'],
+  });
   const addEvent = async () => {
     try {
       if (!eventCategory || !eventName || !eventDate) {

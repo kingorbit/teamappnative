@@ -11,6 +11,7 @@ const FormLogin = () => {
 
   const handleLogin = async () => {
     try {
+      
       const response = await signInWithEmailAndPassword(auth, email, password);
       console.log('Zalogowano', response);
       navigate('/home');
@@ -25,17 +26,23 @@ const FormLogin = () => {
     navigate('/forgetpass');
   };
 
+  const handleStart = () => {
+    navigate('/loading'); // Przejście do ekranu ładowania
+  };
+
   return (
     <View style={styles.container}>
       <TextInput
         style={styles.input}
         placeholder="Email"
+        placeholderTextColor="gray"
         value={email}
         onChangeText={setEmail}
       />
       <TextInput
         style={styles.input}
         placeholder="Hasło"
+        placeholderTextColor="gray"
         value={password}
         onChangeText={setPassword}
         secureTextEntry
@@ -64,6 +71,7 @@ const styles = StyleSheet.create({
     height: 35,
     borderWidth: 1,
     backgroundColor: 'white',
+    color: 'black',
     borderRadius: 5,
     marginBottom: 15,
     paddingHorizontal: 10,
@@ -72,22 +80,21 @@ const styles = StyleSheet.create({
   buttonText: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: 'black',
+    color: 'white',
   },
   button: {
     padding: 20,
     margin: 10,
-    backgroundColor: 'white',
+    backgroundColor: '#9091fd',
     borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
     elevation: 3,
-    width: '50%',
+    width: '90%',
   },
   forgotPasswordText: {
-    color: 'white', // Zmiana koloru tekstu na biały
-    marginTop: 10,
-    textDecorationLine: 'underline',
+    color: 'gray', // Zmiana koloru tekstu na biały
+    marginVertical: 15,
   },
 });
 
