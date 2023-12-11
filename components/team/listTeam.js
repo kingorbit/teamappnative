@@ -1,30 +1,42 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
-import { collection, getDocs, query, where } from 'firebase/firestore';
-import { firestore } from '../../constants/config';
+import { collection, getDocs, query, where, doc, getDoc } from 'firebase/firestore';
+import { firestore, auth } from '../../constants/config';
+import { onAuthStateChanged } from 'firebase/auth';
 import { useNavigate } from 'react-router-native';
 import Header from '../header';
+import NavigationBar from '../navBar';
+import { lightTheme, darkTheme } from '../theme';
 
 const TeamsList = () => {
   const navigate = useNavigate();
   const [teams, setTeams] = useState([]);
+  const [theme, setTheme] = useState(darkTheme);
 
   useEffect(() => {
     const fetchTeams = async () => {
       const teamsCollection = collection(firestore, 'teams');
       const querySnapshot = await getDocs(teamsCollection);
-
+  
       const teamsData = [];
       for (const docRef of querySnapshot.docs) {
         const teamData = docRef.data();
         const userData = await getUserData(teamData.createdBy);
         teamsData.push({ id: docRef.id, ...teamData, creator: userData });
       }
-
+  
       setTeams(teamsData);
     };
-
+  
+    const unsubscribe = onAuthStateChanged(auth, async (userData) => {
+      if (userData) {
+        await fetchUserSettings(userData.uid, setTheme);
+      }
+    });
+  
     fetchTeams();
+  
+    return () => unsubscribe();
   }, []);
 
   const getUserData = async (uid) => {
@@ -45,15 +57,30 @@ const TeamsList = () => {
     }
   };
 
+  const fetchUserSettings = async (uid, setTheme) => {
+    try {
+      const userDocRef = doc(firestore, 'users', uid);
+      const userDocSnapshot = await getDoc(userDocRef);
+  
+      if (userDocSnapshot.exists()) {
+        const userDataFromFirestore = userDocSnapshot.data();
+        const darkModeEnabled = userDataFromFirestore.darkModeEnabled || false;
+        setTheme(darkModeEnabled ? darkTheme : lightTheme);
+      }
+    } catch (error) {
+      console.error('Error fetching user settings:', error.message);
+    }
+  };
+
   return (
-    <View style={styles.container} >
+<View style={[styles.container, { backgroundColor: theme.backgroundColor }]}>
       <Header></Header>
     <ScrollView contentContainerStyle={styles.listcontainer}>
-      <Text style={styles.title}>Lista Zespołów</Text>
+      <Text style={[styles.title, { color: theme.textColor }]}>Lista Zespołów</Text>
       {teams.map((team) => (
-        <TouchableOpacity key={team.id} style={styles.team} onPress={() => navigate(`/team/${team.id}`)}>
-          <Text style={styles.teamName}>{team.name}</Text>
-          <Text style={styles.teamDescription}>{team.description}</Text>
+        <TouchableOpacity key={team.id} style={[styles.team, { backgroundColor: theme.buttonColor }]} onPress={() => navigate(`/team/${team.id}`)}>
+          <Text style={[styles.teamName, { color: theme.textColor }]}>{team.name}</Text>
+          <Text style={[styles.teamDescription, { color: theme.textColor }]}>{team.description}</Text>
           {team.creator && (
             <Text style={styles.creatorInfo}>
               Założyciel: {team.creator.firstName} {team.creator.lastName}
@@ -61,10 +88,11 @@ const TeamsList = () => {
           )}
         </TouchableOpacity>
       ))}
-      <TouchableOpacity style={styles.link} onPress={() => navigate('/team')}>
-        <Text style={styles.linkText}>Powrót</Text>
+      <TouchableOpacity style={[styles.link, { backgroundColor: theme.buttonColor }]} onPress={() => navigate('/team')}>
+        <Text style={[styles.linkText, { color: theme.textColor }]}>Powrót</Text>
       </TouchableOpacity>
     </ScrollView>
+    <NavigationBar></NavigationBar>
     </View>
   );
 };
@@ -92,22 +120,23 @@ backgroundColor: '#9091fd',
     padding: 20,
     marginBottom: 20,
     width: '70%',
-    alignItems: 'center', // Centrowanie tekstu
+    alignItems: 'center', 
   },
   teamName: {
     fontSize: 18,
     fontWeight: 'bold',
     marginBottom: 10,
-    textAlign: 'center', // Centrowanie tekstu
+    textAlign: 'center', 
   },
   teamDescription: {
     fontSize: 16,
-    textAlign: 'center', // Centrowanie tekstu
+    textAlign: 'center', 
   },
   creatorInfo: {
     fontSize: 16,
     color: 'gray',
-    textAlign: 'center', // Centrowanie tekstu
+    textAlign: 'center',
+    marginTop: 10, 
   },
   link: {
     padding: 10,
@@ -123,7 +152,7 @@ backgroundColor: '#9091fd',
   linkText: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: 'black',
+    color: 'white',
   },
 });
 

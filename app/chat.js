@@ -22,6 +22,8 @@ import {
   serverTimestamp,
   where,
   onSnapshot,
+  doc,
+  getDoc,
 } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import Header from '../components/header';
@@ -30,6 +32,7 @@ import { useNavigate } from 'react-router-native';
 import ImagePicker from 'react-native-image-picker';
 import { FontAwesome } from '@expo/vector-icons';
 import NavigationBar from '../components/navBar';
+import { lightTheme, darkTheme } from '../components/theme';
 
 const Chat = () => {
   const [user, setUser] = useState(null);
@@ -45,43 +48,64 @@ const Chat = () => {
   const [showLoadMoreButton, setShowLoadMoreButton] = useState(false);
   const [scrolledUp, setScrolledUp] = useState(false);
   const [isInputFocused, setInputFocused] = useState(false);
+  const [theme, setTheme] = useState(darkTheme);
 
   useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const user = auth.currentUser;
+  
+        if (!user) {
+          console.error('Użytkownik nie jest zalogowany.');
+          return;
+        }
+  
+        // Pobierz dane użytkownika
+        const usersRef = collection(firestore, 'users');
+        const userQuery = query(usersRef, where('uid', '==', user.uid));
+        const userQuerySnapshot = await getDocs(userQuery);
+  
+        if (!userQuerySnapshot.empty) {
+          const userData = userQuerySnapshot.docs[0].data();
+          setUser(userData);
+          setUserTeam(userData.team);
+        }
+  
+        // Dodane wywołanie funkcji fetchUserSettings
+        fetchUserSettings(user.uid, setTheme);
+  
+        // Pobierz wiadomości
+        const messagesRef = collection(
+          firestore,
+          teamChat ? `teamChats/${userTeam}/messages` : 'messages'
+        );
+        const q = query(messagesRef, orderBy('timestamp', 'desc'), limit(messagesToLoad));
+  
+        const unsubscribeMessages = onSnapshot(q, (querySnapshot) => {
+          const messagesData = querySnapshot.docs.map((doc) => doc.data());
+          setMessages(messagesData.reverse()); // Reverse the order to display the latest messages at the bottom
+          setLoadingMore(false);
+        });
+  
+        return () => {
+          unsubscribeMessages();
+        };
+      } catch (error) {
+        console.error('Błąd pobierania danych użytkownika', error);
+      }
+    };
+  
     const unsubscribe = onAuthStateChanged(auth, async (userData) => {
       if (userData) {
-        try {
-          const usersRef = collection(firestore, 'users');
-          const q = query(usersRef, where('uid', '==', userData.uid));
-          const querySnapshot = await getDocs(q);
-
-          if (!querySnapshot.empty) {
-            const userData = querySnapshot.docs[0].data();
-            setUser(userData);
-            setUserTeam(userData.team);
-          }
-        } catch (error) {
-          console.error('Błąd pobierania danych użytkownika', error);
-        }
+        fetchData();
       }
     });
-
-    const messagesRef = collection(
-      firestore,
-      teamChat ? `teamChats/${userTeam}/messages` : 'messages'
-    );
-    const q = query(messagesRef, orderBy('timestamp', 'desc'), limit(messagesToLoad));
-
-    const unsubscribeMessages = onSnapshot(q, (querySnapshot) => {
-      const messagesData = querySnapshot.docs.map((doc) => doc.data());
-      setMessages(messagesData.reverse()); // Reverse the order to display the latest messages at the bottom
-      setLoadingMore(false);
-    });
-
+  
     return () => {
       unsubscribe();
-      unsubscribeMessages();
     };
   }, [teamChat, userTeam, messagesToLoad]);
+  
 
   const chooseImage = async () => {
     try {
@@ -200,8 +224,25 @@ const Chat = () => {
     };
   }, []);
 
+  
+  const fetchUserSettings = async (uid) => {
+    try {
+      const userDocRef = doc(firestore, 'users', uid);
+      const userDocSnapshot = await getDoc(userDocRef);
+  
+      if (userDocSnapshot.exists()) {
+        const userDataFromFirestore = userDocSnapshot.data();
+        const darkModeEnabled = userDataFromFirestore.darkModeEnabled || false;
+        setTheme(darkModeEnabled ? darkTheme : lightTheme);
+      }
+    } catch (error) {
+      console.error('Error fetching user settings:', error.message);
+    }
+  };
+  
+
   return (
-    <View style={styles.container}>
+<View style={[styles.container, { backgroundColor: theme.backgroundColor }]}>
       <Header user={user} />
       <Text style={styles.title}>Chat</Text>
       <View style={styles.chatContainer}>
@@ -210,9 +251,9 @@ const Chat = () => {
           <TouchableOpacity
             onPress={loadMoreMessages}
             disabled={loadingMore}
-            style={styles.loadMoreButton}
+            style={[styles.loadMoreButton, { backgroundColor: theme.buttonColor }]} 
           >
-            <Text style={styles.leadMoreButtonText}>Więcej</Text>
+            <Text style={[styles.leadMoreButtonText, { color: theme.textColor }]}>Więcej</Text>
           </TouchableOpacity>
         )}
         <ScrollView
@@ -251,23 +292,23 @@ const Chat = () => {
             onBlur={handleInputBlur}
           />
           <TouchableOpacity
-            style={styles.chooseImageButton}
+           style={[styles.chooseImageButton, { backgroundColor: theme.buttonColor }]}
             onPress={chooseImage}
             disabled={teamChat}
           >
             <FontAwesome name="image" size={24} color="black" />
           </TouchableOpacity>
-          <TouchableOpacity style={styles.sendButton} onPress={sendMessage}>
+          <TouchableOpacity style={[styles.sendButton, { backgroundColor: theme.buttonColor }]} onPress={sendMessage}>
             <FontAwesome name="send" size={24} color="black" />
           </TouchableOpacity>
         </View>
         {!isInputFocused && (
           <>
             <TouchableOpacity
-              style={styles.toggleButton}
+             style={[styles.toggleButton, { backgroundColor: theme.buttonColor }]}
               onPress={() => setTeamChat((prev) => !prev)}
             >
-              <Text style={styles.toggleButtonText}>
+              <Text style={[styles.toggleButtonText, { color: theme.textColor }]}>
                 {teamChat ? 'Chat ogólny' : 'Chat Zespołu'}
               </Text>
             </TouchableOpacity>

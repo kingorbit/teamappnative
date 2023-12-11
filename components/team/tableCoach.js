@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, FlatList, StyleSheet, TouchableOpacity, Modal, TextInput } from 'react-native';
-import { collection, getDocs, addDoc, doc, setDoc, query, where, deleteDoc } from 'firebase/firestore';
+import { collection, getDocs, addDoc, doc, setDoc, query, where, deleteDoc, getDoc } from 'firebase/firestore';
 import { firestore, auth } from '../../constants/config';
 import TableItem from './tableItem';
 import Header from '../header';
 import NavigationBar from '../navBar';
+import { lightTheme, darkTheme } from '../theme';
+import Icon from 'react-native-vector-icons/FontAwesome';
+import { useNavigate } from 'react-router-native';
 
 
 const TableCoach = () => {
@@ -21,43 +24,38 @@ const TableCoach = () => {
   const [isEditModalVisible, setEditModalVisible] = useState(false);
   const [editedTeam, setEditedTeam] = useState(null);
   const [refreshTable, setRefreshTable] = useState(false);
-  
-
-
-
-
-  
-
+  const [theme, setTheme] = useState(darkTheme);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchTableData = async () => {
       try {
         const user = auth.currentUser;
-
+  
         if (!user) {
           console.error('Użytkownik nie jest zalogowany.');
           return;
         }
-
+  
         // Pobierz zespoły, do których należy aktualnie zalogowany użytkownik
         const teamsRef = collection(firestore, 'teams');
         const teamsQuery = query(teamsRef, where('members', 'array-contains', user.uid));
         const teamsSnapshot = await getDocs(teamsQuery);
-
+  
         const userTeams = [];
         for (const teamDoc of teamsSnapshot.docs) {
           const teamData = teamDoc.data();
           userTeams.push(teamData.teamId);
         }
-
+  
         // Pobierz dane zespołów z tabeli
         const tableRef = collection(firestore, 'table');
         const tableSnapshot = await getDocs(tableRef);
         const tableData = tableSnapshot.docs.map((doc) => doc.data());
-
+  
         // Wybierz tylko zespoły, do których należy aktualnie zalogowany użytkownik
         const userTableData = tableData.filter((team) => userTeams.includes(team.teamId));
-
+  
         // Sortowanie danych: najpierw po punktach, a potem po bramkach strzelonych
         userTableData.sort((a, b) => {
           if (a.points !== b.points) {
@@ -66,15 +64,19 @@ const TableCoach = () => {
             return b.goals - a.goals; // Sortuj malejąco po bramkach strzelonych
           }
         });
-
+  
         setTeams(userTableData);
+  
+        // Dodane wywołanie funkcji fetchUserSettings
+        fetchUserSettings(user.uid, setTheme);
       } catch (error) {
         console.error('Błąd pobierania danych tabeli', error);
       }
     };
-
+  
     fetchTableData();
   }, [isModalVisible]); // Dodaj zależność, aby odświeżać tabelę po dodaniu nowego zespołu
+  
 
   const toggleModal = () => {
     setModalVisible(!isModalVisible);
@@ -217,7 +219,6 @@ const TableCoach = () => {
     }
   };
   
-  
 
   const deleteTeam = async (id) => {
     try {
@@ -235,17 +236,37 @@ const TableCoach = () => {
     }
   };
   
+  const fetchUserSettings = async (uid, setTheme) => {
+    try {
+      const userDocRef = doc(firestore, 'users', uid);
+      const userDocSnapshot = await getDoc(userDocRef);
+  
+      if (userDocSnapshot.exists()) {
+        const userDataFromFirestore = userDocSnapshot.data();
+        const darkModeEnabled = userDataFromFirestore.darkModeEnabled || false;
+        setTheme(darkModeEnabled ? darkTheme : lightTheme);
+      }
+    } catch (error) {
+      console.error('Error fetching user settings:', error.message);
+    }
+  };
   
   
 
   return (
-    <View style={styles.container}>
+<View style={[styles.container, { backgroundColor: theme.backgroundColor }]}>
             <Header />
-          <View style={styles.tablecoachcontainer}>
+      <View style={styles.tablecoachcontainer}>
       <Text style={styles.title}>Tabela</Text>
-      <TouchableOpacity style={styles.addButton} onPress={toggleModal}>
-        <Text style={styles.addButtonText}>Dodaj zespół</Text>
+      <View style={styles.addButtonsContainer}>
+      <TouchableOpacity style={[styles.button, { backgroundColor: theme.succes }]} onPress={toggleModal}>
+        <Text style={styles.buttonText}>Dodaj Zespół</Text>
       </TouchableOpacity>
+      <TouchableOpacity style={[styles.button, { backgroundColor: theme.buttonColor }]} onPress={() => navigate('/team')}>
+            <Text style={[styles.buttonText, { color: theme.textColor }]}>Powrót</Text>
+          </TouchableOpacity>
+
+          </View>
 
       {/* Modal do dodawania nowego zespołu */}
       <Modal
@@ -255,8 +276,8 @@ const TableCoach = () => {
         onRequestClose={toggleModal}
       >
         <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Dodaj zespół</Text>
+          <View style={[styles.modalContent, { backgroundColor: theme.buttonColor }]}>
+            <Text style={[styles.modalTitle, { color: theme.textColor }]}>Dodaj Zespół</Text>
             <TextInput
               style={styles.input}
               placeholder="Nazwa zespołu"
@@ -299,11 +320,11 @@ const TableCoach = () => {
               keyboardType="numeric"
               onChangeText={(text) => setNewTeamGoalsLost(Number(text))}
             />
-            <TouchableOpacity style={styles.modalButton} onPress={addNewTeam}>
-              <Text style={styles.modalButtonText}>Dodaj</Text>
+            <TouchableOpacity style={[styles.modbutton, { backgroundColor: theme.succes }]} onPress={addNewTeam}>
+              <Text style={styles.buttonText}>Dodaj</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.modalButton} onPress={toggleModal}>
-              <Text style={styles.modalButtonText}>Anuluj</Text>
+            <TouchableOpacity style={[styles.modbutton, { backgroundColor: theme.cancel }]} onPress={toggleModal}>
+              <Text style={styles.buttonText}>Anuluj</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -315,9 +336,9 @@ const TableCoach = () => {
   onRequestClose={() => setEditModalVisible(false)}
 >
   <View style={styles.modalContainer}>
-    <View style={styles.modalContent}>
-      <Text style={styles.modalTitle}>Edytuj zespół</Text>
-      <Text style={styles.label}>Mecze rozegrane</Text>
+    <View style={[styles.modalContent, { backgroundColor: theme.buttonColor }]} >
+      <Text style={[styles.modalTitle, { color: theme.textColor }]}>Edytuj zespół</Text>
+      <Text style={[styles.label, { color: theme.textColor }]}>Mecze rozegrane</Text>
 <TextInput
   style={styles.input}
   keyboardType="numeric"
@@ -325,7 +346,7 @@ const TableCoach = () => {
   onChangeText={(text) => setNewTeamMatches(Number(text))}
 />
 
-<Text style={styles.label}>Wygrane</Text>
+<Text style={[styles.label, { color: theme.textColor }]}>Wygrane</Text>
 <TextInput
   style={styles.input}
   keyboardType="numeric"
@@ -333,39 +354,39 @@ const TableCoach = () => {
   onChangeText={(text) => setNewWins(Number(text))}
 />
 
-<Text style={styles.label}>Remisy</Text>
+<Text style={[styles.label, { color: theme.textColor }]}>Remisy</Text>
 <TextInput
   style={styles.input}
   keyboardType="numeric"
   value={newTeamDraws !== undefined ? newTeamDraws.toString() : ''}
   onChangeText={(text) => setNewDraws(Number(text))}
 />
-<Text style={styles.label}>Porażki</Text>
+<Text style={[styles.label, { color: theme.textColor }]}>Porażki</Text>
 <TextInput
   style={styles.input}
   keyboardType="numeric"
   value={newTeamLosts !== undefined ? newTeamLosts.toString() : ''}
   onChangeText={(text) => setNewLosts(Number(text))}
 />
-<Text style={styles.label}>Bramki strzelone</Text>
+<Text style={[styles.label, { color: theme.textColor }]}>Bramki strzelone</Text>
 <TextInput
   style={styles.input}
   keyboardType="numeric"
   value={newTeamGoals !== undefined ? newTeamGoals.toString() : ''}
   onChangeText={(text) => setNewGoals(Number(text))}
 />
-<Text style={styles.label}>Bramki stracone</Text>
+<Text style={[styles.label, { color: theme.textColor }]}>Bramki stracone</Text>
 <TextInput
   style={styles.input}
   keyboardType="numeric"
   value={newTeamGoalsLost !== undefined ? newTeamGoalsLost.toString() : ''}
   onChangeText={(text) => setNewTeamGoalsLost(Number(text))}
 />
-      <TouchableOpacity style={styles.modalButton} onPress={addOrUpdateTeam}>
-        <Text style={styles.modalButtonText}>Zapisz zmiany</Text>
+      <TouchableOpacity style={[styles.modbutton, { backgroundColor: theme.succes }]} onPress={addOrUpdateTeam}>
+        <Text style={styles.buttonText}>Zapisz zmiany</Text>
       </TouchableOpacity>
-      <TouchableOpacity style={styles.modalButton} onPress={() => setEditModalVisible(false)}>
-        <Text style={styles.modalButtonText}>Anuluj</Text>
+      <TouchableOpacity style={[styles.modbutton, { backgroundColor: theme.cancel }]} onPress={() => setEditModalVisible(false)}>
+        <Text style={styles.buttonText}>Anuluj</Text>
       </TouchableOpacity>
     </View>
   </View>
@@ -384,9 +405,9 @@ const TableCoach = () => {
       </TouchableOpacity>
       <TouchableOpacity
         onPress={() => deleteTeam(item.id)}
-        style={styles.deleteButton}
+        style={[styles.delbutton, { backgroundColor: theme.cancel }]}
       >
-        <Text style={styles.deleteButtonText}>Usuń</Text>
+        <Text style={styles.buttonText}>Usuń</Text>
       </TouchableOpacity>
     </View>
   )}
@@ -400,7 +421,6 @@ const TableCoach = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#9091fd',
   },
   tablecoachcontainer:{
     flex: 1,
@@ -412,38 +432,62 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     color: 'white',
   },
-  deleteButton: {
-    backgroundColor: 'red',
+  modbutton: {
     padding: 10,
-    borderRadius: 5,
-    marginTop: 5,
+    margin: 10,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    textAlign: 'center',
+    elevation: 3,
+    width: 250,
   },
-  deleteButtonText: {
+  delbutton: {
+    padding: 10,
+    margin: 10,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    textAlign: 'center',
+    elevation: 3,
+    width: '50%',
+    alignSelf: 'center',
+  },
+  button: {
+    padding: 10,
+    margin: 10,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    textAlign: 'center',
+    elevation: 3,
+    width: 175,
+  },
+  buttonText: {
     color: 'white',
     textAlign: 'center',
     fontSize: 16,
-  },
-  addButton: {
-    backgroundColor: 'green',
-    padding: 10,
-    borderRadius: 5,
-    marginBottom: 10,
-  },
-  addButtonText: {
-    color: 'white',
-    textAlign: 'center',
-    fontSize: 16,
+    fontWeight: 'bold',
   },
   modalContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    alignContent: 'center',
+    alignContent: 'center'
   },
   modalContent: {
     backgroundColor: 'white',
-    padding: 20,
+    padding: 30,
     borderRadius: 10,
-    width: '80%',
+    textAlign: 'center',
+    alignContent: 'center',
+    alignContent: 'center',
+  },
+  addButtonsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 10,
   },
   modalTitle: {
     fontSize: 20,
@@ -452,22 +496,13 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   input: {
-    height: 40,
-    borderColor: 'gray',
+    height: 35,
+    width: 250,
+    backgroundColor: 'white',
     borderWidth: 1,
-    marginBottom: 10,
-    padding: 10,
-  },
-  modalButton: {
-    backgroundColor: 'green',
-    padding: 10,
     borderRadius: 5,
-    marginTop: 10,
-  },
-  modalButtonText: {
-    color: 'white',
+    marginBottom: 10,
     textAlign: 'center',
-    fontSize: 16,
   },
 });
 

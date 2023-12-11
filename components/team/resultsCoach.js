@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Modal, TextInput, ScrollView, Alert } from 'react-native';
 import { onAuthStateChanged } from 'firebase/auth';
-import { collection, query, where, getDocs, addDoc, updateDoc, deleteDoc, doc, setDoc } from 'firebase/firestore';
+import { collection, query, where, getDocs, addDoc, updateDoc, deleteDoc, doc, setDoc, getDoc } from 'firebase/firestore';
 import Header from '../header';
 import { firestore, auth } from '../../constants/config';
 import NavigationBar from '../navBar';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import { useNavigate } from 'react-router-native';
+import { lightTheme, darkTheme } from '../theme';
 
 
 const ResultsCoach = () => {
@@ -26,59 +27,61 @@ const ResultsCoach = () => {
   const [modalSelectedSeason, setModalSelectedSeason] = useState(null);
   const [modalSelectedRound, setModalSelectedRound] = useState(null);
   const navigate = useNavigate();
+  const [theme, setTheme] = useState(darkTheme);
 
-  // ... (reszta kodu)
 
   const toggleAddModal = () => {  // Dodane
     setAddModalVisible(!isAddModalVisible);
   };
-
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (authUser) => {
       if (authUser) {
         try {
+          // Dodane wywołanie funkcji fetchUserSettings
+          fetchUserSettings(authUser.uid, setTheme);
+  
           const usersRef = collection(firestore, 'users');
           const teamsRef = collection(firestore, 'teams');
           const teamsQuery = query(teamsRef, where('members', 'array-contains', authUser.uid));
           const teamsSnapshot = await getDocs(teamsQuery);
-
+  
           let userTeamId = null;
-
+  
           teamsSnapshot.forEach((teamDoc) => {
             const teamData = teamDoc.data();
             if (teamData.members.includes(authUser.uid)) {
               userTeamId = teamDoc.id;
             }
           });
-
+  
           if (!userTeamId) {
             console.error('Użytkownik nie jest członkiem żadnego zespołu:', authUser.uid);
             return;
           }
-
+  
           const q = query(usersRef, where('uid', '==', authUser.uid));
           const querySnapshot = await getDocs(q);
-
+  
           if (!querySnapshot.empty) {
             const userDoc = querySnapshot.docs[0];
             const userData = userDoc.data();
             setUser(userData);
-
+  
             const resultsRef = collection(firestore, 'results');
             const resultsQuery = query(resultsRef, where('teamId', '==', userTeamId));
             const resultsSnapshot = await getDocs(resultsQuery);
-
+  
             const userResults = [];
             resultsSnapshot.forEach((resultDoc) => {
               const resultData = resultDoc.data();
               userResults.push(resultData);
             });
-
+  
             setResults(userResults);
-
+  
             const uniqueSeasons = Array.from(new Set(userResults.map(result => result.season)));
             setSeasons(uniqueSeasons);
-
+  
             const uniqueRounds = Array.from(new Set(userResults.map(result => result.round)));
             setRounds(uniqueRounds);
           }
@@ -87,9 +90,10 @@ const ResultsCoach = () => {
         }
       }
     });
-
+  
     return () => unsubscribe();
-  }, []);
+  }, []); // Dodane zależności, aby useEffect działał tylko raz po zamontowaniu komponentu
+  
 
   const toggleSeasonModal = () => {
     setSeasonModalVisible(!isSeasonModalVisible);
@@ -245,11 +249,6 @@ const ResultsCoach = () => {
       console.error('Błąd edycji wyniku', error);
     }
   };
-  
-  
-  
-  
-  
 
   const handleEditButtonPress = (result) => {
     setEditingResult(result);
@@ -260,15 +259,30 @@ const ResultsCoach = () => {
     setEditModalVisible(true);
   };
 
+  const fetchUserSettings = async (uid, setTheme) => {
+    try {
+      const userDocRef = doc(firestore, 'users', uid);
+      const userDocSnapshot = await getDoc(userDocRef);
+  
+      if (userDocSnapshot.exists()) {
+        const userDataFromFirestore = userDocSnapshot.data();
+        const darkModeEnabled = userDataFromFirestore.darkModeEnabled || false;
+        setTheme(darkModeEnabled ? darkTheme : lightTheme);
+      }
+    } catch (error) {
+      console.error('Error fetching user settings:', error.message);
+    }
+  };
+
   return (
-    <View style={styles.container}>
+<View style={[styles.container, { backgroundColor: theme.backgroundColor }]}>
       <Header user={user} setUser={setUser} />
       <ScrollView contentContainerStyle={styles.scrollViewContainer}>
         <View style={styles.resultsContent}>
           <Text style={styles.title}>Wyniki</Text>
 
           <View style={styles.addButtonsContainer}>
-          <TouchableOpacity style={styles.addButton} onPress={() => {
+          <TouchableOpacity style={[styles.button, { backgroundColor: theme.succes }]} onPress={() => {
             setEditingResult(null);
             setMatchInput('');
             setResultInput('');
@@ -278,9 +292,9 @@ const ResultsCoach = () => {
             <Text style={styles.addButtonText}>Dodaj</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.button} onPress={() => navigate('/team')}>
-          <Icon name="rotate-left" size={15} color="black" />
-            <Text style={styles.buttonText}>Powrót</Text>
+          <TouchableOpacity style={[styles.button, { backgroundColor: theme.buttonColor }]} onPress={() => navigate('/team')}>
+          <Icon name="rotate-left" size={15} style={[styles.buttonText, { color: theme.textColor }]} />
+            <Text style={[styles.buttonText, { color: theme.textColor }]}>Powrót</Text>
           </TouchableOpacity>
         </View>
           <View style={styles.filtersContainer}>
@@ -306,19 +320,19 @@ const ResultsCoach = () => {
     (selectedRound === null || result.round === selectedRound)
   ))
   .map((result) => (
-    <View key={result.resultId} style={styles.resultContainer}>
-      <Text style={styles.resultText}>{`Sezon: ${result.season}`}</Text>
-      <Text style={styles.resultText}>{`Kolejka: ${result.round}`}</Text>
-      <Text style={styles.resultText}>{`${result.match}`}</Text>
-      <Text style={styles.resultText}>{`Wynik: ${result.result}`}</Text>
+    <View key={result.resultId} style={[styles.resultContainer, { backgroundColor: theme.buttonColor }]}>
+      <Text style={[styles.resultText, { color: theme.textColor }]}>{`Sezon: ${result.season}`}</Text>
+      <Text style={[styles.resultText, { color: theme.textColor }]}>{`Kolejka: ${result.round}`}</Text>
+      <Text style={[styles.resultText, { color: theme.textColor }]}>{`${result.match}`}</Text>
+      <Text style={[styles.resultText, { color: theme.textColor }]}>{`Wynik: ${result.result}`}</Text>
 
       <View style={styles.editDeleteButtonsContainer}>
-        <TouchableOpacity onPress={() => handleEditButtonPress(result)}>
-          <Text style={styles.editButton}>Edytuj</Text>
+        <TouchableOpacity style={[styles.button, { backgroundColor: theme.warn }]} onPress={() => handleEditButtonPress(result)}>
+          <Text style={styles.buttonText}>Edytuj</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity onPress={() => deleteResult(result.resultId)}>
-          <Text style={styles.deleteButton}>Usuń</Text>
+        <TouchableOpacity style={[styles.button, { backgroundColor: theme.cancel }]} onPress={() => deleteResult(result.resultId)}>
+          <Text style={styles.buttonText}>Usuń</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -334,20 +348,20 @@ const ResultsCoach = () => {
             onRequestClose={toggleSeasonModal}
           >
             <View style={styles.modalContainer}>
-              <View style={styles.modalContent}>
+              <View style={[styles.modalContent, { backgroundColor: theme.buttonColor }]}>
                 {seasons.map((season) => (
                   <TouchableOpacity
   key={season}
   onPress={() => {
     setSelectedSeason(season);
-    toggleSeasonModal(); // Dodaj tę linijkę, aby schować modal po wybraniu sezonu
+    toggleSeasonModal(); 
   }}
 >
-  <Text style={styles.modalItem}>{season}</Text>
+  <Text style={[styles.modalItem, { color: theme.textColor }]}>{season}</Text>
 </TouchableOpacity>
                 ))}
                 <TouchableOpacity onPress={() => setSelectedSeason(null)}>
-                  <Text style={styles.modalItem}>Wszystkie</Text>
+                  <Text style={[styles.modalItem, { color: theme.textColor }]}>Wszystkie</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -361,7 +375,7 @@ const ResultsCoach = () => {
             onRequestClose={toggleRoundModal}
           >
             <View style={styles.modalContainer}>
-              <View style={styles.modalContent}>
+              <View style={[styles.modalContent, { backgroundColor: theme.buttonColor }]}>
                 {rounds.map((round) => (
                   <TouchableOpacity
   key={round}
@@ -370,11 +384,11 @@ const ResultsCoach = () => {
     toggleRoundModal(); // Dodaj tę linijkę, aby schować modal po wybraniu kolejki
   }}
 >
-  <Text style={styles.modalItem}>{round}</Text>
+  <Text style={[styles.modalItem, { color: theme.textColor }]}>{round}</Text>
 </TouchableOpacity>
                 ))}
                 <TouchableOpacity onPress={() => setSelectedRound(null)}>
-                  <Text style={styles.modalItem}>Wszystkie</Text>
+                  <Text style={[styles.modalItem, { color: theme.textColor }]}>Wszystkie</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -386,7 +400,8 @@ const ResultsCoach = () => {
             onRequestClose={toggleAddModal}
           >
             <View style={styles.modalContainer}>
-              <View style={styles.modalContent}>
+              <View style={[styles.modalContent, { backgroundColor: theme.buttonColor }]}>
+                <Text style={[styles.modalTittle, { color: theme.textColor }]} >Dodaj Wynik</Text>
               <TextInput
   style={styles.input}
   placeholder="Sezon (maks. 4 cyfry)"
@@ -422,11 +437,11 @@ const ResultsCoach = () => {
                   onChangeText={setResultInput}
                 />
 <View style={styles.modalButtonContainer}>
-        <TouchableOpacity onPress={addResult}>
-          <Text style={styles.addButtonMod}>Dodaj</Text>
+        <TouchableOpacity style={[styles.button, { backgroundColor: theme.succes }]} onPress={addResult}>
+          <Text style={styles.buttonText}>Dodaj</Text>
         </TouchableOpacity>
-        <TouchableOpacity onPress={toggleAddModal}>
-          <Text style={styles.cancelButton}>Anuluj</Text>
+        <TouchableOpacity style={[styles.button, { backgroundColor: theme.cancel }]} onPress={toggleAddModal}>
+          <Text style={styles.buttonText} >Anuluj</Text>
         </TouchableOpacity>
       </View>
               </View>
@@ -441,7 +456,8 @@ const ResultsCoach = () => {
   onRequestClose={toggleEditModal}
 >
   <View style={styles.modalContainer}>
-    <View style={styles.modalContent}>
+    <View style={[styles.modalContent, { backgroundColor: theme.buttonColor }]}>
+      <Text style={[styles.modalTittle, { color: theme.textColor }]} >Edytuj Wynik</Text>
       <TextInput
         style={styles.input}
         placeholder="Mecz"
@@ -477,12 +493,12 @@ const ResultsCoach = () => {
         keyboardType="numeric" // Ogranicza wprowadzane wartości do cyfr
       />
 <View style={styles.modalButtonContainer}>
-  <TouchableOpacity onPress={handleEditResult}>
-    <Text style={styles.editButton}>Edytuj</Text>
+  <TouchableOpacity style={[styles.button, { backgroundColor: theme.succes }]} onPress={handleEditResult}>
+    <Text style={styles.buttonText} >Edytuj</Text>
   </TouchableOpacity>
 
-  <TouchableOpacity onPress={toggleEditModal}>
-    <Text style={styles.cancelButton}>Anuluj</Text>
+  <TouchableOpacity style={[styles.button, { backgroundColor: theme.cancel }]} onPress={toggleEditModal}>
+    <Text style={styles.buttonText}>Anuluj</Text>
   </TouchableOpacity>
 </View>
     </View>
@@ -519,9 +535,9 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
     justifyContent: 'center', // Wycentrowanie przycisków
     borderRadius: 8,
-    padding: 15,
+    padding: 25,
     marginBottom: 20,
-    width: '70%',
+    width: '80%',
   },
   resultText: {
     fontSize: 16,
@@ -576,14 +592,14 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   addButton: {
-    backgroundColor: 'green',  // Kolor tła - zielony
-    padding: 10,  // Dodatkowy padding
-    borderRadius: 10,  // Zaokrąglenie rogów
-    alignItems: 'center',  // Wyśrodkowanie zawartości w pionie
-    justifyContent: 'center',  // Wyśrodkowanie zawartości w poziomie
-    marginTop: 20,  // Dodatkowy margines od góry
-    width: '25%',
-    marginRight: 25,
+    padding: 10,
+    margin: 10,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    textAlign: 'center',
+    elevation: 3,
+    width: '50%',
   },
 
   addButtonText: {
@@ -636,27 +652,29 @@ const styles = StyleSheet.create({
     marginVertical: 10,
   },
   button: {
-    width: '25%',
-    marginTop: 20,
     padding: 10,
-    backgroundColor: 'white',
-    borderRadius: 5,
-    alignItems: 'center',  // Wyśrodkowanie zawartości w pionie
-    justifyContent: 'center',  // Wyśrodkowanie zawartości w poziomie
+    margin: 10,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    textAlign: 'center',
+    elevation: 3,
+    width: '50%',
   },
   buttonText: {
     fontSize: 15,
     fontWeight: 'bold',
-    color: 'black',
+    color: 'white',
   },
   // Styles for Edit Modal
   input: {
-    height: 40,
-    borderColor: 'gray',
-    borderWidth: 1,
-    marginBottom: 20,
-    paddingLeft: 10,
+    height: 35,
     width: 250,
+    backgroundColor: 'white',
+    borderWidth: 1,
+    borderRadius: 5,
+    marginBottom: 10,
+    paddingLeft: 10,
     textAlign: 'center',
   },
   modalButton: {
@@ -664,6 +682,12 @@ const styles = StyleSheet.create({
     color: 'blue',
     marginBottom: 10,
   },
+  modalTittle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 20,
+    textAlign: 'center',
+  }
 });
 
 export default ResultsCoach;

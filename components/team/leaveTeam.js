@@ -132,7 +132,7 @@ const LeaveTeam = () => {
         {team ? (
           <>
             <Text style={styles.title}>Opuść Zespół</Text>
-            <Text style={styles.leaveText}>
+            <Text style={[styles.leaveText, { color: theme.textColor }]}>
               Czy na pewno chcesz opuścić zespół "{team.name}"? Po opuszczeniu będziesz musiał dołączyć ponownie.
             </Text>
             <TouchableOpacity style={[styles.button, { backgroundColor: theme.cancel }]} onPress={() => handleRemoveMember(user.uid)}>

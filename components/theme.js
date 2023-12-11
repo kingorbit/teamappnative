@@ -15,5 +15,6 @@ export const lightTheme = {
     succes: '#198754',
     warn: '#ffc107',
     cancel: '#dc3545',
+    add: '#6c6dbe',
   };
   

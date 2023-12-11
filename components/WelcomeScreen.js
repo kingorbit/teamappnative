@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Image, Animated, ActivityIndicator } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Image, Animated, ActivityIndicator, Keyboard, Platform } from 'react-native';
 import { useNavigate } from 'react-router-native';
 import LoginForm from './formLogin';
 import FormRole from './formRole';
-
 
 const WelcomeScreen = () => {
   const navigate = useNavigate();
@@ -11,6 +10,7 @@ const WelcomeScreen = () => {
   const [showSignUpForm, setShowSignUpForm] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const spinValue = new Animated.Value(0);
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
 
   useEffect(() => {
     // Symulacja opóźnienia ładowania
@@ -27,7 +27,24 @@ const WelcomeScreen = () => {
       })
     ).start();
 
-    return () => clearTimeout(loadingTimeout);
+    const keyboardDidShowListener = Keyboard.addListener(
+      'keyboardDidShow',
+      () => {
+        setKeyboardVisible(true);
+      },
+    );
+    const keyboardDidHideListener = Keyboard.addListener(
+      'keyboardDidHide',
+      () => {
+        setKeyboardVisible(false);
+      },
+    );
+
+    return () => {
+      clearTimeout(loadingTimeout);
+      keyboardDidShowListener.remove();
+      keyboardDidHideListener.remove();
+    };
   }, [spinValue]);
 
   const handleLoginClick = () => {
@@ -53,37 +70,40 @@ const WelcomeScreen = () => {
 
   return (
     <View style={styles.container}>
-        <Image source={require('../assets/logo.png')} style={styles.logo} />
+      <Image source={require('../assets/logo.png')} style={styles.logo} />
 
       {isLoading ? (
         <>
-          <ActivityIndicator size="large" color="#9091fd" style={styles.loadingIndicator} />
+          <ActivityIndicator size="large" color="#acadfe" style={styles.loadingIndicator} />
           <Animated.View style={{ transform: [{ rotate: spin }] }}>
           </Animated.View>
         </>
       ) : (
         <>
-          <Text style={styles.title}>Team App</Text>
+          <View style={styles.welcomecontroler}>
+            <Text style={styles.title}>Team App</Text>
 
-          {!showLoginForm && !showSignUpForm && (
-            <TouchableOpacity style={styles.button} onPress={handleLoginClick}>
-              <Text style={styles.buttonText}>Logowanie</Text>
-            </TouchableOpacity>
-          )}
+            {!showLoginForm && !showSignUpForm && (
+              <TouchableOpacity style={styles.button} onPress={handleLoginClick}>
+                <Text style={styles.buttonText}>Logowanie</Text>
+              </TouchableOpacity>
+            )}
 
-          {showLoginForm && <LoginForm />}
-          {!showLoginForm && !showSignUpForm && (
-            <TouchableOpacity style={styles.button} onPress={handleSignUpClick}>
-              <Text style={styles.buttonText}>Stwórz Konto</Text>
-            </TouchableOpacity>
-          )}
+            {showLoginForm && <LoginForm />}
+            {!showLoginForm && !showSignUpForm && (
+              <TouchableOpacity style={styles.button} onPress={handleSignUpClick}>
+                <Text style={styles.buttonText}>Stwórz Konto</Text>
+              </TouchableOpacity>
+            )}
 
-          {showSignUpForm && <FormRole />}
-          {showLoginForm || showSignUpForm ? (
-            <TouchableOpacity style={styles.button} onPress={handleBack}>
-              <Text style={styles.buttonText}>Powrót</Text>
-            </TouchableOpacity>
-          ) : null}
+            {showSignUpForm && <FormRole />}
+            {(showLoginForm || showSignUpForm) && !keyboardVisible && (
+              <TouchableOpacity style={styles.button} onPress={handleBack}>
+                <Text style={styles.buttonText}>Powrót</Text>
+              </TouchableOpacity>
+            )}
+
+          </View>
         </>
       )}
     </View>
@@ -93,9 +113,13 @@ const WelcomeScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#24243f',
+  },
+  welcomecontroler: {
+    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#24243f',
+    paddingBottom: Platform.OS === 'ios' ? 0 : 50, // Dodaj tę linijkę
   },
   logo: {
     marginVertical: 20,
@@ -103,9 +127,13 @@ const styles = StyleSheet.create({
     height: 150,
     marginBottom: 10,
     borderRadius: 20,
+    alignSelf: 'center',
   },
   loadingIndicator: {
     marginBottom: 20,
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   rotatingCircle: {
     width: 50,
@@ -131,7 +159,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     elevation: 3,
-    width: '55%',
+    width: '45%',
   },
 });
 

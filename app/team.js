@@ -77,19 +77,17 @@ const Team = () => {
       <View style={styles.teamContent}>
       <Text style={[styles.title, { color: theme.textColor }]}>Zarządzanie Zespołami</Text>
 
-        {user && (
+        {user && user.isCoach && !isInTeam && (
           // Pozostałe linki dostępne dla wszystkich zalogowanych użytkowników
-          <>
-          </>
+          <Link to="/createTeam" style={[styles.link, { backgroundColor: theme.buttonColor }]}>
+          <Text style={[styles.linkText, { color: theme.textColor }]}>Utwórz Zespół</Text>
+        </Link>
         )}
-        {user && user.isCoach && (
+        {user && user.isCoach && isInTeam &&(
           <>
             {/* Linki dla trenera */}
             <Link to="/manageTeam" style={[styles.link, { backgroundColor: theme.buttonColor }]}>
             <Text style={[styles.linkText, { color: theme.textColor }]}>Zarządzaj Drużyną</Text>
-            </Link>
-            <Link to="/createTeam" style={[styles.link, { backgroundColor: theme.buttonColor }]}>
-              <Text style={[styles.linkText, { color: theme.textColor }]}>Utwórz Zespół</Text>
             </Link>
             <Link to="/listTeam" style={[styles.link, { backgroundColor: theme.buttonColor }]}>
               <Text style={[styles.linkText, { color: theme.textColor }]}>Lista Zespołów</Text>
@@ -98,16 +96,16 @@ const Team = () => {
               <Text style={[styles.linkText, { color: theme.textColor }]}>Usuń Drużynę</Text>
             </Link>
             <Link to="/resultsCoach" style={[styles.link, { backgroundColor: theme.buttonColor }]}>
-              <Text style={[styles.linkText, { color: theme.textColor }]}>Wyniki - Trener</Text>
+              <Text style={[styles.linkText, { color: theme.textColor }]}>Wyniki</Text>
             </Link>
             <Link to="/tableCoach" style={[styles.link, { backgroundColor: theme.buttonColor }]}>
-              <Text style={[styles.linkText, { color: theme.textColor }]}>Tabela - Trener</Text>
+              <Text style={[styles.linkText, { color: theme.textColor }]}>Tabela</Text>
             </Link>    
-            <Link to="/playerStats" style={[styles.link, { backgroundColor: theme.buttonColor }]}>
-              <Text style={[styles.linkText, { color: theme.textColor }]}>Indywidualne - Trener</Text>
-            </Link>
             <Link to="/teamStats" style={[styles.link, { backgroundColor: theme.buttonColor }]}>
-              <Text style={[styles.linkText, { color: theme.textColor }]}>Drużyny - Trener</Text>
+              <Text style={[styles.linkText, { color: theme.textColor }]}>Statystyki Zespołu</Text>
+            </Link>
+            <Link to="/playerStats" style={[styles.link, { backgroundColor: theme.buttonColor }]}>
+              <Text style={[styles.linkText, { color: theme.textColor }]}>Statystyki Zawodniów</Text>
             </Link>           
           </>
         )}

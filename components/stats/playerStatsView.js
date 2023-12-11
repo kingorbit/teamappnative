@@ -205,7 +205,7 @@ const PlayerStatsView = () => {
           </View>
         )}
         </ScrollView>
-        <Link to="/teams" style={styles.link}>
+        <Link to="/team" style={styles.link}>
           <Text style={styles.linkText}>Powrót</Text>
         </Link>
 

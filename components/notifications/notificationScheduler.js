@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { Platform } from 'react-native';
 import * as Notifications from 'expo-notifications';
 
-const scheduleNotification = async (eventName, eventDate) => {
+const scheduleNotification = async (eventName, eventDate, eventCategory) => {
   if (Platform.OS === 'web') {
     // Obsługa powiadomień dla przeglądarki
     if (!("Notification" in window)) {
@@ -12,14 +12,14 @@ const scheduleNotification = async (eventName, eventDate) => {
 
     if (Notification.permission === "granted") {
       const options = {
-        body: `Dzisiaj masz wydarzenie: ${eventName}`,
+        body: `Dzisiaj masz wydarzenie: ${eventCategory} o nazwie ${eventName}`,
       };
 
       if (eventDate) {
         options.body += ` o godzinie ${eventDate.split(" ")[1]}`;
       }
 
-      new Notification("Przypomnienie o wydarzeniu", options);
+      new Notification("Przypomnienie o wydarzeniu!", options);
     } else if (Notification.permission !== "denied") {
       Notification.requestPermission().then((permission) => {
         if (permission === "granted") {
@@ -33,8 +33,8 @@ const scheduleNotification = async (eventName, eventDate) => {
       if (eventDate) {
         await Notifications.scheduleNotificationAsync({
           content: {
-            title: 'Przypomnienie o wydarzeniu',
-            body: `Dzisiaj o godzinie ${eventDate.split(':')[0]} masz wydarzenie: ${eventName}`,
+            title: 'Przypomnienie o wydarzeniu!',
+            body: `Dzisiaj o godzinie ${eventDate.split(':')[0]} masz wydarzenie: ${eventCategory} o nazwie ${eventName}`,
           },
           trigger: {
             seconds: 1,  // Ustawiamy opóźnienie na 1 sekundę
@@ -53,12 +53,17 @@ const scheduleNotification = async (eventName, eventDate) => {
 
 const EventNotificationScheduler = ({ events }) => {
   useEffect(() => {
-    events.forEach((event) => {
-      // Jeśli godzina nie jest podana, ustaw na godzinę 12:00
-      const eventTime = event.eventDate ? event.eventDate.split(' ')[1] : '12:00';
-
-      scheduleNotification(event.eventName, eventTime);
+    const scheduledNotifications = events.map((event) => {
+      const eventTime = event.eventDate ? event.eventDate.split(' ')[1] : '09:00';
+      return scheduleNotification(event.eventName, eventTime);
     });
+
+    return () => {
+      // Opcjonalnie: Anuluj zaplanowane powiadomienia, gdy komponent jest oczyszczany
+      scheduledNotifications.forEach(async (notification) => {
+        await Notifications.cancelScheduledNotificationAsync(notification);
+      });
+    };
   }, [events]);
 
   return null;

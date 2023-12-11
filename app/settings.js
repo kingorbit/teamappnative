@@ -8,7 +8,7 @@ import {
   Alert,
 } from 'react-native';
 import { onAuthStateChanged, sendPasswordResetEmail } from 'firebase/auth';
-import { collection, query, where, getDoc, updateDoc, doc, setDoc } from 'firebase/firestore';
+import { collection, query, where, getDoc, updateDoc, doc, setDoc, getDocs } from 'firebase/firestore';
 import { auth, firestore } from '../constants/config';
 import Header from '../components/header';
 import NavigationBar from '../components/navBar';
@@ -27,31 +27,32 @@ const Settings = () => {
       if (userData) {
         setUser(userData);
         try {
-          const userDocRef = doc(firestore, 'users', userData.uid);
+          const userDocRef = collection(firestore, 'users');
+          
+          // Sprawdź, czy istnieje dokument z polem "uid" równe UID użytkownika
+          const userQuery = query(userDocRef, where('uid', '==', userData.uid));
+          const userDocs = await getDocs(userQuery);
   
-          // Sprawdź, czy istnieje dokument o nazwie UID użytkownika
-          const userDocSnapshot = await getDoc(userDocRef);
+          if (userDocs.size > 0) {
+            // Dokument istnieje, więc go zaktualizuj
+            const userDoc = userDocs.docs[0];
+            const userDataFromFirestore = userDoc.data();
   
-          if (userDocSnapshot.exists()) {
-            const userDataFromFirestore = userDocSnapshot.data();
             setUserEmail(userDataFromFirestore.email || '');
             setNotificationsEnabled(userDataFromFirestore.notificationsEnabled || false);
             setDarkModeEnabled(userDataFromFirestore.darkModeEnabled || false);
   
             // Aktualizuj istniejący dokument
-            await updateDoc(userDocRef, {
+            await updateDoc(userDoc.ref, {
               notificationsEnabled: userDataFromFirestore.notificationsEnabled || false,
               darkModeEnabled: userDataFromFirestore.darkModeEnabled || false,
             });
           } else {
-            // Zmiana nazwy dokumentu na UID użytkownika
-            const renamedDocRef = doc(firestore, 'users', userData.uid);
-  
-            // Utwórz nowy dokument z nową nazwą
-            await setDoc(renamedDocRef, {
+            // Dokument nie istnieje, więc go utwórz
+            await addDoc(userDocRef, {
               uid: userData.uid,
               email: userData.email,
-              notificationsEnabled: false, // Możesz ustawić domyślne wartości
+              notificationsEnabled: false,
               darkModeEnabled: false,
             });
           }
@@ -110,7 +111,7 @@ const Settings = () => {
       return (
         <View style={[styles.informationContainer, { backgroundColor: theme.buttonColor }]}>
           <Text style={[styles.informationText, { color: theme.textColor }]}>
-            Lorem Ipsum is simply dummy text of the printing and typesetting industry.
+            Praca inżynierska. Jakub Fluder 2023
           </Text>
         </View>
       );

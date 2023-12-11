@@ -11,6 +11,7 @@ import { LocaleConfig } from 'react-native-calendars';
 import ModalDropdown from 'react-native-modal-dropdown';
 import Icon from 'react-native-vector-icons/FontAwesome'; 
 import EventNotificationScheduler from '../components/notifications/notificationScheduler';
+import { lightTheme, darkTheme } from '../components/theme';
 
 
 LocaleConfig.locales['pl'] = {
@@ -49,7 +50,6 @@ const categoryColors = {
   'Mecz Pucharowy': 'red',
   'Mecz Ligowy': 'green',
   'Trening': 'blue',
-  // Dodaj inne kategorie i kolory według potrzeb
 };
 
 LocaleConfig.defaultLocale = 'pl';
@@ -73,6 +73,7 @@ const CalendarScreen = () => {
   const [editedEvent, setEditedEvent] = useState(null);
   const [userIsInTeam, setUserIsInTeam] = useState(false); 
   const [isLoading, setIsLoading] = useState(true);
+  const [theme, setTheme] = useState(darkTheme);
   const spinValue = new Animated.Value(0);
 
   useEffect(() => {
@@ -80,6 +81,9 @@ const CalendarScreen = () => {
       const unsubscribe = onAuthStateChanged(auth, async (userData) => {
         if (userData) {
           try {
+            // Dodane wywołanie funkcji fetchUserSettings
+            fetchUserSettings(userData.uid);
+  
             const usersRef = collection(firestore, 'users');
             const q = query(usersRef, where('uid', '==', userData.uid));
             const querySnapshot = await getDocs(q);
@@ -149,8 +153,7 @@ const CalendarScreen = () => {
                   console.log('Marked dates:', markedDates);
                   setMarkedDates(markedDates);
                   setUserIsInTeam(true);
-                }
-                else{
+                } else {
                   setUserIsInTeam(false);
                 }
               }
@@ -173,7 +176,7 @@ const CalendarScreen = () => {
     // Symulacja opóźnienia ładowania
     const loadingTimeout = setTimeout(() => {
       setIsLoading(false);
-    }, 2000);
+    }, 3000);
 
     // Animacja obracającego się koła
     Animated.loop(
@@ -191,6 +194,9 @@ const CalendarScreen = () => {
     inputRange: [0, 1],
     outputRange: ['0deg', '360deg'],
   });
+
+
+
   const addEvent = async () => {
     try {
       if (!eventCategory || !eventName || !eventDate) {
@@ -318,6 +324,22 @@ const CalendarScreen = () => {
       console.error('Błąd usuwania zdarzenia', error);
     }
   };
+
+  const fetchUserSettings = async (uid) => {
+    try {
+      const userDocRef = doc(firestore, 'users', uid);
+      const userDocSnapshot = await getDoc(userDocRef);
+  
+      if (userDocSnapshot.exists()) {
+        const userDataFromFirestore = userDocSnapshot.data();
+        const darkModeEnabled = userDataFromFirestore.darkModeEnabled || false;
+        setTheme(darkModeEnabled ? darkTheme : lightTheme);
+      }
+    } catch (error) {
+      console.error('Error fetching user settings:', error.message);
+    }
+  };
+
   const renderUpcomingEvents = () => {
     // Sprawdź, czy użytkownik jest w zespole
     if (!userIsInTeam) {
@@ -344,13 +366,13 @@ const CalendarScreen = () => {
         {upcomingEvents.map((event) => (
           <TouchableOpacity
             key={event.id}
-            style={styles.upcomingEventButton}
+            style={[styles.upcomingEventButton, { backgroundColor: theme.buttonColor }]}
             onPress={() => showEventDetails(event)}
           >
-            <View style={styles.upcomingEventDetails}>
-              <Text style={styles.upcomingEventText}>{event.eventName}</Text>
-              <Text>Kategoria: {event.eventCategory}</Text>
-              <Text>Data: {event.eventDate}</Text>
+            <View style={[styles.upcomingEventDetails, { backgroundColor: theme.buttonColor }]}>
+              <Text style={[styles.upcomingEventText, { color: theme.textColor }]} >{event.eventName}</Text>
+              <Text style={[styles.upcomingEventText, { color: theme.textColor }]} >Kategoria: {event.eventCategory}</Text>
+              <Text style={[styles.upcomingEventText, { color: theme.textColor }]}  >Data: {event.eventDate}</Text>
             </View>
             <View style={styles.daysRemainingContainer}>
               <Text style={styles.daysRemainingText}>{calculateDaysRemaining(event.eventDate)}</Text>
@@ -377,13 +399,34 @@ const CalendarScreen = () => {
 
 
   return (
-    <View style={styles.container}>
-          <ScrollView style={styles.childcontainer}>
+<View style={[styles.container, { backgroundColor: theme.backgroundColor }]}>
+{isLoading ? (
+        <View style={styles.loadingContainer}>
+                  <Image source={require('../assets/logo.png')} style={styles.logo} />
+          <ActivityIndicator size="large" color="#acadfe" style={styles.loadingIndicator} />
+          <Animated.View style={{ transform: [{ rotate: spin }] }}>
+
+          </Animated.View>
+        </View>
+      ) : (
+        <>
+      <ScrollView style={styles.childcontainer}>
       <Header user={user} setUser={setUser} />
       <Text style={styles.title}>Kalendarz</Text>
       <EventNotificationScheduler events={events} />
       <View style={styles.calendarcontainer}>
       <Calendar
+            style={{
+              borderWidth: 1,
+              borderColor: 'gray',
+              backgroundColor: '#ffffff',
+              calendarBackground: '#ffffff',
+              textSectionTitleColor: '#b6c1cd',
+              selectedDayBackgroundColor: '#00adf5',
+              selectedDayTextColor: '#ffffff',
+              todayTextColor: '#00adf5',
+              dayTextColor: '#2d4150',
+            }}
   markedDates={markedDates}
   onDayPress={(day) => {
     setSelectedDate(day.dateString);
@@ -402,33 +445,12 @@ const CalendarScreen = () => {
       setMarkedDates(updatedMarkedDates);
     }
   }}
-  style={styles.calendar}
-  theme={{
-    // ... inne ustawienia tematu
-    dotColor: 'yellow',
-    selectedDotColor: '#ffffff',
-    arrowColor: 'black',
-    monthTextColor: 'black',
-    textDayFontFamily: 'monospace',
-    textMonthFontFamily: 'monospace',
-    textDayHeaderFontFamily: 'monospace',
-    textDayFontWeight: '300',
-    textMonthFontWeight: 'bold',
-    textDayHeaderFontWeight: '300',
-    textDayFontSize: 16,
-    textMonthFontSize: 16,
-    textDayHeaderFontSize: 16,
-    // Dodaj nową sekcję do ustawiania kolorów kropek
-    todayTextColor: 'green',
-    dayTextColor: 'black',
-    textDisabledColor: 'gray',
-  }}
 />
         {user && isCoach && (
           <View style={styles.buttonsContainer}>
-            <TouchableOpacity style={styles.iconButton} onPress={() => setEventFormVisible(true)}>
-              <Icon name="plus" size={17} color="black" />
-              <Text style={styles.buttonText}>Dodaj Wydarzenie </Text>
+            <TouchableOpacity style={[styles.iconButton, { backgroundColor: theme.succes }]} onPress={() => setEventFormVisible(true)}>
+              <Icon name="plus" size={17} style={[styles.buttonText, { color: 'white' }]} />
+              <Text style={[styles.buttonText, { color: 'white' }]}>Dodaj Wydarzenie </Text>
             </TouchableOpacity>
           </View>
         )}
@@ -440,8 +462,8 @@ const CalendarScreen = () => {
   onRequestClose={() => setEventFormVisible(false)}
 >
   <View style={styles.modalContainer}>
-    <View style={styles.modalContent}>
-      <Text style={styles.modalTitle}>Dodaj Wydarzenie</Text>
+    <View style={[styles.modalContent, { backgroundColor: theme.buttonColor }]}>
+      <Text style={[styles.modalTitle, { color: theme.textColor }]}>Dodaj Wydarzenie</Text>
       <TextInput
         style={styles.input}
         placeholder="Nazwa wydarzenia"
@@ -475,11 +497,11 @@ const CalendarScreen = () => {
   }}
   keyboardType="numeric"
 />
-      <TouchableOpacity style={[styles.addButton, { backgroundColor: '#4BB543' }]} onPress={addEvent}>
+      <TouchableOpacity style={[styles.addButton, { backgroundColor: theme.succes }]} onPress={addEvent}>
    <Text style={[styles.buttonText, { color: 'white' }]}>Dodaj</Text>
       </TouchableOpacity>
       <TouchableOpacity
-  style={[styles.closeButton, { backgroundColor: 'red' }]} // Dodano styl o kolorze czerwonym
+  style={[styles.closeButton, { backgroundColor: theme.cancel }]}
   onPress={() => setEventFormVisible(false)}
 >
 <Text style={[styles.buttonText, { color: 'white' }]}>Zamknij</Text>
@@ -498,13 +520,13 @@ const CalendarScreen = () => {
   }}
 >
   <View style={styles.modalContainer}>
-    <View style={styles.modalContent}>
+    <View style={[styles.modalContent, { backgroundColor: theme.buttonColor }]}>
       {selectedEventDetails && (
         <View>
-          <Text style={styles.modalTitle}>Szczegóły</Text>
-          <Text>Nazwa: {selectedEventDetails.eventName}</Text>
-          <Text>Kategoria: {selectedEventDetails.eventCategory}</Text>
-          <Text>Data: {selectedEventDetails.eventDate}</Text>
+          <Text style={[styles.modalTitle, { color: theme.textColor }]}>Szczegóły</Text>
+          <Text style={[styles.buttonText, { color: theme.textColor }]} >Nazwa: {selectedEventDetails.eventName}</Text>
+          <Text style={[styles.buttonText, { color: theme.textColor }]} >Kategoria: {selectedEventDetails.eventCategory}</Text>
+          <Text style={[styles.buttonText, { color: theme.textColor }]} >Data: {selectedEventDetails.eventDate}</Text>
           {isCoach && (
             <View>
               <TouchableOpacity
@@ -543,8 +565,8 @@ const CalendarScreen = () => {
   onRequestClose={() => setDeleteConfirmationVisible(false)}
 >
   <View style={styles.modalContainer}>
-    <View style={styles.modalContent}>
-      <Text style={styles.modalTitle}>Potwierdź Usunięcie</Text>
+    <View style={[styles.modalContent, { backgroundColor: theme.buttonColor }]}>
+      <Text style={[styles.modalTitle, { color: theme.textColor }]}>Potwierdź Usunięcie</Text>
       <TouchableOpacity
         style={[styles.confirmDeleteButton, { backgroundColor: 'red' }]}
         onPress={deleteEvent}
@@ -552,7 +574,7 @@ const CalendarScreen = () => {
         <Text style={[styles.buttonText, { color: 'white' }]}>Usuń</Text>
       </TouchableOpacity>
       <TouchableOpacity
-        style={[styles.closeButton, { backgroundColor: '#198754' }]}
+        style={[styles.addButton, { backgroundColor: theme.succes }]}
         onPress={() => setDeleteConfirmationVisible(false)}
       >
         <Text style={[styles.buttonText, { color: 'white' }]}>Anuluj</Text>
@@ -567,8 +589,8 @@ const CalendarScreen = () => {
   onRequestClose={() => setEditFormVisible(false)}
 >
   <View style={styles.modalContainer}>
-    <View style={styles.modalContent}>
-      <Text style={styles.modalTitle}>Edytuj Wydarzenie</Text>
+    <View style={[styles.modalContent, { backgroundColor: theme.buttonColor }]}>
+      <Text style={[styles.modalTitle, { color: theme.textColor }]}>Edytuj Wydarzenie</Text>
       <TextInput
         style={styles.input}
         placeholder="Nazwa wydarzenia"
@@ -592,10 +614,10 @@ const CalendarScreen = () => {
         keyboardType="numeric"
       />
       <TouchableOpacity
-        style={[styles.addButton, { backgroundColor: '#4BB543' }]}
+        style={[styles.addButton, { backgroundColor: theme.succes }]}
         onPress={updateEvent}
       >
-        <Text style={[styles.buttonText, { color: 'white' }]}>Zapisz zmiany</Text>
+        <Text style={[styles.buttonText, { color: 'white' }]}>Zapisz</Text>
       </TouchableOpacity>
       <TouchableOpacity
         style={[styles.closeButton, { backgroundColor: 'red' }]}
@@ -611,6 +633,8 @@ const CalendarScreen = () => {
       {renderUpcomingEvents()}
       </ScrollView>
       <NavigationBar></NavigationBar>
+      </>
+      )}
     </View>
   );
 };
@@ -697,7 +721,7 @@ const styles = StyleSheet.create({
   },
   input: {
     height: 40,
-    borderColor: 'gray',
+    backgroundColor: 'white',
     borderWidth: 1,
     marginBottom: 10,
     paddingHorizontal: 10,
@@ -744,6 +768,7 @@ const styles = StyleSheet.create({
   daysRemainingText: {
     color: 'white',
     fontWeight: 'bold',
+    textAlign: 'center',
   },
   dropdown: {
     height: 35,
@@ -792,7 +817,26 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     width: 75,
     marginBottom: 10,
-  }
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingIndicator: {
+    marginBottom: 20,
+  },
+  logo: {
+    width: 150, 
+    height: 150,
+    resizeMode: 'contain',
+    borderRadius: 15,
+  },
+  rotatingCircle: {
+    width: 50,
+    height: 50,
+    marginTop: 20,
+  },
 });
 
 export default CalendarScreen;

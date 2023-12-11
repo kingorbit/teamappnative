@@ -1,24 +1,28 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
-import { collection, addDoc, doc, updateDoc } from 'firebase/firestore';
+import { collection, addDoc, doc, updateDoc, getDoc } from 'firebase/firestore';
 import { firestore, auth } from '../../constants/config';
 import { onAuthStateChanged } from 'firebase/auth';
 import { useNavigate } from 'react-router-native';
 import Header from '../header';
+import NavigationBar from '../navBar';
+import { lightTheme, darkTheme } from '../theme';
 
 const CreateTeam = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [teamName, setTeamName] = useState('');
   const [teamDescription, setTeamDescription] = useState('');
+  const [theme, setTheme] = useState(darkTheme);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (userData) => {
+    const unsubscribe = onAuthStateChanged(auth, async (userData) => {
       if (userData) {
         setUser(userData);
+        await fetchUserSettings(userData.uid, setTheme);
       }
     });
-
+  
     return () => unsubscribe();
   }, []);
 
@@ -32,6 +36,21 @@ const CreateTeam = () => {
     }
 
     return result;
+  };
+
+  const fetchUserSettings = async (uid, setTheme) => {
+    try {
+      const userDocRef = doc(firestore, 'users', uid);
+      const userDocSnapshot = await getDoc(userDocRef);
+  
+      if (userDocSnapshot.exists()) {
+        const userDataFromFirestore = userDocSnapshot.data();
+        const darkModeEnabled = userDataFromFirestore.darkModeEnabled || false;
+        setTheme(darkModeEnabled ? darkTheme : lightTheme);
+      }
+    } catch (error) {
+      console.error('Error fetching user settings:', error.message);
+    }
   };
 
   const handleCreateTeam = async () => {
@@ -69,10 +88,10 @@ const CreateTeam = () => {
   };
 
   return (
-    <View style={styles.container}>
+<View style={[styles.container, { backgroundColor: theme.backgroundColor }]}>
       <Header></Header>
       <View style={styles.teamContent}>
-        <Text style={styles.title}>Utwórz Zespół</Text>
+        <Text style={[styles.title, { color: theme.textColor }]}>Utwórz Zespół</Text>
         <TextInput
           style={styles.input}
           placeholder="Nazwa zespołu"
@@ -87,13 +106,14 @@ const CreateTeam = () => {
           multiline={true}
           numberOfLines={4}
         />
-        <TouchableOpacity style={styles.button} onPress={handleCreateTeam}>
+        <TouchableOpacity style={[styles.button, { backgroundColor: theme.succes }]} onPress={handleCreateTeam}>
           <Text style={styles.buttonText}>Utwórz Zespół</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.link} onPress={() => navigate('/team')}>
-          <Text style={styles.linkText}>Powrót</Text>
+        <TouchableOpacity style={[styles.link, { backgroundColor: theme.buttonColor }]} onPress={() => navigate('/team')}>
+          <Text style={[styles.linkText, { color: theme.textColor }]}>Powrót</Text>
         </TouchableOpacity>
       </View>
+      <NavigationBar></NavigationBar>
     </View>
   );
 };
@@ -121,18 +141,19 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   button: {
-    padding: 20,
+    padding: 10,
     margin: 10,
-    backgroundColor: 'white',
     borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
+    textAlign: 'center',
     elevation: 3,
+    width: '50%',
   },
   buttonText: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: 'black',
+    color: 'white',
   },
   link: {
     padding: 10,

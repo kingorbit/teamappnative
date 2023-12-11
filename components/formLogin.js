@@ -68,7 +68,7 @@ const styles = StyleSheet.create({
   },
   input: {
     width: '100%',
-    height: 35,
+    height: 45,
     borderWidth: 1,
     backgroundColor: 'white',
     color: 'black',
@@ -90,7 +90,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     elevation: 3,
-    width: '90%',
+    width: '70%',
   },
   forgotPasswordText: {
     color: 'gray', // Zmiana koloru tekstu na biały

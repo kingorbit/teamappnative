@@ -152,7 +152,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#9091fd',
   },
   title: {
-    fontSize: 24,
+    fontSize: 34,
     fontWeight: 'bold',
     marginBottom: 20,
     textAlign: 'center',
@@ -168,7 +168,8 @@ const styles = StyleSheet.create({
   teamInfo: {
     marginBottom: 20,
     backgroundColor: '#fff',
-    padding: 15,
+    width: '70%',
+    padding: 30,
     borderRadius: 10,
     shadowColor: '#000',
     shadowOffset: {
@@ -181,38 +182,39 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   teamAvatar: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
+    width: 150,
+    height: 150,
+    borderRadius: 100,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: 'purple', // Kolor tła dla awatara drużyny
     marginBottom: 10,
   },
   avatarText: {
-    fontSize: 24,
+    fontSize: 35,
     color: 'white',
+    fontWeight: 'bold',
   },
   teamName: {
-    fontSize: 20,
+    fontSize: 25,
     fontWeight: 'bold',
     marginBottom: 10,
     color: '#3498db',
   },
   info: {
-    fontSize: 18,
+    fontSize: 24,
     marginBottom: 10,
     color: 'black',
   },
   membersTitle: {
-    fontSize: 20,
+    fontSize: 25,
     fontWeight: 'bold',
     marginTop: 15,
     marginBottom: 10,
     color: 'black',
   },
   member: {
-    fontSize: 16,
+    fontSize: 18,
     marginBottom: 5,
     color: 'black',
   },

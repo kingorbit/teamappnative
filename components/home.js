@@ -6,6 +6,7 @@ import { getFirestore, collection, query, where, onSnapshot, getDocs, orderBy, l
 import { auth } from '../constants/config';
 import Header from './header';
 import NavigationBar from './navBar';
+import { lightTheme, darkTheme } from '../components/theme';
 
 const Home = () => {
   const [user, setUser] = useState(null);
@@ -14,6 +15,7 @@ const Home = () => {
   const [upcomingEvent, setUpcomingEvent] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const spinValue = new Animated.Value(0);
+  const [theme, setTheme] = useState(darkTheme);
 
   const fetchUserData = async (userId) => {
     const userDocRef = doc(firestore, 'users', userId);
@@ -95,20 +97,56 @@ const Home = () => {
     return () => unsubscribe();
   };
 
+  const fetchUserSettings = async (uid) => {
+    try {
+      const userDocRef = doc(firestore, 'users', uid);
+      const userDocSnapshot = await getDoc(userDocRef);
+  
+      if (userDocSnapshot.exists()) {
+        const userDataFromFirestore = userDocSnapshot.data();
+        const darkModeEnabled = userDataFromFirestore.darkModeEnabled || false;
+        setTheme(darkModeEnabled ? darkTheme : lightTheme);
+      }
+    } catch (error) {
+      console.error('Error fetching user settings:', error.message);
+    }
+  };
+  
+
   useEffect(() => {
-    
-    const unsubscribe = onAuthStateChanged(auth, async (userData) => {
-      if (userData) {
-        const { uid } = userData;
-        setUser(userData);
+    const fetchData = async () => {
+      try {
+        const user = auth.currentUser;
+  
+        if (!user) {
+          console.error('Użytkownik nie jest zalogowany.');
+          return;
+        }
+  
+        const { uid } = user;
+  
+        // Dodane wywołanie funkcji fetchUserSettings
+        fetchUserSettings(uid, setTheme);
+  
+        setUser(user);
         const userAdditionalData = await fetchUserData(uid);
         setUserAdditionalData(userAdditionalData);
         fetchCoachMessages(uid);
         fetchLatestEventData();
+      } catch (error) {
+        console.error('Błąd pobierania danych użytkownika', error);
+      }
+    };
+  
+    const unsubscribe = onAuthStateChanged(auth, (userData) => {
+      if (userData) {
+        fetchData();
       }
     });
-
-    return () => unsubscribe();
+  
+    return () => {
+      unsubscribe();
+    };
   }, []);
 
   useEffect(() => {
@@ -136,11 +174,11 @@ const Home = () => {
 
   
   return (
-    <View style={styles.container}>
+<View style={[styles.container, { backgroundColor: theme.backgroundColor }]}>
       {isLoading ? (
         <View style={styles.loadingContainer}>
                   <Image source={require('../assets/logo.png')} style={styles.logo} />
-          <ActivityIndicator size="large" color="#9091fd" style={styles.loadingIndicator} />
+          <ActivityIndicator size="large" color="#acadfe" style={styles.loadingIndicator} />
           <Animated.View style={{ transform: [{ rotate: spin }] }}>
 
           </Animated.View>
@@ -150,29 +188,31 @@ const Home = () => {
           <Header user={user} setUser={setUser} />
           <ScrollView style={styles.contentContainer}>
             <Text style={styles.welcomeText}>
-              {`Witaj ${userAdditionalData ? `${userAdditionalData.firstName} ${userAdditionalData.lastName}` : ''} w Team App!`}
+              {`Witaj ${userAdditionalData ? `${userAdditionalData.firstName} ${userAdditionalData.lastName}` : ''}!`}
             </Text>
   
-            <Text style={styles.sectionTitle}>Najnowsze Wiadomości od Trenera</Text>
-            <View style={styles.messagesContainer}>
+            <Text style={styles.sectionTitle}>Wiadomości od Trenera!</Text>
+            
               {coachMessages.map((message) => (
-                <View key={message.id} style={styles.messageContainer}>
-                  <Text style={styles.messageTitle}>{message.name}</Text>
-                  <Text style={styles.messageText}>{message.messages}</Text>
+                <View key={message.id} style={[styles.messageContainer, { backgroundColor: theme.buttonColor }]}>
+                  <Text style={[styles.messageTitle, { color: theme.textColor }]}>{message.name}</Text>
+                  <Text style={[styles.messageText, { color: theme.textColor }]}>{message.messages}</Text>
                   <Text style={styles.messageDate}>{`Dodane: ${message.data}`}</Text>
                 </View>
               ))}
-            </View>
+
             <Text style={styles.sectionTitle}>Najbliższe wydarzenie!</Text>
             {upcomingEvent && (
-              <View style={styles.upcomingEventContainer}>
-                <View style={styles.eventContainer}>
-                  <Text style={styles.eventTitle}>{upcomingEvent.title}</Text>
-                  <Text style={styles.eventTitle}>{upcomingEvent.eventName}</Text>
-                  <Text style={styles.eventDate}>{`Data: ${new Date(upcomingEvent.eventDate).toDateString()}`}</Text>
-                  <Text style={styles.daysRemainingText}>{calculateDaysRemaining(upcomingEvent.eventDate)}</Text>
+             
+                <View style={[styles.eventContainer, { backgroundColor: theme.buttonColor }]}>
+                  <Text style={[styles.eventTitle, { color: theme.textColor }]}>{upcomingEvent.eventName}</Text>
+                  <Text style={[styles.eventTitle, { color: theme.textColor }]}>{upcomingEvent.eventCategory}</Text>
+                  <Text style={[styles.eventDate, { color: theme.textColor }]}>{`Data: ${new Date(upcomingEvent.eventDate).toDateString()}`}</Text>
+                  <View style={styles.daysRemainingContainer}>
+                  <Text style={[styles.daysRemaining, { color: theme.textColor }]}>{calculateDaysRemaining(upcomingEvent.eventDate)}</Text>
+                  </View>
                 </View>
-              </View>
+
             )}
           </ScrollView>
           <NavigationBar />
@@ -196,6 +236,7 @@ const styles = StyleSheet.create({
     color: 'white',
     marginBottom: 20,
     alignSelf: 'center',
+    textAlign: 'center',
   },
   sectionTitle: {
     fontSize: 24,
@@ -203,6 +244,8 @@ const styles = StyleSheet.create({
     color: 'white',
     marginBottom: 20,
     alignSelf: 'center',
+    textAlign: 'center',
+    marginVertical: 20,
   },
   messagesContainer: {
     backgroundColor: 'white',
@@ -232,14 +275,14 @@ const styles = StyleSheet.create({
   messageDate: {
     marginTop: 20,
     fontSize: 14,
-    color: 'gray',
+    color: '#E1D9D1',
     textAlign: 'right',
   },
   upcomingEventContainer: {
     backgroundColor: 'white',
     borderRadius: 10,
     padding: 15,
-    marginBottom: 20,
+    marginBottom: 70,
   },
   eventContainer: {
     backgroundColor: '#F5F5F5',
@@ -260,6 +303,20 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     alignSelf: 'center',
   },
+  daysRemainingContainer: {
+    backgroundColor: 'green',
+    borderRadius: 5,
+    padding: 10,
+    marginLeft: 10,
+    width: '27%',
+    height: 40,
+    alignItems: 'center',
+    alignSelf: 'center',
+
+  },
+  daysRemaining: {
+    fontWeight: 'bold',
+  },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -277,7 +334,7 @@ const styles = StyleSheet.create({
   rotatingCircle: {
     width: 50,
     height: 50,
-    marginTop: 10,
+    marginTop: 20,
   },
 });
 

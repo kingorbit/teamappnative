@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, TextInput, Alert, ScrollView, Modal } from 'react-native';
 import { onAuthStateChanged } from 'firebase/auth';
-import { collection, query, where, getDocs, doc, updateDoc, setDoc,deleteDoc, addDoc } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, updateDoc, setDoc,deleteDoc, addDoc, getDoc } from 'firebase/firestore';
 import Header from '../header';
 import { firestore, auth } from '../../constants/config';
 import { useNavigate } from 'react-router-native';
+import { lightTheme, darkTheme } from '../theme';
+import NavigationBar from '../navBar';
 
 const ManageTeam = () => {
   const [user, setUser] = useState(null);
@@ -21,7 +23,7 @@ const ManageTeam = () => {
   const [editedMessageTitle, setEditedMessageTitle] = useState('');
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [editedMessageId, setEditedMessageId] = useState('');
-
+  const [theme, setTheme] = useState(darkTheme);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -31,37 +33,40 @@ const ManageTeam = () => {
           const usersRef = collection(firestore, 'users');
           const q = query(usersRef, where('uid', '==', userData.uid));
           const querySnapshot = await getDocs(q);
-
+  
           if (!querySnapshot.empty) {
             const userData = querySnapshot.docs[0].data();
             setUser(userData);
-
+  
+            // Fetch user settings
+            await fetchUserSettings(userData.uid, setTheme);
+  
             const teamsRef = collection(firestore, 'teams');
             const teamsQuery = query(teamsRef, where('members', 'array-contains', userData.uid));
             const teamsSnapshot = await getDocs(teamsQuery);
-
+  
             const userTeams = [];
             for (const teamDoc of teamsSnapshot.docs) {
               const teamData = teamDoc.data();
-
+  
               const membersData = [];
               for (const memberUid of teamData.members) {
                 const memberQuery = query(usersRef, where('uid', '==', memberUid));
                 const memberSnapshot = await getDocs(memberQuery);
-
+  
                 if (!memberSnapshot.empty) {
                   const memberData = memberSnapshot.docs[0].data();
                   membersData.push(`${memberData.firstName} ${memberData.lastName}`);
                 }
               }
-
+  
               userTeams.push({
                 team: teamData,
                 members: membersData,
               });
             }
             setTeams(userTeams);
-
+  
             // Fetch coach messages
             const coachMessagesRef = collection(firestore, 'coachMessages');
             const coachMessagesQuery = query(coachMessagesRef, where('teamId', '==', userTeams[0].team.teamId));
@@ -74,9 +79,26 @@ const ManageTeam = () => {
         }
       }
     });
-
+  
     return () => unsubscribe();
   }, []);
+
+
+  
+const fetchUserSettings = async (uid, setTheme) => {
+  try {
+    const userDocRef = doc(firestore, 'users', uid);
+    const userDocSnapshot = await getDoc(userDocRef);
+
+    if (userDocSnapshot.exists()) {
+      const userDataFromFirestore = userDocSnapshot.data();
+      const darkModeEnabled = userDataFromFirestore.darkModeEnabled || false;
+      setTheme(darkModeEnabled ? darkTheme : lightTheme);
+    }
+  } catch (error) {
+    console.error('Error fetching user settings:', error.message);
+  }
+};
   
 
   const handleRemoveMember = async (memberUid) => {
@@ -139,10 +161,6 @@ const ManageTeam = () => {
       Alert.alert('Błąd', 'Wystąpił błąd podczas aktualizacji informacji o zespole.');
     }
   };
-
-
-// ...
-
 
 const handleAddMessage = async () => {
   try {
@@ -243,74 +261,70 @@ const handleEditMessage = async () => {
     Alert.alert('Błąd', 'Wystąpił błąd podczas edycji wiadomości.');
   }
 };
-
-
-
-
-  
   
 
   return (
-    <View style={styles.container}>
+<View style={[styles.container, { backgroundColor: theme.backgroundColor }]}>
       <Header user={user} setUser={setUser} />
       <ScrollView contentContainerStyle={styles.scrollView}>
         {teams.length > 0 ? (
           <>
-            <Text style={styles.title}>Zarządzaj Zespołem</Text>
+            <Text style={[styles.title, { color: theme.textColor }]}>Zarządzaj Zespołem</Text>
             {teams.map((team, index) => (
               <View key={index} style={styles.teamInfo}>
-                <Text style={styles.info}>Nazwa Zespołu: {team.team.name}</Text>
-                <Text style={styles.info}>Opis: {team.team.description}</Text>
-                {founderData && (
-                  <Text style={styles.info}>Założyciel: {`${founderData.firstName} ${founderData.lastName}`}</Text>
-                )}
-                <Text style={styles.info}>Kod dołączania do drużyny: {team.team.joinCode}</Text>
-                <Text style={styles.membersTitle}>Członkowie:</Text>
+                <Text style={[styles.info, { color: theme.textColor }]}>Nazwa Zespołu: {team.team.name}</Text>
+                <Text style={[styles.info, { color: theme.textColor }]}>Opis: {team.team.description}</Text>
+                <Text style={[styles.info, { color: theme.textColor }]}>Kod dołączania do drużyny: {team.team.joinCode}</Text>
+                <Text style={[styles.membersTitle, { color: theme.textColor }]}>Członkowie:</Text>
                 {team.members.map((member, index) => (
                   <View key={index} style={styles.memberContainer}>
-                    <Text style={styles.member}>{member}</Text>
-                    <TouchableOpacity onPress={() => handleRemoveMember(member)}>
+                    <Text style={[styles.member, { color: theme.textColor }]}>{member}</Text>
+                    <TouchableOpacity style={[styles.button, { backgroundColor: theme.cancel }]} onPress={() => handleRemoveMember(member)}>
                       <Text style={styles.removeMemberText}>Usuń</Text>
                     </TouchableOpacity>
                   </View>
                 ))}
-                <Text style={styles.info}>Zmień nazwę zespołu:</Text>
+                <View style={styles.changinfoContainer}>
+                <Text style={[styles.info, { color: theme.textColor }]}>Zmień nazwę zespołu:</Text>
                 <TextInput
                   style={styles.input}
                   placeholder="Nowa nazwa zespołu"
+                  placeholderTextColor={'gray'}
                   value={newName}
                   onChangeText={(text) => setNewName(text)}
                 />
-                <Text style={styles.info}>Zmień opis zespołu:</Text>
+                <Text style={[styles.info, { color: theme.textColor }]}>Zmień opis zespołu:</Text>
                 <TextInput
                   style={styles.input}
                   placeholder="Nowy opis zespołu"
+                  placeholderTextColor={'gray'}
                   value={newDescription}
                   onChangeText={(text) => setNewDescription(text)}
                 />
-                <TouchableOpacity style={styles.button} onPress={handleUpdateTeamInfo}>
-                  <Text style={styles.buttonText}>Zaktualizuj informacje o zespole</Text>
+                <TouchableOpacity style={[styles.button, { backgroundColor: theme.succes }]} onPress={handleUpdateTeamInfo}>
+                  <Text style={styles.buttonText}>Zaktualizuj</Text>
                 </TouchableOpacity>
+                </View>
               </View>
             ))}
           </>
         ) : (
-          <Text style={styles.info}>Nie jesteś członkiem żadnego zespołu.</Text>
+          <Text style={[styles.info, { color: theme.textColor }]}>Nie jesteś członkiem żadnego zespołu.</Text>
         )}
       {coachMessages.length > 0 && (
-        <View style={styles.messageContainer}>
-          <Text style={styles.membersTitle}>Wiadomości od trenera:</Text>
+        <View style={[styles.messageContainer, { backgroundColor: theme.buttonColor }]}>
+          <Text style={[styles.membersTitle, { color: theme.textColor }]}>Wiadomości od Trenera:</Text>
           {coachMessages.map((message) => (
-            <View key={message.messageId} style={styles.messageContainer}>
-               <Text style={styles.messageText}>{message.name}</Text>
-              <Text style={styles.messageText}>{message.messages}</Text>
+            <View key={message.messageId} style={[styles.messageContainer, { backgroundColor: theme.buttonColor }]}>
+               <Text style={[styles.messageText, { color: theme.textColor }]}>{message.name}</Text>
+              <Text style={[styles.messageText, { color: theme.textColor }]}>{message.messages}</Text>
               <Text style={styles.messageDate}>{message.data}</Text>
               <View style={styles.buttonContainer}>
-              <TouchableOpacity onPress={() => handleOpenEditModal(message.messageId, message.name, message.messages)}>
-          <Text style={styles.editMessageText}>Edytuj</Text>
+              <TouchableOpacity style={[styles.button, { backgroundColor: theme.warn }]} onPress={() => handleOpenEditModal(message.messageId, message.name, message.messages)}>
+          <Text style={styles.buttonText}>Edytuj</Text>
         </TouchableOpacity>
                 <TouchableOpacity
-                  style={styles.removeMessageButton}
+                  style={[styles.button, { backgroundColor: theme.cancel }]}
                   onPress={() => handleRemoveMessage(message.messageId)}
                 >
                   <Text style={styles.removeMessageText}>Usuń</Text>
@@ -321,8 +335,8 @@ const handleEditMessage = async () => {
   </View>
 )}
          {/* Button to open the modal */}
-         <TouchableOpacity style={styles.button} onPress={() => setModalVisible(true)}>
-          <Text style={styles.buttonText}>Dodaj nową wiadomość</Text>
+         <TouchableOpacity style={[styles.button, { backgroundColor: theme.buttonColor }]} onPress={() => setModalVisible(true)}>
+          <Text style={[styles.buttonText, { color: theme.textColor }]}>Dodaj nową wiadomość</Text>
         </TouchableOpacity>
 
         {/* Modal for adding a new message */}
@@ -333,24 +347,26 @@ const handleEditMessage = async () => {
   onRequestClose={() => setModalVisible(false)}
 >
   <View style={styles.modalContainer}>
-    <View style={styles.modalContent}>
-      <Text style={styles.modalTitle}>Dodaj nową wiadomość</Text>
+    <View style={[styles.modalContent, { backgroundColor: theme.buttonColor }]}>
+      <Text style={[styles.modalTitle, { color: theme.textColor }]}>Dodaj nową wiadomość</Text>
       <TextInput
   style={[styles.input, { color: 'black' }]}
   placeholder="Tytuł wiadomości"
+  placeholderTextColor={'gray'}
   value={newMessageTitle}
   onChangeText={(text) => setNewMessageTitle(text)}
 />
       <TextInput
-        style={[styles.input, { color: 'black' }]} 
+        style={[styles.input, { height: 80 }]}
         placeholder="Treść wiadomości"
+        placeholderTextColor={'gray'}
         value={newMessage}
         onChangeText={(text) => setNewMessage(text)}
       />
-      <TouchableOpacity style={styles.button} onPress={handleAddMessage}>
+      <TouchableOpacity style={[styles.button, { backgroundColor: theme.succes }]} onPress={handleAddMessage}>
         <Text style={styles.buttonText}>Dodaj wiadomość</Text>
       </TouchableOpacity>
-      <TouchableOpacity style={styles.button} onPress={() => setModalVisible(false)}>
+      <TouchableOpacity style={[styles.button, { backgroundColor: theme.cancel }]} onPress={() => setModalVisible(false)}>
         <Text style={styles.buttonText}>Anuluj</Text>
       </TouchableOpacity>
     </View>
@@ -363,25 +379,26 @@ const handleEditMessage = async () => {
   onRequestClose={() => setEditModalVisible(false)}
 >
   <View style={styles.modalContainer}>
-    <View style={styles.modalContent}>
-      <Text style={styles.modalTitle}>Edytuj wiadomość</Text>
+    <View style={[styles.modalContent, { backgroundColor: theme.buttonColor }]}>
+      <Text style={[styles.modalTitle, { color: theme.textColor }]}>Edytuj wiadomość</Text>
       <TextInput
-        style={[styles.input, { color: 'black' }]}
+        borderColor={theme.textColor}
+        style={styles.input}
         placeholder="Tytuł wiadomości"
         value={editedMessageTitle}  // Dodaj to pole value
         onChangeText={(text) => setEditedMessageTitle(text)}
       />
       <TextInput
-        style={[styles.input, { color: 'black' }]}
+        style={[styles.input, { height: 80 }]}
         placeholder="Treść wiadomości"
         value={editedMessage}
         onChangeText={(text) => setEditedMessage(text)}
       />
-      <TouchableOpacity style={styles.button} onPress={handleEditMessage}>
+      <TouchableOpacity style={[styles.button, { backgroundColor: theme.succes }]} onPress={handleEditMessage}>
         <Text style={styles.buttonText}>Zaktualizuj wiadomość</Text>
       </TouchableOpacity>
       <TouchableOpacity
-        style={[styles.button, { backgroundColor: 'red' }]}
+        style={[styles.button, { backgroundColor: theme.cancel }]}
         onPress={() => setEditModalVisible(false)}
       >
         <Text style={styles.buttonText}>Anuluj</Text>
@@ -391,10 +408,11 @@ const handleEditMessage = async () => {
 </Modal>
 
 
-        <TouchableOpacity style={styles.button} onPress={() => navigate('/team')}>
-          <Text style={styles.buttonText}>Powrót</Text>
+        <TouchableOpacity style={[styles.button, { backgroundColor: theme.buttonColor }]} onPress={() => navigate('/team')}>
+          <Text style={[styles.buttonText, { color: theme.textColor }]}>Powrót</Text>
         </TouchableOpacity>
       </ScrollView>
+      <NavigationBar></NavigationBar>
     </View>
   );
 };
@@ -405,7 +423,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#9091fd',
   },
   scrollView: {
-    padding: 20,
+    padding: 10,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -425,7 +443,7 @@ const styles = StyleSheet.create({
     color: 'white',
   },
   membersTitle: {
-    fontSize: 20,
+    fontSize: 25,
     fontWeight: 'bold',
     marginTop: 15,
     marginBottom: 10,
@@ -443,27 +461,38 @@ const styles = StyleSheet.create({
   },
   removeMemberText: {
     fontSize: 16,
-    color: 'red',
+    color: 'white',
   },
   button: {
-    marginTop: 20,
     padding: 10,
-    backgroundColor: 'white',
-    borderRadius: 5,
+    margin: 10,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    textAlign: 'center',
+    elevation: 3,
+    width: '50%',
   },
   buttonText: {
+    textAlign: 'center',
     fontSize: 18,
     fontWeight: 'bold',
-    color: 'black',
+    color: 'white',
+  },
+  changinfoContainer:{
+    justifyContent: 'center',
+    alignItems: 'center',
+    textAlign: 'center',
+    marginVertical: 15,
   },
   input: {
-    height: 40,
+    height: 35,
     width: '100%',
-    borderColor: 'white',
+    backgroundColor: 'white',
     borderWidth: 1,
+    borderRadius: 5,
     marginBottom: 10,
     paddingLeft: 10,
-    color: 'white',
   },
   membersTitle: {
     fontSize: 20,
@@ -473,10 +502,13 @@ const styles = StyleSheet.create({
     color: 'black',
   },
   messageContainer: {
-    backgroundColor: '#F5F5F5',
     borderRadius: 8,
     padding: 15,
-    marginBottom: 10,
+    marginBottom: 15,
+    width: '85%',
+    justifyContent: 'center',
+    alignItems: 'center',
+    textAlign: 'center',
   },
   messageText: {
     fontSize: 16,
@@ -498,35 +530,24 @@ const styles = StyleSheet.create({
     marginTop: 5,
   },
 
-  editMessageButton: {
-    backgroundColor: 'blue', // Kolor przycisku edycji
-    padding: 10,
-    borderRadius: 5,
-    marginRight: 5,
-  },
-  removeMessageButton: {
-    backgroundColor: 'red', // Czerwone tło dla przycisku usuwania
-    padding: 10,
-    borderRadius: 5,
-    marginTop: 5,
-    width: '50%',
-  },
   modalContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    textAlign: 'center',
   },
   modalContent: {
-    backgroundColor: 'white',
     padding: 20,
     borderRadius: 10,
     width: '80%',
+    justifyContent: 'center',
+    alignItems: 'center',
+    textAlign: 'center',
   },
   modalTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    marginBottom: 10,
+    marginBottom: 20,
   },
 });
 

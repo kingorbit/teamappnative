@@ -1,17 +1,19 @@
 // Table.js
 import React, { useState, useEffect } from 'react';
-import { View, Text, FlatList, StyleSheet, useWindowDimensions } from 'react-native';
+import { View, Text, FlatList, StyleSheet, useWindowDimensions, TouchableOpacity } from 'react-native';
 import { collection, getDocs, doc, getDoc } from 'firebase/firestore';
 import { firestore, auth } from '../../constants/config';
 import TableItem from './tableItem';
-import Header from '../header'; // Import Header z odpowiedniego katalogu
+import Header from '../header'; 
 import NavigationBar from '../navBar';
 import { lightTheme, darkTheme } from '../theme';
+import { useNavigate } from 'react-router-native';
 
 const Table = () => {
   const [teams, setTeams] = useState([]);
   const windowWidth = useWindowDimensions().width;
   const isSmallScreen = windowWidth < 600;
+  const navigate = useNavigate();
   const [theme, setTheme] = useState(darkTheme);
 
   useEffect(() => {
@@ -88,6 +90,9 @@ const Table = () => {
               keyExtractor={(item) => item.teamId}
               renderItem={({ item, index }) => <TableItem team={item} index={index} />}
         />
+                  <TouchableOpacity style={[styles.button, { backgroundColor: theme.buttonColor }]} onPress={() => navigate('/team')}>
+          <Text style={[styles.buttonText, { color: theme.textColor }]}>Powrót</Text>
+        </TouchableOpacity>
         </View>
         <NavigationBar></NavigationBar>
     </View>
@@ -119,6 +124,22 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: 'white',
     textAlign: 'center',
+  },
+  button: {
+    padding: 10,
+    margin: 10,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    textAlign: 'center',
+    elevation: 3,
+    width: '50%',
+    alignSelf: 'center',
+  },
+  buttonText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: 'black',
   },
 });
 

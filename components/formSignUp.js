@@ -45,6 +45,8 @@ const FormSignUp = () => {
         age: age,
         position: position,
         isCoach: false,
+        darkModeEnabled: false,  // Add this line to set darkModeEnabled to false
+        notificationsEnabled: false,  // Add this line to set notificationsEnabled to false
         uid: userCredential.user.uid,
       });
 
