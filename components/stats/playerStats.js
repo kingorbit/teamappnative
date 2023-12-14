@@ -231,7 +231,7 @@ const PlayerStats = () => {
       <Header />
       <ScrollView>
         <View style={styles.teamStatsContainer}>
-          <Text style={styles.title}>Statystyki Zawodnika</Text>
+          <Text style={styles.title}>Statystyki Indywidualne</Text>
           {user && (
             <View style={styles.teamInfo}>
               {teamNames.length > 0 && (
