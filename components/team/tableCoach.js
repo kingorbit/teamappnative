@@ -121,6 +121,7 @@ const TableCoach = () => {
       // Dodaj nowy zespół do tabeli
       const newTeam = {
         name: newTeamName,
+        matches: newTeamMatches,
         wins: newTeamWins,
         draws: newTeamDraws,
         losts: newTeamLosts,

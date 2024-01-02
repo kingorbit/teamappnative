@@ -5,6 +5,7 @@ import { auth, firestore } from '../../constants/config';
 import { getDocs, collection, query, where, doc, getDoc } from 'firebase/firestore';
 import Header from '../header';
 import { useNavigate } from 'react-router-native';
+import { lightTheme, darkTheme } from '../theme';
 
 const TeamStatsView = () => {
   const [user, setUser] = useState(null);
@@ -12,6 +13,7 @@ const TeamStatsView = () => {
   const [teamStats, setTeamStats] = useState(null);
   const [isModalVisible, setModalVisible] = useState(false);
   const [selectedSeason, setSelectedSeason] = useState('2023'); // Domyślny sezon
+  const [theme, setTheme] = useState(darkTheme);
   const navigate = useNavigate();
 
 
@@ -56,6 +58,7 @@ const TeamStatsView = () => {
         setUser(userData);
         console.log('Zalogowano użytkownika:', userData);
         fetchData(userData);
+        fetchUserSettings(userData.uid, setTheme);
       } else {
         console.log('Użytkownik wylogowany');
       }
@@ -69,6 +72,20 @@ const TeamStatsView = () => {
     setModalVisible(!isModalVisible);
   };
 
+  const fetchUserSettings = async (uid, setTheme) => {
+    try {
+      const userDocRef = doc(firestore, 'users', uid);
+      const userDocSnapshot = await getDoc(userDocRef);
+  
+      if (userDocSnapshot.exists()) {
+        const userDataFromFirestore = userDocSnapshot.data();
+        const darkModeEnabled = userDataFromFirestore.darkModeEnabled || false;
+        setTheme(darkModeEnabled ? darkTheme : lightTheme);
+      }
+    } catch (error) {
+      console.error('Error fetching user settings:', error.message);
+    }
+  };
   const toggleModal = () => {
     setModalVisible(!isModalVisible);
   };
@@ -78,13 +95,13 @@ const TeamStatsView = () => {
   }
 
   return (
-    <View style={styles.container}>
+<View style={[styles.container, { backgroundColor: theme.backgroundColor }]}>
       <Header />
       <View style={styles.contentContainer}>
-        <Text style={styles.title}>Statystyki Zespołowe</Text>
+        <Text style={[styles.title, { color: theme.textColor }]}>Statystyki Zespołowe</Text>
 
-        <TouchableOpacity onPress={toggleModal} style={styles.seasonButton}>
-          <Text>Aktualny sezon: {selectedSeason}</Text>
+        <TouchableOpacity  onPress={toggleModal}style={[styles.seasonButton, { backgroundColor: theme.buttonColor }]}>
+          <Text style={[styles.linkText, { color: theme.textColor }]}>Aktualny sezon: {selectedSeason}</Text>
         </TouchableOpacity>
 
         <Modal
@@ -96,21 +113,21 @@ const TeamStatsView = () => {
           }}
         >
           <View style={styles.centeredView}>
-            <View style={styles.modalView}>
-              <Text style={styles.modalText}>Wybierz sezon</Text>
+            <View style={[styles.modalView, { backgroundColor: theme.buttonColor }]}>
+              <Text style={[styles.modalText, { color: theme.textColor }]}>Wybierz sezon</Text>
 
               <TouchableHighlight
                 style={{ ...styles.openButton, backgroundColor: '#2196F3' }}
                 onPress={() => handleSeasonChange('2022')}
               >
-                <Text style={styles.textStyle}>Sezon 2022</Text>
+                <Text style={[styles.textStyle, { color: theme.textColor }]}>Sezon 2022</Text>
               </TouchableHighlight>
 
               <TouchableHighlight
                 style={{ ...styles.openButton, backgroundColor: '#2196F3' }}
                 onPress={() => handleSeasonChange('2023')}
               >
-                <Text style={styles.textStyle}>Sezon 2023</Text>
+                <Text style={[styles.textStyle, { color: theme.textColor }]}>Sezon 2023</Text>
               </TouchableHighlight>
             </View>
             
@@ -119,18 +136,25 @@ const TeamStatsView = () => {
 
         {teamStats ? (
           <View style={styles.statsContainer}>
-            <Text style={styles.statItem}>Mecze zespołu: {teamStats.matchesPlayed}</Text>
-            <Text style={styles.statItem}>Mecze zespołu: {teamStats.matchesPlayed}</Text>
-            <Text style={styles.statItem}>Bramki zespołu: {teamStats.goals}</Text>
-            <Text style={styles.statItem}>Mecze zespołu: {teamStats.matchesPlayed}</Text>
-            <Text style={styles.statItem}>Mecze zespołu: {teamStats.matchesPlayed}</Text>
+            <Text style={[styles.statItem, { color: theme.textColor }]}>Mecze zespołu: {teamStats.matchesPlayed}</Text>
+            <Text style={[styles.statItem, { color: theme.textColor }]}>Mecze zespołu u siebie: {teamStats.matchesPlayedHome}</Text>
+            <Text style={[styles.statItem, { color: theme.textColor }]}>Mecze zespołu na wyjeżdzie: {teamStats.matchesPlayedAway}</Text>
+            <Text style={[styles.statItem, { color: theme.textColor }]}>Wygrane zespołu: {teamStats.wins}</Text>
+            <Text style={[styles.statItem, { color: theme.textColor }]}>Wygrane zespołu u siebie: {teamStats.winsHome}</Text>
+            <Text style={[styles.statItem, { color: theme.textColor }]}>Wygrane zespołu na wyjezdzie: {teamStats.winsAway}</Text>
+            <Text style={[styles.statItem, { color: theme.textColor }]}>Remisy zespołu: {teamStats.draws}</Text>
+            <Text style={[styles.statItem, { color: theme.textColor }]}>Remisy zespołu u siebie: {teamStats.drawsHome}</Text>
+            <Text style={[styles.statItem, { color: theme.textColor }]}>Remisy zespołu na wyjezdzie: {teamStats.drawsAway}</Text>
+            <Text style={[styles.statItem, { color: theme.textColor }]}>Porazki zespołu: {teamStats.losses}</Text>
+            <Text style={[styles.statItem, { color: theme.textColor }]}>Porazki zespołu u siebie: {teamStats.lossesHome}</Text>
+            <Text style={[styles.statItem, { color: theme.textColor }]}>Porazki zespołu na wyjezdzie: {teamStats.lossesAway}</Text>
 
           </View>
         ) : (
           <Text style={styles.noData}>Brak danych zespołowych dla wybranego sezonu</Text>
         )}
-          <TouchableOpacity style={styles.link} onPress={() => navigate('/team')}>
-            <Text style={styles.linkText}>Powrót</Text>
+          <TouchableOpacity style={[styles.link, { backgroundColor: theme.buttonColor }]} onPress={() => navigate('/team')}>
+            <Text style={[styles.linkText, { color: theme.textColor }]}>Powrót</Text>
           </TouchableOpacity>
       </View>
       

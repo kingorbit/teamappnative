@@ -34,7 +34,7 @@ const scheduleNotification = async (eventName, eventDate, eventCategory) => {
         await Notifications.scheduleNotificationAsync({
           content: {
             title: 'Przypomnienie o wydarzeniu!',
-            body: `Dzisiaj o godzinie ${eventDate.split(':')[0]} masz wydarzenie: ${eventCategory} o nazwie ${eventName}`,
+            body: `Dzisiaj o godzinie 18:30 masz wydarzenie: Sparing o nazwie: Żuraw Krzeszów vs Lachy Lachowice`,
           },
           trigger: {
             seconds: 1,  // Ustawiamy opóźnienie na 1 sekundę

@@ -23,6 +23,7 @@ import {
 import Header from '../header';
 import { firestore, auth } from '../../constants/config';
 import { useNavigate } from 'react-router-native';
+import { lightTheme, darkTheme } from '../theme';
 
 const PlayerStats = () => {
   const [user, setUser] = useState(null);
@@ -30,6 +31,7 @@ const PlayerStats = () => {
   const [userTeams, setUserTeams] = useState([]);
   const [members, setMembers] = useState([]);
   const [selectedPlayer, setSelectedPlayer] = useState(null);
+  const [theme, setTheme] = useState(darkTheme);
   const [playerStats, setPlayerStats] = useState({
     assists: 0,
     assistsAway: 0,
@@ -71,24 +73,39 @@ const PlayerStats = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    const fetchUserSettings = async (uid) => {
+      try {
+        const userDocRef = doc(firestore, 'users', uid);
+        const userDocSnapshot = await getDoc(userDocRef);
+  
+        if (userDocSnapshot.exists()) {
+          const userDataFromFirestore = userDocSnapshot.data();
+          const darkModeEnabled = userDataFromFirestore.darkModeEnabled || false;
+          setTheme(darkModeEnabled ? darkTheme : lightTheme);
+        }
+      } catch (error) {
+        console.error('Error fetching user settings:', error.message);
+      }
+    };
+  
     const unsubscribe = onAuthStateChanged(auth, async (userData) => {
       if (userData) {
         try {
           const usersRef = collection(firestore, 'users');
           const q = query(usersRef, where('uid', '==', userData.uid));
           const querySnapshot = await getDocs(q);
-
+  
           if (!querySnapshot.empty) {
             const userData = querySnapshot.docs[0].data();
             setUser(userData);
-
+  
             console.log('Imię:', userData.firstName);
             console.log('Nazwisko:', userData.lastName);
-
+  
             const teamsRef = collection(firestore, 'teams');
             const teamsQuery = query(teamsRef, where('members', 'array-contains', userData.uid));
             const teamsSnapshot = await getDocs(teamsQuery);
-
+  
             const userTeams = [];
             for (const teamDoc of teamsSnapshot.docs) {
               const teamData = teamDoc.data();
@@ -98,24 +115,27 @@ const PlayerStats = () => {
             }
             setTeamNames(userTeams.map((team) => team.name));
             setUserTeams(userTeams);
-
+  
             if (userTeams.length > 0 && userData.isCoach) {
               const teamId = userTeams[0].id;
               const teamRef = doc(firestore, 'teams', teamId);
               const teamDocSnapshot = await getDoc(teamRef);
-
+  
               if (teamDocSnapshot.exists()) {
                 const teamData = teamDocSnapshot.data();
                 setMembers(teamData.members || []);
               }
             }
+  
+            // Dodane wywołanie funkcji fetchUserSettings
+            fetchUserSettings(userData.uid, setTheme);
           }
         } catch (error) {
           console.error('Błąd pobierania danych użytkownika', error);
         }
       }
     });
-
+  
     return () => unsubscribe();
   }, []);
 
@@ -134,6 +154,21 @@ const PlayerStats = () => {
     } catch (error) {
       console.error('Błąd pobierania danych użytkownika', error);
       return null;
+    }
+  };
+
+  const fetchUserSettings = async (uid, setTheme) => {
+    try {
+      const userDocRef = doc(firestore, 'users', uid);
+      const userDocSnapshot = await getDoc(userDocRef);
+  
+      if (userDocSnapshot.exists()) {
+        const userDataFromFirestore = userDocSnapshot.data();
+        const darkModeEnabled = userDataFromFirestore.darkModeEnabled || false;
+        setTheme(darkModeEnabled ? darkTheme : lightTheme);
+      }
+    } catch (error) {
+      console.error('Error fetching user settings:', error.message);
     }
   };
 
@@ -227,22 +262,22 @@ const PlayerStats = () => {
   );
 
   return (
-    <View style={styles.container}>
+<View style={[styles.container, { backgroundColor: theme.backgroundColor }]}>
       <Header />
       <ScrollView>
         <View style={styles.teamStatsContainer}>
-          <Text style={styles.title}>Statystyki Indywidualne</Text>
+          <Text style={[styles.title, { color: theme.textColor }]}>Statystyki Indywidualne</Text>
           {user && (
             <View style={styles.teamInfo}>
               {teamNames.length > 0 && (
                 <View style={styles.teamContainer}>
-                  <Text style={styles.teamText}>Drużyny: </Text>
-                  <Text style={styles.teamNameText}>{teamNames.join(', ')}</Text>
+                  <Text style={[styles.teamText, { color: theme.textColor }]}>Drużyny: </Text>
+                  <Text style={[styles.teamText, { color: theme.textColor }]}>{teamNames.join(', ')}</Text>
                 </View>
               )}
               {user.isCoach && (
                 <View>
-                  <Text style={styles.title}>Lista zawodników</Text>
+                  <Text style={[styles.title, { color: theme.textColor }]}>Lista zawodników</Text>
                   <VirtualizedList
                     data={members}
                     renderItem={renderPlayerItem}
@@ -329,11 +364,14 @@ backgroundColor: '#9091fd',
 },
 teamStatsContainer: {
 margin: 20,
+textAlign: 'center',
+alignContent: 'center',
 },
 title: {
 fontSize: 24,
 fontWeight: 'bold',
 marginBottom: 10,
+alignSelf: 'center'
 },
 teamInfo: {
 marginBottom: 20,

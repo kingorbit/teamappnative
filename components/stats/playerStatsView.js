@@ -5,6 +5,7 @@ import { onAuthStateChanged } from 'firebase/auth';
 import { auth, firestore } from '../../constants/config';
 import Header from '../header';
 import { getDocs, collection, query, where, doc, getDoc } from 'firebase/firestore';
+import { lightTheme, darkTheme } from '../theme';
 
 const PlayerStatsView = () => {
   const [user, setUser] = useState(null);
@@ -16,6 +17,7 @@ const PlayerStatsView = () => {
   const [isModalVisible, setModalVisible] = useState(false);
   const [selectedMemberStats, setSelectedMemberStats] = useState(null);
   const [selectedMember, setSelectedMember] = useState(null);
+  const [theme, setTheme] = useState(darkTheme);
   const [teamMembers, setTeamMembers] = useState([]);
 
   useEffect(() => {
@@ -93,6 +95,7 @@ const PlayerStatsView = () => {
       if (userData) {
         setUser(userData);
         console.log('Zalogowano użytkownika:', userData);
+        fetchUserSettings(userData.uid, setTheme);
         fetchData(userData);
       } else {
         console.log('Użytkownik wylogowany');
@@ -104,6 +107,21 @@ const PlayerStatsView = () => {
   const handleSeasonChange = (selectedSeason) => {
     setSelectedSeason(selectedSeason);
     setModalVisible(false);
+  };
+
+  const fetchUserSettings = async (uid, setTheme) => {
+    try {
+      const userDocRef = doc(firestore, 'users', uid);
+      const userDocSnapshot = await getDoc(userDocRef);
+  
+      if (userDocSnapshot.exists()) {
+        const userDataFromFirestore = userDocSnapshot.data();
+        const darkModeEnabled = userDataFromFirestore.darkModeEnabled || false;
+        setTheme(darkModeEnabled ? darkTheme : lightTheme);
+      }
+    } catch (error) {
+      console.error('Error fetching user settings:', error.message);
+    }
   };
 
   const handleMemberSelect = async (memberUid) => {
@@ -135,17 +153,17 @@ const PlayerStatsView = () => {
   };
 
   return (
-    <View style={styles.container} >
+<View style={[styles.container, { backgroundColor: theme.backgroundColor }]}>
       <Header />
       <View style={styles.contentContainer}>
         <ScrollView>
-        <Text style={styles.title}>Twoje Statystyki</Text>
-        <TouchableOpacity onPress={toggleModal} style={styles.seasonButton}>
-          <Text>Aktualny sezon: {selectedSeason}</Text>
+        <Text style={[styles.title, { color: theme.textColor }]}>Twoje Statystyki</Text>
+        <TouchableOpacity onPress={toggleModal} style={[styles.seasonButton, { backgroundColor: theme.buttonColor }]}>
+          <Text style={[styles.linkText, { color: theme.textColor }]} >Aktualny sezon: {selectedSeason}</Text>
         </TouchableOpacity>
         {teamMembers.map((member) => (
   <TouchableOpacity key={member.uid} onPress={() => handleMemberSelect(member.uid)}>
-    <Text style={styles.textStyle}>{member.name}</Text>
+    <Text style={[styles.textStyle, { color: theme.textColor }]}>{member.name}</Text>
   </TouchableOpacity>
 ))}
         
@@ -157,8 +175,8 @@ const PlayerStatsView = () => {
             onRequestClose={() => setModalVisible(false)}
           >
             <View style={styles.centeredView}>
-              <View style={styles.modalView}>
-                <Text style={styles.modalText}>Wybierz sezon</Text>
+              <View style={[styles.modalView, { backgroundColor: theme.buttonColor }]}>
+                <Text style={[styles.modalText, { color: theme.textColor }]}>Wybierz sezon</Text>
 
                 <TouchableHighlight
                   style={{ ...styles.openButton, backgroundColor: '#2196F3' }}
@@ -182,31 +200,31 @@ const PlayerStatsView = () => {
 
         {playerStats && userData && teamData && (
           <View style={styles.statsContainer}>
-            <Text style={styles.statItem}>Imię: {userData.firstName}</Text>
-            <Text style={styles.statItem}>Nazwisko: {userData.lastName}</Text>
-            <Text style={styles.statItem}>Pozycja: {userData.position}</Text>
-            <Text style={styles.statItem}>Drużyna: {teamData.name}</Text>
-            <Text style={styles.statItem}>Mecze rozegrane: {playerStats.matchesPlayed}</Text>
-            <Text style={styles.statItem}>Mecze rozegrane u siebie: {playerStats.matchesPlayedHome}</Text>
-            <Text style={styles.statItem}>Mecze rozegrane na wyjezdzie {playerStats.matchesPlayedAway}</Text>
-            <Text style={styles.statItem}>Bramki: {playerStats.goals}</Text>
-            <Text style={styles.statItem}>Bramki u siebie: {playerStats.goalsHome}</Text>
-            <Text style={styles.statItem}>Bramki na wyjeżdzie: {playerStats.goalsAway}</Text>
-            <Text style={styles.statItem}>Asysty: {playerStats.assists}</Text>
-            <Text style={styles.statItem}>Asysty u siebie: {playerStats.assistsHome}</Text>
-            <Text style={styles.statItem}>Asysty na wyjezdzie: {playerStats.assistsAway}</Text>
-            <Text style={styles.statItem}>Strzały: {playerStats.shots}</Text>
-            <Text style={styles.statItem}>Strzały u siebie: {playerStats.shotsHome}</Text>
-            <Text style={styles.statItem}>Strzały na wyjezdzie: {playerStats.shotsAway}</Text>
-            <Text style={styles.statItem}>Żółte kartki: {playerStats.yellowCards}</Text>
-            <Text style={styles.statItem}>Żółte kartki u siebie: {playerStats.yellowCardsHome}</Text>
-            <Text style={styles.statItem}>Żółte kartki na wyjezdzie: {playerStats.yellowCardsAway}</Text>
+            <Text style={[styles.statItem, { color: theme.textColor }]}>Imię: {userData.firstName}</Text>
+            <Text style={[styles.statItem, { color: theme.textColor }]}>Nazwisko: {userData.lastName}</Text>
+            <Text style={[styles.statItem, { color: theme.textColor }]}>Pozycja: {userData.position}</Text>
+            <Text style={[styles.statItem, { color: theme.textColor }]}>Drużyna: {teamData.name}</Text>
+            <Text style={[styles.statItem, { color: theme.textColor }]}>Mecze rozegrane: {playerStats.matchesPlayed}</Text>
+            <Text style={[styles.statItem, { color: theme.textColor }]}>Mecze rozegrane u siebie: {playerStats.matchesPlayedHome}</Text>
+            <Text style={[styles.statItem, { color: theme.textColor }]}>Mecze rozegrane na wyjezdzie {playerStats.matchesPlayedAway}</Text>
+            <Text style={[styles.statItem, { color: theme.textColor }]}>Bramki: {playerStats.goals}</Text>
+            <Text style={[styles.statItem, { color: theme.textColor }]}>Bramki u siebie: {playerStats.goalsHome}</Text>
+            <Text style={[styles.statItem, { color: theme.textColor }]}>Bramki na wyjeżdzie: {playerStats.goalsAway}</Text>
+            <Text style={[styles.statItem, { color: theme.textColor }]}>Asysty: {playerStats.assists}</Text>
+            <Text style={[styles.statItem, { color: theme.textColor }]}>Asysty u siebie: {playerStats.assistsHome}</Text>
+            <Text style={[styles.statItem, { color: theme.textColor }]}>Asysty na wyjezdzie: {playerStats.assistsAway}</Text>
+            <Text style={[styles.statItem, { color: theme.textColor }]}>Strzały: {playerStats.shots}</Text>
+            <Text style={[styles.statItem, { color: theme.textColor }]}>Strzały u siebie: {playerStats.shotsHome}</Text>
+            <Text style={[styles.statItem, { color: theme.textColor }]}>Strzały na wyjezdzie: {playerStats.shotsAway}</Text>
+            <Text style={[styles.statItem, { color: theme.textColor }]}>Żółte kartki: {playerStats.yellowCards}</Text>
+            <Text style={[styles.statItem, { color: theme.textColor }]}>Żółte kartki u siebie: {playerStats.yellowCardsHome}</Text>
+            <Text style={[styles.statItem, { color: theme.textColor }]}>Żółte kartki na wyjezdzie: {playerStats.yellowCardsAway}</Text>
 
           </View>
         )}
         </ScrollView>
-        <Link to="/team" style={styles.link}>
-          <Text style={styles.linkText}>Powrót</Text>
+        <Link to="/team" style={[styles.link, { backgroundColor: theme.buttonColor }]}>
+          <Text style={[styles.linkText, { color: theme.textColor }]}>Powrót</Text>
         </Link>
 
       </View>

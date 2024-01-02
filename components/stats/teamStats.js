@@ -5,10 +5,12 @@ import { collection, query, where, getDocs, doc, updateDoc, setDoc, getDoc } fro
 import Header from '../header';
 import { firestore, auth } from '../../constants/config';
 import { useNavigate } from 'react-router-native';
+import { lightTheme, darkTheme } from '../theme';
 
 const TeamStats = () => {
   const [user, setUser] = useState(null);
   const [teamNames, setTeamNames] = useState([]);
+  const [theme, setTheme] = useState(darkTheme);
   const [teamStats, setTeamStats] = useState({
     matchesPlayed: 0,
     matchesPlayedHome: 0,
@@ -112,15 +114,18 @@ const TeamStats = () => {
           const usersRef = collection(firestore, 'users');
           const q = query(usersRef, where('uid', '==', userData.uid));
           const querySnapshot = await getDocs(q);
-
+  
           if (!querySnapshot.empty) {
             const userData = querySnapshot.docs[0].data();
             setUser(userData);
-
+  
+            // Fetch user settings
+            await fetchUserSettings(userData.uid, setTheme);
+  
             const teamsRef = collection(firestore, 'teams');
             const teamsQuery = query(teamsRef, where('members', 'array-contains', userData.uid));
             const teamsSnapshot = await getDocs(teamsQuery);
-
+  
             const userTeams = [];
             for (const teamDoc of teamsSnapshot.docs) {
               const teamData = teamDoc.data();
@@ -129,28 +134,28 @@ const TeamStats = () => {
               }
             }
             setTeamNames(userTeams.map((team) => team.name));
-
+  
             if (userTeams.length > 0 && userData.isCoach) {
-  const coachTeamId = userTeams[0].id;
-  setTeamId(coachTeamId);
-  const currentSeason = new Date().getFullYear(); // zakładam, że sezon to rok kalendarzowy
-  const teamStatsRef = doc(firestore, 'teamStats', coachTeamId, 'seasons', currentSeason.toString());
+              const coachTeamId = userTeams[0].id;
+              setTeamId(coachTeamId);
+              const currentSeason = new Date().getFullYear();
+              const teamStatsRef = doc(firestore, 'teamStats', coachTeamId, 'seasons', currentSeason.toString());
   
-  const teamStatsDoc = await getDoc(teamStatsRef);
+              const teamStatsDoc = await getDoc(teamStatsRef);
   
-  if (teamStatsDoc.exists()) {
-    const statsData = teamStatsDoc.data();
-    setTeamStats(statsData);
-    setEditedStats(statsData);
-  }
-}
+              if (teamStatsDoc.exists()) {
+                const statsData = teamStatsDoc.data();
+                setTeamStats(statsData);
+                setEditedStats(statsData);
+              }
+            }
           }
         } catch (error) {
           console.error('Błąd pobierania danych użytkownika', error);
         }
       }
     });
-
+  
     return () => unsubscribe();
   }, []);
 
@@ -178,8 +183,23 @@ const TeamStats = () => {
     }
   };
 
+  const fetchUserSettings = async (uid, setTheme) => {
+    try {
+      const userDocRef = doc(firestore, 'users', uid);
+      const userDocSnapshot = await getDoc(userDocRef);
+  
+      if (userDocSnapshot.exists()) {
+        const userDataFromFirestore = userDocSnapshot.data();
+        const darkModeEnabled = userDataFromFirestore.darkModeEnabled || false;
+        setTheme(darkModeEnabled ? darkTheme : lightTheme);
+      }
+    } catch (error) {
+      console.error('Error fetching user settings:', error.message);
+    }
+  };
+
   return (
-    <View style={styles.container}>
+<View style={[styles.container, { backgroundColor: theme.backgroundColor }]}>
       <Header />
       <ScrollView>
       <View style={styles.teamStatsContainer}>
@@ -195,14 +215,17 @@ const TeamStats = () => {
             {user.isCoach && (
               <View>
                 <TouchableOpacity
-                  style={styles.editStatsButton}
+                  style={[styles.button, { backgroundColor: theme.buttonColor }]}
                   onPress={() => {
                     setEditedStats(teamStats); // Dodane do zainicjowania stanu edytowanych statystyk
                     setEditStatsModalVisible(true);
                   }}
                 >
-                  <Text style={styles.editStatsButtonText}>Edytuj Statystyki</Text>
+                  <Text style={styles.buttonText}>Edytuj Statystyki</Text>
                 </TouchableOpacity>
+                <TouchableOpacity style={[styles.button, { backgroundColor: theme.buttonColor }]} onPress={() => navigate('/team')}>
+          <Text style={styles.buttonText}>Powrót</Text>
+        </TouchableOpacity>
                 <FlatList
                   data={[
                     { label: 'Liczba rozegranych meczów', key: 'matchesPlayed' },
@@ -258,12 +281,11 @@ const TeamStats = () => {
                     
                   )}
                 />
+                
               </View>
               
             )}
-            <TouchableOpacity style={styles.link} onPress={() => navigate('/team')}>
-          <Text style={styles.linkText}>Powrót</Text>
-        </TouchableOpacity>
+            
           </View>
         )}
       </View>
@@ -313,10 +335,9 @@ const TeamStats = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#9091fd',
   },
   teamStatsContainer: {
-    paddingTop: 30,
+    paddingTop: 50,
     justifyContent: 'center',
     alignItems: 'center',
     flex: 1,
@@ -339,21 +360,20 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: 'white',
   },
-  link: {
+  button: {
     padding: 10,
-    margin: 10,
     borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
     textAlign: 'center',
     elevation: 3,
-    width: '75%',
-    backgroundColor: '#f0f0f0',
+    width: '100%',
+    marginVertical: 10,
   },
-  linkText: {
+  buttonText: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: 'black',
+    color: 'white',
   },
   teamContainer: {
     marginTop: 10,
@@ -422,12 +442,6 @@ const styles = StyleSheet.create({
     margin: 10,
     padding: 5,
     backgroundColor: 'white',
-  },
-  button: {
-    backgroundColor: 'blue',
-    padding: 10,
-    borderRadius: 5,
-    marginTop: 10,
   },
 });
 

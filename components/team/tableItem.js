@@ -3,6 +3,8 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 
 const TableItem = ({ team, index }) => {
+  const bilans = team.goals - team.goalsLost;
+
   return (
     <View style={styles.container}>
       <Text style={styles.cell}>{index}</Text>
@@ -13,7 +15,7 @@ const TableItem = ({ team, index }) => {
       <Text style={styles.cell}>{team.losts}</Text>
       <Text style={styles.cell}>{team.goals}</Text>
       <Text style={styles.cell}>{team.goalsLost}</Text>
-      <Text style={styles.cell}>{`${team.goals} - ${team.goalsLost}`}</Text>
+      <Text style={styles.cell}>{bilans}</Text>
       <Text style={styles.cell}>{team.points}</Text>
     </View>
   );

@@ -66,7 +66,7 @@ const Table = () => {
 
   const renderTableHeader = () => {
     const headers = isSmallScreen
-      ? ['Lp.', 'Drużyna', 'M', 'W', 'R', 'P', 'B.S.', 'B.St.', 'B.B.', 'Pkt'] // Skrócone nagłówki dla małych ekranów
+      ? ['Lp.', 'Dr', 'M', 'W', 'R', 'P', 'B.S.', 'B.St.', 'B.B.', 'Pkt'] // Skrócone nagłówki dla małych ekranów
       : ['Lp.', 'Drużyna', 'Mecze', 'Wygrane', 'Remisy', 'Przegrane', 'Bramki strzelone', 'Bramki stracone', 'Bilans bramkowy', 'Punkty'];
     const cellWidth = windowWidth > 600 ? windowWidth / headers.length : 60;
 
@@ -88,7 +88,7 @@ const Table = () => {
             <FlatList
               data={teams}
               keyExtractor={(item) => item.teamId}
-              renderItem={({ item, index }) => <TableItem team={item} index={index} />}
+              renderItem={({ item, index }) => <TableItem team={item} index={index+1} />}
         />
                   <TouchableOpacity style={[styles.button, { backgroundColor: theme.buttonColor }]} onPress={() => navigate('/team')}>
           <Text style={[styles.buttonText, { color: theme.textColor }]}>Powrót</Text>
