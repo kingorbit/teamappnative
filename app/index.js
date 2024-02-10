@@ -1,8 +1,8 @@
 import "expo-router/entry";
 import * as React from 'react';
 import { NativeRouter, Routes, Route } from "react-router-native";
-import NotificationPermissionHandler from '../components/notifications/notificationPermision'; // Dodane
-import EventNotificationScheduler from '../components/notifications/notificationScheduler'; // Dodane
+import NotificationPermissionHandler from '../components/notifications/notificationPermision';
+import EventNotificationScheduler from '../components/notifications/notificationScheduler';
 import WelcomeScreen from '../components/WelcomeScreen';
 import Home from '../components/home';
 import CalendarScreen from './calendar';
@@ -60,16 +60,8 @@ const App = () => {
         <Route path="/tableCoach" element={<TableCoach />} />
         <Route path="/results" element={<Results />} />
         <Route path="/resultsCoach" element={<ResultsCoach />} />
-
-        {/* Dodane: Obsługa powiadomień */}
-        <Route
-          path="/notificationPermision"
-          element={<NotificationPermissionHandler />}
-        />
-        <Route
-          path="/notificationScheduler"
-          element={<EventNotificationScheduler />}
-        />
+        <Route path="/notificationPermision" element={<NotificationPermissionHandler />}/>
+        <Route path="/notificationScheduler" element={<EventNotificationScheduler />}/>
 
       </Routes>
     </NativeRouter>

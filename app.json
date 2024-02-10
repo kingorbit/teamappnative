@@ -13,6 +13,17 @@
       "android": {
         "useNextNotificationsApi": true
       }
+    },
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "7a9df913-77fa-458a-a94b-584f7644bf4b"
+      }
+    },
+    "android": {
+      "package": "com.kingorbit.teamapp"
     }
   }
 }

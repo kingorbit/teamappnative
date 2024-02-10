@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, TextInput, Alert, ScrollView, Modal } from 'react-native';
 import { onAuthStateChanged } from 'firebase/auth';
-import { collection, query, where, getDocs, doc, updateDoc, setDoc,deleteDoc, addDoc, getDoc } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, updateDoc, setDoc,deleteDoc, addDoc, getDoc, arrayRemove } from 'firebase/firestore';
 import Header from '../header';
 import { firestore, auth } from '../../constants/config';
 import { useNavigate } from 'react-router-native';
@@ -101,26 +101,31 @@ const fetchUserSettings = async (uid, setTheme) => {
 };
   
 
-  const handleRemoveMember = async (memberUid) => {
-    try {
-      if (!teams || teams.length === 0) {
-        console.error('Brak danych o zespole.');
-        return;
-      }
-  
-      const teamId = teams[0].team.teamId;
-  
-      // Usuń członka zespołu
-      const updatedMembers = teams[0].team.members.filter((member) => member !== memberUid);
-  
+const handleRemoveMember = async (memberUid) => {
+  try {
+    if (!teams || teams.length === 0) {
+      console.error('Brak danych o zespole.');
+      return;
+    }
+
+    const teamId = teams[0].team.teamId;
+
+    // Znajdź indeks członka do usunięcia
+    const memberIndex = teams[0].team.members.findIndex((member) => member === memberUid);
+
+    if (memberIndex !== -1) {
+      // Usuń członka zespołu na podstawie indeksu
+      const updatedMembers = [...teams[0].team.members];
+      updatedMembers.splice(memberIndex, 1);
+
       // Zaktualizuj kolekcję teams
       await updateDoc(doc(firestore, 'teams', teamId), { members: updatedMembers });
-  
+
       // Aktualizuj lokalny stan teams
       setTeams((prevTeams) => {
         const updatedTeams = [...prevTeams];
         const updatedTeamIndex = updatedTeams.findIndex((team) => team.team.teamId === teamId);
-  
+
         if (updatedTeamIndex !== -1) {
           updatedTeams[updatedTeamIndex] = {
             ...updatedTeams[updatedTeamIndex],
@@ -130,21 +135,28 @@ const fetchUserSettings = async (uid, setTheme) => {
             },
           };
         }
-  
+
         console.log('Updated Teams:', updatedTeams);
-  
+
         return updatedTeams;
       });
-  
-      console.log('Members after update:', updatedMembers); // Dodaj ten log
-  
+
+      console.log('Members after update:', updatedMembers);
+
       Alert.alert('Sukces', 'Członek zespołu został usunięty.');
-    } catch (error) {
-      console.error('Błąd usuwania członka zespołu', error);
-      Alert.alert('Błąd', 'Wystąpił błąd podczas usuwania członka zespołu.');
-      console.log('Teams after update:', teams);
+    } else {
+      console.error('Nie znaleziono członka do usunięcia.');
     }
-  };
+  } catch (error) {
+    console.error('Błąd usuwania członka zespołu', error);
+    Alert.alert('Błąd', 'Wystąpił błąd podczas usuwania członka zespołu.');
+    console.log('Teams after update:', teams);
+  }
+};
+
+
+
+
   
   const handleUpdateTeamInfo = async () => {
     try {

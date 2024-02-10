@@ -221,10 +221,10 @@ const TeamStats = () => {
                     setEditStatsModalVisible(true);
                   }}
                 >
-                  <Text style={styles.buttonText}>Edytuj Statystyki</Text>
+                  <Text style={[styles.buttonText, { color: theme.textColor }]}>Edytuj Statystyki</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={[styles.button, { backgroundColor: theme.buttonColor }]} onPress={() => navigate('/team')}>
-          <Text style={styles.buttonText}>Powrót</Text>
+          <Text style={[styles.buttonText, { color: theme.textColor }]}>Powrót</Text>
         </TouchableOpacity>
                 <FlatList
                   data={[
@@ -296,12 +296,12 @@ const TeamStats = () => {
   onRequestClose={() => setEditStatsModalVisible(false)}
 >
   <ScrollView style={styles.modalContainer}>
-    <View style={styles.modalContent}>
-      <Text style={styles.modalTitle}>Edytuj Statystyki</Text>
+    <View style={[styles.modalContent, { backgroundColor: theme.buttonColor }]}>
+      <Text style={[styles.modalTitle, { color: theme.textColor }]}>Edytuj Statystyki</Text>
       
       {Object.entries(editedStats).map(([key, value]) => (
         <View key={key} style={styles.inputContainer}>
-          <Text style={styles.inputLabel}>{key}</Text>
+          <Text style={[styles.inputLabel, { color: theme.textColor }]}>{key}</Text>
           <TextInput
             style={styles.input}
             value={value.toString()}
@@ -315,15 +315,12 @@ const TeamStats = () => {
         </View>
       ))}
 
-      <TouchableOpacity style={[styles.button, { backgroundColor: 'green' }]} onPress={handleSaveStats}>
-        <Text>Zapisz</Text>
-      </TouchableOpacity>
-      <TouchableOpacity
-        style={[styles.button, { backgroundColor: 'red' }]}
-        onPress={() => setEditStatsModalVisible(false)}
-      >
-        <Text>Powrót</Text>
-      </TouchableOpacity>
+<TouchableOpacity style={[styles.button, { backgroundColor: theme.succes }]} onPress={handleSaveStats}>
+          <Text style={styles.buttonText}>Zapisz</Text>
+        </TouchableOpacity>
+          <TouchableOpacity style={[styles.button, { backgroundColor: theme.cancel }]} onPress={() => setEditStatsModalVisible(false)}>
+            <Text style={[styles.buttonText, { color: theme.textColor }]}>Powrót</Text>
+          </TouchableOpacity>
     </View>
   </ScrollView>
 </Modal>

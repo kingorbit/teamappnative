@@ -204,11 +204,19 @@ const CalendarScreen = () => {
         return;
       }
   
+      // Dodaj obsługę błędów daty
+      const isValidDate = /^[0-9]{4}-[0-9]{2}-[0-9]{2}/.test(eventDate);
+      if (!isValidDate) {
+        console.error('Nieprawidłowy format daty');
+        // Możesz również użyć Alert.alert, aby wyświetlić komunikat na ekranie
+        return;
+      }
+  
       const newEvent = {
         eventName,
         eventCategory,
         eventDate,
-        teamId: teams.length > 0 ? teams[0].team.teamId : '', // Ustawia teamId na pierwszy zespół trenera
+        teamId: teams.length > 0 ? teams[0].team.teamId : '',
         // Dodaj inne pola, jeśli są potrzebne
       };
   
@@ -216,7 +224,6 @@ const CalendarScreen = () => {
       const docRef = await addDoc(eventsRef, newEvent);
       const eventId = docRef.id;
   
-      // Dodajemy unikalne ID do wydarzenia
       await updateDoc(doc(eventsRef, eventId), { id: eventId });
   
       setEvents((prevEvents) => [...prevEvents, { ...newEvent, id: eventId }]);
@@ -231,10 +238,10 @@ const CalendarScreen = () => {
           eventData: { ...newEvent, id: eventId },
         },
       }));
-      setEventName(''); // Wyczyszczenie pola eventName
-      setEventCategory(''); // Wyczyszczenie pola eventCategory
-      setEventDate(''); // Wyczyszczenie pola eventDate
-      // Możesz dodać więcej pól, jeśli to konieczne
+  
+      setEventName('');
+      setEventCategory('');
+      setEventDate('');
   
       setEventFormVisible(false);
     } catch (error) {
@@ -479,23 +486,15 @@ const CalendarScreen = () => {
         defaultValue="Wybierz kategorię"
         onSelect={(index, value) => setEventCategory(value)}
       />
+      <Text style={[styles.buttonText, { color: 'white' }]}>Format daty: RRRR-MM-DD HH:MM:SS</Text>
 <TextInput
   style={styles.input}
-  placeholder="Wybierz datę"
+  placeholder="Data i godzina wydarzenia"
   value={eventDate}
   onChangeText={(text) => {
-    // Sprawdź, czy tekst zawiera tylko dozwolone znaki
-    const sanitizedText = text.replace(/[^0-9.\-]/g, ''); // Pozbądź się niedozwolonych znaków
-
-    // Sprawdź, czy liczba kropek jest mniejsza niż 2, a my musimy mieć co najmniej jedno cyfrowe
-    if (
-      sanitizedText.split('.').length <= 2 &&
-      /^[0-9]*([.\-]?[0-9]*)*$/.test(sanitizedText)
-    ) {
-      setEventDate(sanitizedText);
-    }
+    setEventDate(text);
   }}
-  keyboardType="numeric"
+  keyboardType="default"
 />
       <TouchableOpacity style={[styles.addButton, { backgroundColor: theme.succes }]} onPress={addEvent}>
    <Text style={[styles.buttonText, { color: 'white' }]}>Dodaj</Text>

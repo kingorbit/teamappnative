@@ -326,8 +326,8 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   logo: {
-    width: 150, // Dostosuj szerokość loga według potrzeb
-    height: 150, // Dostosuj wysokość loga według potrzeb
+    width: 150, 
+    height: 150,
     resizeMode: 'contain',
     borderRadius: 15,
   },
